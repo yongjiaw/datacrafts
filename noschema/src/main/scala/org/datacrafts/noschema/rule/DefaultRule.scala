@@ -5,7 +5,7 @@ import org.datacrafts.noschema.Container._
 import org.datacrafts.noschema.operator.{PrimitiveOperator, ShapelessProductMapper}
 import org.datacrafts.noschema.operator.ContainerOperator.{IterableOperator, MapOperator, OptionOperator, SeqOperator}
 
-trait DefaultRule extends Operation.OperationRule {
+trait DefaultRule extends Operation.Rule {
 
   override def getOperator[V](operation: Operation[V]): Operation.Operator[V] = {
 

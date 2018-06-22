@@ -12,12 +12,13 @@ class NoSchemaTest extends FlatSpec with ShapelessProduct.Implicits {
     val op = NoSchema.of[TestClass]
 
     assert(
-      op.operator.marshal(Map(
-                "v1" -> 10,
-                "v5" -> Map("_2" -> 12),
-                "v3" -> Iterable(Seq("v21" -> 3)),
-                "v6" -> TestClass3(v31 = 5)
-              )) == TestClass(
+      op.operator.marshal(
+        Map(
+          "v1" -> 10,
+          "v5" -> Map("_2" -> 12),
+          "v3" -> Iterable(Seq("v21" -> 3)),
+          "v6" -> TestClass3(v31 = 5)
+        )) == TestClass(
         v1 = 10,
         v5 = (null, 12),
         v3 = Some(Seq(Some(
@@ -58,18 +59,27 @@ class NoSchemaTest extends FlatSpec with ShapelessProduct.Implicits {
 
 object NoSchemaTest {
 
-  case class TestClass(v1: Int, v2: Option[Seq[Option[Double]]] = None,
+  case class TestClass(v1: Int,
+    v2: Option[Seq[Option[Double]]] = None,
     v3: Option[Seq[Option[TestClass2]]] = Some(Seq(Some(TestClass2()))),
-    v4: Seq[Int] = null, v5: (String, Int) = ("a", 2), v6: Option[TestClass3] = None
+    v4: Seq[Int] = null,
+    v5: (String, Int) = ("a", 2),
+    v6: Option[TestClass3] = None
   )
 
-  case class TestClass2(v21: Int = 3, v22: TestClass3 = TestClass3(0))
+  case class TestClass2(v21: Int = 3,
+    v22: TestClass3 = TestClass3(0)
+  )
 
-  case class TestClass3(v31: Int, v32: Iterable[Double] = Seq(12),
-    v: Map[String, Int] = Map.empty)
+  case class TestClass3(v31: Int,
+    v32: Iterable[Double] = Seq(12),
+    v: Map[String, Int] = Map.empty
+  )
 
   // recursive definition should be supported,
   // unless there are members with the recursive type and non-empty default value
-  case class Recursive(v: Seq[Recursive] = Seq.empty, v2: Int = 1)
+  case class Recursive(v: Seq[Recursive] = Seq.empty,
+    v2: Int = 1
+  )
 
 }

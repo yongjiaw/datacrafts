@@ -41,7 +41,7 @@ object NoSchema extends Primitive.Implicits
     val Seq, Map, Struct, Primitive, Option = Value
   }
 
-  def of[T : NoSchema](implicit rule: Operation.OperationRule = DefaultRule): Operation[T] = {
+  def of[T: NoSchema](implicit rule: Operation.Rule = DefaultRule): Operation[T] = {
     new Operation[T](Context.root(implicitly[NoSchema[T]]), rule)
   }
 }

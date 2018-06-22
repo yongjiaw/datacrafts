@@ -81,8 +81,8 @@ object ContainerOperator {
 
     protected override def marshalNoneNull(input: Any): Map[String, T] = {
       input match {
-        case value: Iterable[_] => value.map {
-          case (k, v) => k.toString -> elementOperation.operator.marshal(v)
+        case value: Iterable[(_, _)] => value.map {
+          case (k, v) => s"$k" -> elementOperation.operator.marshal(v)
         }.toMap
         case None => throw new Exception(s"marshalling ${this} " +
           s"but input is not Iterable ${input.getClass}, ${input}")

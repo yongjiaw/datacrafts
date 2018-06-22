@@ -4,20 +4,19 @@ import org.datacrafts.noschema.Context.LocalContext
 
 final class Operation[T](
   val context: Context[T],
-  val operatorRule: Operation.OperationRule
+  val rule: Operation.Rule
 ) {
 
-  val operator: Operation.Operator[T] = operatorRule.getOperator(this)
+  val operator: Operation.Operator[T] = rule.getOperator(this)
 
   val dependencyOperationMap: Map[Context.LocalContext[_], Operation[_]] =
     context.noSchema.dependencies.map {
       dependency =>
-        dependency -> new Operation(context.dependencyContext(dependency), operatorRule)
+        dependency -> new Operation(context.dependencyContext(dependency), rule)
     }.toMap
 
-  // structurally, this is only invoked through shapeless determined at compile time
-  // by implicit resolution
-  // user code can control the actual operations through the operatorRule
+  // this is invoked through implicit resolution at compile time based on structure of the type
+  // user code can control the actual operations through the rule
   def dependencyOperation[D](dependency: LocalContext[D]): Operation[D] = {
     dependencyOperationMap.getOrElse(
       dependency,
@@ -31,8 +30,8 @@ final class Operation[T](
 
 object Operation {
 
-  trait OperationRule {
-    def getOperator[V](operation: Operation[V]): Operation.Operator[V]
+  trait Rule {
+    def getOperator[V](operation: Operation[V]): Operator[V]
   }
 
   trait Operator[T] {
@@ -51,6 +50,7 @@ object Operation {
               s"and operator ${this} has no default"))
       }
     }
+
     protected def marshalNoneNull(input: Any): T
 
     def unmarshal(input: T): Any = {
@@ -60,6 +60,7 @@ object Operation {
         input
       }
     }
+
     protected def unmarshalNoneNull(input: T): Any
 
     def default: Option[T] = None
