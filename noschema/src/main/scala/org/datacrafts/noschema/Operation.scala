@@ -1,6 +1,7 @@
 package org.datacrafts.noschema
 
 import org.datacrafts.noschema.Context.LocalContext
+import org.datacrafts.noschema.Operation.Operator
 
 final class Operation[T](
   val context: Context[T],
@@ -25,6 +26,26 @@ final class Operation[T](
           s"not found in ${dependencyOperationMap.keySet}"
       )
     ).asInstanceOf[Operation[D]]
+  }
+
+  def format(
+    schemaFormatter: (NoSchema[_], Operator[_]) => String = {
+      (noSchema: NoSchema[_], operator: Operator[_]) =>
+        s"${noSchema} => ${operator.getClass.getSimpleName}\n"
+    },
+    dependencyFormatter: (Operation[_], String) => String = {
+      (depOp: Operation[_], depFormatted) => s"${"\t" * depOp.context.level}${
+        depOp.context.localContext match {
+          case Context.MemberVariable(symbol, _) => symbol.map(_.name).get
+          case Context.ContainerElement(_) => "element"
+        }
+      }: ${depFormatted}"
+    }
+  ): String = {
+    s"${schemaFormatter(context.noSchema, operator)}${
+      dependencyOperationMap.values.map {
+        op => dependencyFormatter(op, s"${op.format(schemaFormatter, dependencyFormatter)}")
+      }.mkString("")}"
   }
 }
 

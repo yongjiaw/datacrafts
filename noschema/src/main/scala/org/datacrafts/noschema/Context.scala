@@ -21,6 +21,8 @@ object Context {
 case class Context[T](
   localContext: LocalContext[T], parentContext: Option[Context[_]]) {
 
+  val level: Int = parentContext.map(_.level + 1).getOrElse(0)
+
   def noSchema: NoSchema[T] = localContext.noSchema
 
   override def toString: String =

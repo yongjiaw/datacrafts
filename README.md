@@ -83,6 +83,42 @@ object NoSchemaTest {
 
 }
 
+```
+This is the details of the operation with the case class TestClass
+```
+println(op.format())
+org.datacrafts.noschema.NoSchemaTest.TestClass(nullable = true) => ShapelessProductMapper
+	v6: Option[org.datacrafts.noschema.NoSchemaTest.TestClass3](nullable = false) => OptionOperator
+		element: org.datacrafts.noschema.NoSchemaTest.TestClass3(nullable = true) => ShapelessProductMapper
+			v: Map[String,Int](nullable = true) => MapOperator
+				element: Int(nullable = false) => PrimitiveOperator
+			v32: Iterable[Double](nullable = true) => IterableOperator
+				element: Double(nullable = false) => PrimitiveOperator
+			v31: Int(nullable = false) => PrimitiveOperator
+	v1: Int(nullable = false) => PrimitiveOperator
+	v5: (String, Int)(nullable = true) => ShapelessProductMapper
+		_2: Int(nullable = false) => PrimitiveOperator
+		_1: String(nullable = true) => PrimitiveOperator
+	v3: Option[Seq[Option[org.datacrafts.noschema.NoSchemaTest.TestClass2]]](nullable = false) => OptionOperator
+		element: Seq[Option[org.datacrafts.noschema.NoSchemaTest.TestClass2]](nullable = true) => SeqOperator
+			element: Option[org.datacrafts.noschema.NoSchemaTest.TestClass2](nullable = false) => OptionOperator
+				element: org.datacrafts.noschema.NoSchemaTest.TestClass2(nullable = true) => ShapelessProductMapper
+					v22: org.datacrafts.noschema.NoSchemaTest.TestClass3(nullable = true) => ShapelessProductMapper
+						v: Map[String,Int](nullable = true) => MapOperator
+							element: Int(nullable = false) => PrimitiveOperator
+						v32: Iterable[Double](nullable = true) => IterableOperator
+							element: Double(nullable = false) => PrimitiveOperator
+						v31: Int(nullable = false) => PrimitiveOperator
+					v21: Int(nullable = false) => PrimitiveOperator
+	v2: Option[Seq[Option[Double]]](nullable = false) => OptionOperator
+		element: Seq[Option[Double]](nullable = true) => SeqOperator
+			element: Option[Double](nullable = false) => OptionOperator
+				element: Double(nullable = false) => PrimitiveOperator
+	v4: Seq[Int](nullable = true) => SeqOperator
+		element: Int(nullable = false) => PrimitiveOperator
+```
+This is the default rule that can be customized
+```
 trait DefaultRule extends Operation.Rule {
 
   override def getOperator[V](operation: Operation[V]): Operation.Operator[V] = {

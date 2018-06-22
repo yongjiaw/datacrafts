@@ -10,7 +10,7 @@ class NoSchemaTest extends FlatSpec with ShapelessProduct.Implicits {
   "Marshalling and unmarshalling with Map" should "be successful" in {
 
     val op = NoSchema.of[TestClass]
-
+    println(op.format())
     assert(
       op.operator.marshal(
         Map(

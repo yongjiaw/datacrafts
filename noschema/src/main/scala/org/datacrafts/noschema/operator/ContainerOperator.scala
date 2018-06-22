@@ -1,9 +1,7 @@
 package org.datacrafts.noschema.operator
 
-import org.datacrafts.noschema.{Container, Context, NoSchema, Operation}
-import org.datacrafts.noschema.Container.OptionContainer
 import org.datacrafts.noschema.Context.ContainerElement
-import org.datacrafts.noschema.Operation.Operator
+import org.datacrafts.noschema.Operation
 
 trait ContainerOperator[T, C] extends Operation.Operator[C] {
   val element: ContainerElement[T]
@@ -81,7 +79,7 @@ object ContainerOperator {
 
     protected override def marshalNoneNull(input: Any): Map[String, T] = {
       input match {
-        case value: Iterable[(_, _)] => value.map {
+        case value: Iterable[_] => value.map {
           case (k, v) => s"$k" -> elementOperation.operator.marshal(v)
         }.toMap
         case None => throw new Exception(s"marshalling ${this} " +
