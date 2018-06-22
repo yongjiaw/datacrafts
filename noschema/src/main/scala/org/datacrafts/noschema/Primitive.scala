@@ -3,7 +3,8 @@ package org.datacrafts.noschema
 class Primitive[T: NoSchema.Type](nullable: Boolean = false)
   extends NoSchema[T](
     category = NoSchema.Category.Primitive,
-    nullable = nullable) {
+    nullable = nullable
+  ) {
 }
 
 object Primitive {

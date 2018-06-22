@@ -3,11 +3,11 @@ package org.datacrafts.noschema
 import org.datacrafts.noschema.Context.LocalContext
 
 final class Operation[T](
-  context: Context[T],
-  operatorRule: Operation.OperatorRule
+  val context: Context[T],
+  val operatorRule: Operation.OperationRule
 ) {
 
-  val operator: Operation.Operator[T] = operatorRule.getOperator(context)
+  val operator: Operation.Operator[T] = operatorRule.getOperator(this)
 
   val dependencyOperationMap: Map[Context.LocalContext[_], Operation[_]] =
     context.noSchema.dependencies.map {
@@ -31,17 +31,38 @@ final class Operation[T](
 
 object Operation {
 
-  trait OperatorRule {
-    def getOperator[V](context: Context[V]): Operation.Operator[V]
+  trait OperationRule {
+    def getOperator[V](operation: Operation[V]): Operation.Operator[V]
   }
 
   trait Operator[T] {
 
     def operation: Operation[T]
 
-    def marshal(input: Any): T
+    def marshal(input: Any): T = {
+      if (Option(input).isDefined) {
+        marshalNoneNull(input)
+      } else if (operation.context.noSchema.nullable) {
+        null.asInstanceOf[T] // scalastyle:ignore
+      } else {
+        default.getOrElse(
+          throw new Exception(
+            s"input is null, but ${operation.context.noSchema} is not nullable, " +
+              s"and operator ${this} has no default"))
+      }
+    }
+    protected def marshalNoneNull(input: Any): T
 
-    def unmarshal(input: T): Any
+    def unmarshal(input: T): Any = {
+      if (Option(input).isDefined) {
+        unmarshalNoneNull(input)
+      } else {
+        input
+      }
+    }
+    protected def unmarshalNoneNull(input: T): Any
+
+    def default: Option[T] = None
 
   }
 

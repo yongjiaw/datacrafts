@@ -10,7 +10,8 @@ class ShapelessProduct[T : NoSchema.Type, R <: HList](
   shapeless: ShapelessAdapter[R]
 ) extends NoSchema[T](
   category = NoSchema.Category.Struct,
-  nullable = true
+  nullable = true,
+  dependencies = dependencies
 )
 {
   def marshal(symbolExtractor: SymbolExtractor, operation: Operation[T]): T = {
@@ -70,7 +71,7 @@ object ShapelessProduct {
           symbolExtractor: SymbolExtractor, operation: Operation[_]): FieldType[K, V] :: L = {
           field[K](
             operation.dependencyOperation(headValueContext).operator
-              .marshal(symbolExtractor.getSymbolValue(headSymbol.value))
+                          .marshal(symbolExtractor.getSymbolValue(headSymbol.value))
           ) :: tail.value.marshalHList(symbolExtractor.removeSymbol(headSymbol.value), operation)
         }
 

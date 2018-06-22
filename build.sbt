@@ -30,9 +30,6 @@ lazy val logging = project.settings(
 lazy val noschema = project.settings(
   commenSettings,
 
-  resolvers += "commbank-releases" at
-    "http://commbank.artifactoryonline.com/commbank/ext-releases-local",
-
   libraryDependencies ++= Seq(
     "com.chuusai" %% "shapeless" % "2.3.3",
     "org.slf4j" % "slf4j-log4j12" % "1.7.25" % Test
