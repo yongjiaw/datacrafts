@@ -5,10 +5,11 @@ Available on [Sonatype Nexus](https://oss.sonatype.org/content/repositories/snap
 ## NoSchema
 NoSchema is for NoSQL, to handle schema evolution with customization.
 Scala types such as case class serves as the structured NoSQL schema.
-Schema evolution is just a special case of custom marshalling and unmarshalilng.
+Schema evolution is just a special case of custom marshalling and unmarshalilng.<br/>
+The design is to let shapeless and implicit resolution to figure out the type structure only,
+while use regular scala constructs to control everything else.<br/>
 The following example converts between case class and nested Map[String, Any],
 using the default rule.
-
 ```
 class NoSchemaTest extends FlatSpec with ShapelessProduct.Implicits {
 
@@ -87,37 +88,38 @@ object NoSchemaTest {
 This is the details of the operation with the case class TestClass
 ```
 println(op.format())
-org.datacrafts.noschema.NoSchemaTest.TestClass(nullable = true) => ShapelessProductMapper
-	v6: Option[org.datacrafts.noschema.NoSchemaTest.TestClass3](nullable = false) => OptionOperator
-		element: org.datacrafts.noschema.NoSchemaTest.TestClass3(nullable = true) => ShapelessProductMapper
-			v: Map[String,Int](nullable = true) => MapOperator
-				element: Int(nullable = false) => PrimitiveOperator
-			v32: Iterable[Double](nullable = true) => IterableOperator
-				element: Double(nullable = false) => PrimitiveOperator
-			v31: Int(nullable = false) => PrimitiveOperator
-	v1: Int(nullable = false) => PrimitiveOperator
-	v5: (String, Int)(nullable = true) => ShapelessProductMapper
-		_2: Int(nullable = false) => PrimitiveOperator
-		_1: String(nullable = true) => PrimitiveOperator
-	v3: Option[Seq[Option[org.datacrafts.noschema.NoSchemaTest.TestClass2]]](nullable = false) => OptionOperator
-		element: Seq[Option[org.datacrafts.noschema.NoSchemaTest.TestClass2]](nullable = true) => SeqOperator
-			element: Option[org.datacrafts.noschema.NoSchemaTest.TestClass2](nullable = false) => OptionOperator
-				element: org.datacrafts.noschema.NoSchemaTest.TestClass2(nullable = true) => ShapelessProductMapper
-					v22: org.datacrafts.noschema.NoSchemaTest.TestClass3(nullable = true) => ShapelessProductMapper
-						v: Map[String,Int](nullable = true) => MapOperator
-							element: Int(nullable = false) => PrimitiveOperator
-						v32: Iterable[Double](nullable = true) => IterableOperator
-							element: Double(nullable = false) => PrimitiveOperator
-						v31: Int(nullable = false) => PrimitiveOperator
-					v21: Int(nullable = false) => PrimitiveOperator
-	v2: Option[Seq[Option[Double]]](nullable = false) => OptionOperator
-		element: Seq[Option[Double]](nullable = true) => SeqOperator
-			element: Option[Double](nullable = false) => OptionOperator
-				element: Double(nullable = false) => PrimitiveOperator
-	v4: Seq[Int](nullable = true) => SeqOperator
-		element: Int(nullable = false) => PrimitiveOperator
+TestClass(nullable = true) => ShapelessProductMapper
+    ├──v1: Int(nullable = false) => PrimitiveOperator
+    ├──v2: Option(nullable = false) => OptionOperator
+    │   └──element: Seq(nullable = true) => SeqOperator
+    │      └──element: Option(nullable = false) => OptionOperator
+    │         └──element: Double(nullable = false) => PrimitiveOperator
+    ├──v4: Seq(nullable = true) => SeqOperator
+    │   └──element: Int(nullable = false) => PrimitiveOperator
+    ├──v3: Option(nullable = false) => OptionOperator
+    │   └──element: Seq(nullable = true) => SeqOperator
+    │      └──element: Option(nullable = false) => OptionOperator
+    │         └──element: TestClass2(nullable = true) => ShapelessProductMapper
+    │            ├──v22: TestClass3(nullable = true) => ShapelessProductMapper
+    │            │   ├──v: Map(nullable = true) => MapOperator
+    │            │   │   └──element: Int(nullable = false) => PrimitiveOperator
+    │            │   ├──v32: Iterable(nullable = true) => IterableOperator
+    │            │   │   └──element: Double(nullable = false) => PrimitiveOperator
+    │            │   └──v31: Int(nullable = false) => PrimitiveOperator
+    │            └──v21: Int(nullable = false) => PrimitiveOperator
+    ├──v5: Tuple2(nullable = true) => ShapelessProductMapper
+    │   ├──_2: Int(nullable = false) => PrimitiveOperator
+    │   └──_1: String(nullable = true) => PrimitiveOperator
+    └──v6: Option(nullable = false) => OptionOperator
+       └──element: TestClass3(nullable = true) => ShapelessProductMapper
+          ├──v: Map(nullable = true) => MapOperator
+          │   └──element: Int(nullable = false) => PrimitiveOperator
+          ├──v32: Iterable(nullable = true) => IterableOperator
+          │   └──element: Double(nullable = false) => PrimitiveOperator
+          └──v31: Int(nullable = false) => PrimitiveOperator
 ```
-This is the default rule that can be customized
+This is the default rule which is only based on schema type.
+Customized rules can control behaviors by context/path of the schema.
 ```
 trait DefaultRule extends Operation.Rule {
 

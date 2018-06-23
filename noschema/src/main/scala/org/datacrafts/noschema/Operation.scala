@@ -30,21 +30,39 @@ final class Operation[T](
 
   def format(
     schemaFormatter: (NoSchema[_], Operator[_]) => String = {
-      (noSchema: NoSchema[_], operator: Operator[_]) =>
-        s"${noSchema} => ${operator.getClass.getSimpleName}\n"
+      (noSchema, operator) =>
+        s"${noSchema.tpe.typeSymbol.name}(nullable=${noSchema.nullable}) " +
+          s"=> ${operator.getClass.getSimpleName}\n"
     },
-    dependencyFormatter: (Operation[_], String) => String = {
-      (depOp: Operation[_], depFormatted) => s"${"\t" * depOp.context.level}${
+    dependencyFormatter: (Operation[_], String, Set[Int]) => String = {
+      (depOp, depFormatted, openLevels) =>
+        s"${
+          (0 to depOp.context.level - 1)
+            .map(i => if (openLevels.contains(i)) " │  " else "   " ).mkString("")
+        }${if (openLevels.contains(depOp.context.level)) " ├──" else " └──"}${
         depOp.context.localContext match {
           case Context.MemberVariable(symbol, _) => symbol.map(_.name).get
           case Context.ContainerElement(_) => "element"
         }
       }: ${depFormatted}"
-    }
+    },
+    openLevels: Set[Int] = Set.empty
   ): String = {
     s"${schemaFormatter(context.noSchema, operator)}${
-      dependencyOperationMap.values.map {
-        op => dependencyFormatter(op, s"${op.format(schemaFormatter, dependencyFormatter)}")
+      val dependencies = dependencyOperationMap.values.toSeq
+      (0 until dependencyOperationMap.size).map {
+        i =>
+          val op = dependencies(i)
+          val depOpenLevels = if (i == dependencies.size - 1) {
+            openLevels - op.context.level
+          } else {
+            openLevels + op.context.level
+          }
+          dependencyFormatter(
+            op,
+            s"${op.format(schemaFormatter, dependencyFormatter, depOpenLevels)}",
+            depOpenLevels
+          )
       }.mkString("")}"
   }
 }

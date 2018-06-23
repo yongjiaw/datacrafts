@@ -1,7 +1,6 @@
 package org.datacrafts.noschema
 
 import org.datacrafts.noschema.NoSchemaTest.{TestClass, TestClass2, TestClass3}
-import org.datacrafts.noschema.rule.DefaultRule
 import org.scalatest.FlatSpec
 
 // scalastyle:off
