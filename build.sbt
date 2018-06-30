@@ -1,7 +1,7 @@
 
 val commenSettings = Seq(
   organization := "org.datacrafts",
-  version := "0.0.1-SNAPSHOT",
+  version := "0.0.1",
   scalaVersion := "2.12.6",
   crossScalaVersions := Seq("2.11.12", "2.12.6"),
   libraryDependencies ++= Seq(

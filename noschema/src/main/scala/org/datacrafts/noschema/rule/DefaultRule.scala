@@ -11,28 +11,28 @@ trait DefaultRule extends Operation.Rule {
 
     operation.context.noSchema match {
 
-      case _: Primitive[V] => new PrimitiveOperator[V](operation)
+      case _: Primitive[V] => new PrimitiveOperator(operation)
 
       case shapeless: ShapelessProduct[V, _] =>
-        new ShapelessProductMapper[V](operation, shapeless)
+        new ShapelessProductMapper(operation, shapeless)
 
       case option: OptionContainer[_] =>
-        new OptionOperator[option.Elem](
+        new OptionOperator(
           option.element, operation.asInstanceOf[Operation[Option[option.Elem]]])
           .asInstanceOf[Operation.Operator[V]]
 
       case map: MapContainer[_] =>
-        new MapOperator[map.Elem](
+        new MapOperator(
           map.element, operation.asInstanceOf[Operation[Map[String, map.Elem]]])
           .asInstanceOf[Operation.Operator[V]]
 
       case seq: SeqContainer[_] =>
-        new SeqOperator[seq.Elem](
+        new SeqOperator(
           seq.element, operation.asInstanceOf[Operation[Seq[seq.Elem]]])
           .asInstanceOf[Operation.Operator[V]]
 
       case iterable: IterableContainer[_] =>
-        new IterableOperator[iterable.Elem](
+        new IterableOperator(
           iterable.element, operation.asInstanceOf[Operation[Iterable[iterable.Elem]]])
           .asInstanceOf[Operation.Operator[V]]
     }
