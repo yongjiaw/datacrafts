@@ -4,7 +4,7 @@ import org.datacrafts.noschema.NoSchemaTest.{TestClass, TestClass2, TestClass3}
 import org.scalatest.FlatSpec
 
 // scalastyle:off
-class NoSchemaTest extends FlatSpec with ShapelessProduct.Implicits {
+class NoSchemaTest extends FlatSpec {
 
   "Marshalling and unmarshalling with Map" should "be successful" in {
 

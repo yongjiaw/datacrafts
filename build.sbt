@@ -1,22 +1,44 @@
 
+import ReleaseTransformations._
+import xerial.sbt.Sonatype._
+
+sonatypeProfileName := "org.datacrafts"
+
 val commenSettings = Seq(
   organization := "org.datacrafts",
-  version := "0.0.1",
+  version := "0.0.2",
   scalaVersion := "2.12.6",
   crossScalaVersions := Seq("2.11.12", "2.12.6"),
   libraryDependencies ++= Seq(
     "org.scalatest" %% "scalatest" % "3.0.4" % Test
   ),
-  publishTo := {
-    val nexus = "https://oss.sonatype.org/"
-    if (isSnapshot.value) {
-      Some("snapshots" at nexus + "content/repositories/snapshots/org/datacrafts")
-    }
-    else {
-      Some("releases"  at nexus + "service/local/staging/deploy/maven2/org/datacrafts")
-    }
 
-  }
+  releaseCrossBuild := true,
+
+  releaseProcess := Seq[ReleaseStep](
+    checkSnapshotDependencies,
+    inquireVersions,
+    runClean,
+    runTest,
+    setReleaseVersion,
+    commitReleaseVersion,
+    tagRelease,
+    // For non cross-build projects, use releaseStepCommand("publishSigned")
+    releaseStepCommandAndRemaining("+publishSigned"),
+    setNextVersion,
+    commitNextVersion,
+    releaseStepCommand("sonatypeReleaseAll"),
+    pushChanges
+  ),
+
+  publishTo := sonatypePublishTo.value,
+
+  publishMavenStyle := true,
+
+  licenses := Seq("APL2" -> url("http://www.apache.org/licenses/LICENSE-2.0.txt")),
+
+  sonatypeProjectHosting := Some(GitHubHosting("Yongjia Wang", "datacrafts", ""))
+
 )
 
 lazy val logging = project.settings(
@@ -38,7 +60,10 @@ lazy val noschema = project.settings(
 
 lazy val datacrafts = (project in file("."))
   .settings(
-    publish := {}
+    commenSettings,
+    publish := {},
+    publishLocal := {},
+    publishArtifact := false
   )
   .aggregate(
     logging,
