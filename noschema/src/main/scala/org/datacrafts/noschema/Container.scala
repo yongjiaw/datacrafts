@@ -28,7 +28,7 @@ object Container {
     (implicit ot: NoSchema.Type[Map[String, T]])
     extends Container[T, Map[String, T]](NoSchema.Category.Seq, element)
 
-  trait Implicits {
+  trait Instances {
     implicit def getOptionSchemaFromElementSchema[T: NoSchema.Type](implicit
       node: NoSchema[T],
       ot: NoSchema.Type[Option[T]]): OptionContainer[T] =

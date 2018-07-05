@@ -1,4 +1,5 @@
 package org.datacrafts
 
-package object noschema extends Primitive.Implicits
-  with Container.Implicits with ShapelessProduct.Implicits
+package object noschema extends Primitive.Instances
+  with Container.Instances with ShapelessProduct.Instances
+  with com.stripe.scrooge.shapes.GenericInstances

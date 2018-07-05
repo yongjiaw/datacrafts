@@ -40,7 +40,7 @@ object ShapelessProduct {
 
   }
 
-  trait Implicits extends FallbackImplicits {
+  trait Instances extends FallbackImplicits {
 
     implicit val hNilNode = new ShapelessAdapter[HNil](Seq.empty) {
       override def marshalHList(symbolExtractor: SymbolExtractor, operation: Operation[_]) = {

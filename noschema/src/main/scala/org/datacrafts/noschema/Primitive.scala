@@ -9,7 +9,7 @@ class Primitive[T: NoSchema.Type](nullable: Boolean = false)
 
 object Primitive {
 
-  trait Implicits {
+  trait Instances {
 
     implicit val intPrimitiveType = new Primitive[Int]
     implicit val longPrimitiveType = new Primitive[Long]

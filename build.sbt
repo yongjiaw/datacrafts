@@ -52,6 +52,7 @@ lazy val noschema = project.settings(
   commenSettings,
   libraryDependencies ++= Seq(
     "com.chuusai" %% "shapeless" % "2.3.3",
+    "com.stripe" %% "scrooge-shapes" % "0.1.0",
     "org.slf4j" % "slf4j-log4j12" % "1.7.25" % Test
   )
 ).dependsOn(logging)
