@@ -7,7 +7,7 @@ sonatypeProfileName := "org.datacrafts"
 val commenSettings = Seq(
   organization := "org.datacrafts",
   scalaVersion := "2.12.6",
-  crossScalaVersions := Seq("2.11.12", "2.12.6"),
+  crossScalaVersions := Seq("2.12.6"),
   libraryDependencies ++= Seq(
     "org.scalatest" %% "scalatest" % "3.0.4" % Test
   ),
