@@ -122,7 +122,8 @@ TestClass(Product, nullable=true) => ShapelessProductMapper
           ├──org.datacrafts.noschema.NoSchemaTest.Fruit.Apple: Apple(Product, nullable=true) => ShapelessProductMapper
           │   └──name: String(Primitive, nullable=true) => PrimitiveOperator
           └──org.datacrafts.noschema.NoSchemaTest.Pear: Pear(Product, nullable=true) => ShapelessProductMapper
-             └──size: Double(Primitive, nullable=false) => PrimitiveOperator```
+             └──size: Double(Primitive, nullable=false) => PrimitiveOperator
+```
 This is the default rule which is only based on schema type.
 Highly customized rules can control behaviors even by context/path of the schema.
 ```
