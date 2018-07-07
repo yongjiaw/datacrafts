@@ -1,6 +1,6 @@
 package org.datacrafts.noschema
 
-abstract class Container[T: NoSchema.Type, C: NoSchema.Type](
+abstract class Container[T: NoSchema.ScalaType, C: NoSchema.ScalaType](
   category: NoSchema.Category.Value,
   element: Context.ContainerElement[T],
   nullable: Boolean = true
@@ -12,41 +12,41 @@ abstract class Container[T: NoSchema.Type, C: NoSchema.Type](
 
 object Container {
 
-  case class OptionContainer[T: NoSchema.Type](element: Context.ContainerElement[T])
-    (implicit ot: NoSchema.Type[Option[T]])
+  case class OptionContainer[T: NoSchema.ScalaType](element: Context.ContainerElement[T])
+    (implicit ot: NoSchema.ScalaType[Option[T]])
     extends Container[T, Option[T]](NoSchema.Category.Option, element, false)
 
-  case class SeqContainer[T: NoSchema.Type](element: Context.ContainerElement[T])
-    (implicit ot: NoSchema.Type[Seq[T]])
+  case class SeqContainer[T: NoSchema.ScalaType](element: Context.ContainerElement[T])
+    (implicit ot: NoSchema.ScalaType[Seq[T]])
     extends Container[T, Seq[T]](NoSchema.Category.Seq, element)
 
-  case class IterableContainer[T: NoSchema.Type](element: Context.ContainerElement[T])
-    (implicit ot: NoSchema.Type[Iterable[T]])
+  case class IterableContainer[T: NoSchema.ScalaType](element: Context.ContainerElement[T])
+    (implicit ot: NoSchema.ScalaType[Iterable[T]])
     extends Container[T, Iterable[T]](NoSchema.Category.Seq, element)
 
-  case class MapContainer[T: NoSchema.Type](element: Context.ContainerElement[T])
-    (implicit ot: NoSchema.Type[Map[String, T]])
-    extends Container[T, Map[String, T]](NoSchema.Category.Seq, element)
+  case class MapContainer[T: NoSchema.ScalaType](element: Context.ContainerElement[T])
+    (implicit ot: NoSchema.ScalaType[Map[String, T]])
+    extends Container[T, Map[String, T]](NoSchema.Category.Map, element)
 
   trait Instances {
-    implicit def getOptionSchemaFromElementSchema[T: NoSchema.Type](implicit
+    implicit def getOptionSchemaFromElementSchema[T: NoSchema.ScalaType](implicit
       node: NoSchema[T],
-      ot: NoSchema.Type[Option[T]]): OptionContainer[T] =
+      ot: NoSchema.ScalaType[Option[T]]): OptionContainer[T] =
       new OptionContainer[T](Context.ContainerElement(node))
 
-    implicit def getSeqSchemaFromElementSchema[T: NoSchema.Type](implicit
+    implicit def getSeqSchemaFromElementSchema[T: NoSchema.ScalaType](implicit
       node: NoSchema[T],
-      ot: NoSchema.Type[Seq[T]]): SeqContainer[T] =
+      ot: NoSchema.ScalaType[Seq[T]]): SeqContainer[T] =
       new SeqContainer[T](Context.ContainerElement(node))
 
-    implicit def getIterableSchemaFromElementSchema[T: NoSchema.Type](implicit
+    implicit def getIterableSchemaFromElementSchema[T: NoSchema.ScalaType](implicit
       node: NoSchema[T],
-      ot: NoSchema.Type[Iterable[T]]): IterableContainer[T] =
+      ot: NoSchema.ScalaType[Iterable[T]]): IterableContainer[T] =
       new IterableContainer[T](Context.ContainerElement(node))
 
-    implicit def getMapSchemaFromElementSchema[T: NoSchema.Type](implicit
+    implicit def getMapSchemaFromElementSchema[T: NoSchema.ScalaType](implicit
       node: NoSchema[T],
-      ot: NoSchema.Type[Map[String, T]]): MapContainer[T] =
+      ot: NoSchema.ScalaType[Map[String, T]]): MapContainer[T] =
       new MapContainer[T](Context.ContainerElement(node))
   }
 

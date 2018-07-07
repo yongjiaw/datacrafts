@@ -1,18 +1,18 @@
 package org.datacrafts.noschema.operator
 
 import org.datacrafts.logging.Slf4jLogging
-import org.datacrafts.noschema.{Operation, ShapelessProduct}
 import org.datacrafts.noschema.Operation.Operator
-import org.datacrafts.noschema.ShapelessProduct.{SymbolCollector, SymbolExtractor}
-import org.datacrafts.noschema.operator.ShapelessProductOperator.ProductBuilder
+import org.datacrafts.noschema.ShapelessCoproduct
+import org.datacrafts.noschema.ShapelessCoproduct.{TypeValueExtractor, UnionTypeValueCollector}
+import org.datacrafts.noschema.operator.ShapelessCoproductOperator.CoproductBuilder
 
-abstract class ShapelessProductOperator[T, I, O] extends Operator[T] with Slf4jLogging.Default {
+abstract class ShapelessCoproductOperator[T, I, O] extends Operator[T] with Slf4jLogging.Default {
 
-  protected def shapeless: ShapelessProduct[T, _]
+  protected def shapeless: ShapelessCoproduct[T, _]
 
-  protected def parse(input: I): SymbolExtractor
+  protected def parse(input: I): TypeValueExtractor
 
-  protected def newProductBuilder(): ProductBuilder[O]
+  protected def newCoproductBuilder(): CoproductBuilder[O]
 
   protected final override def marshalNoneNull(input: Any): T = {
     val className = input.getClass.getCanonicalName
@@ -27,14 +27,14 @@ abstract class ShapelessProductOperator[T, I, O] extends Operator[T] with Slf4jL
   }
 
   protected final override def unmarshalNoneNull(input: T): O = {
-    shapeless.unmarshal(input, newProductBuilder(), operation)
-      .asInstanceOf[ProductBuilder[O]].build()
+    shapeless.unmarshal(input, newCoproductBuilder(), operation)
+      .asInstanceOf[CoproductBuilder[O]].build()
   }
 }
 
-object ShapelessProductOperator {
+object ShapelessCoproductOperator {
 
-  trait ProductBuilder[O] extends SymbolCollector {
+  trait CoproductBuilder[O] extends UnionTypeValueCollector {
     def build(): O
   }
 

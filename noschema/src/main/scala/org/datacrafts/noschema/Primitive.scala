@@ -1,6 +1,6 @@
 package org.datacrafts.noschema
 
-class Primitive[T: NoSchema.Type](nullable: Boolean = false)
+class Primitive[T: NoSchema.ScalaType](nullable: Boolean = false)
   extends NoSchema[T](
     category = NoSchema.Category.Primitive,
     nullable = nullable

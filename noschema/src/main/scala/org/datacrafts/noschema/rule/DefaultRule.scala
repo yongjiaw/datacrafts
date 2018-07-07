@@ -2,7 +2,7 @@ package org.datacrafts.noschema.rule
 
 import org.datacrafts.noschema._
 import org.datacrafts.noschema.Container._
-import org.datacrafts.noschema.operator.{PrimitiveOperator, ShapelessProductMapper}
+import org.datacrafts.noschema.operator.{PrimitiveOperator, ShapelessCoproductTupler, ShapelessProductMapper}
 import org.datacrafts.noschema.operator.ContainerOperator.{IterableOperator, MapOperator, OptionOperator, SeqOperator}
 
 trait DefaultRule extends Operation.Rule {
@@ -15,6 +15,9 @@ trait DefaultRule extends Operation.Rule {
 
       case shapeless: ShapelessProduct[V, _] =>
         new ShapelessProductMapper(operation, shapeless)
+
+      case shapeless: ShapelessCoproduct[V, _] =>
+        new ShapelessCoproductTupler[V](operation, shapeless)
 
       case option: OptionContainer[_] =>
         new OptionOperator(

@@ -14,6 +14,9 @@ object Context {
   case class ContainerElement[T](noSchema: NoSchema[T])
     extends LocalContext[T]
 
+  case class CoproductElement[T](symbol: Symbol, noSchema: NoSchema[T])
+    extends LocalContext[T]
+
   def root[T](node: NoSchema[T]): Context[T] =
     Context(MemberVariable(None, node), None)
 }

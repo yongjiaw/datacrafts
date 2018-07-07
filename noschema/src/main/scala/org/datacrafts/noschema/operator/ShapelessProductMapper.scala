@@ -2,12 +2,13 @@ package org.datacrafts.noschema.operator
 
 import org.datacrafts.noschema.{Operation, ShapelessProduct}
 import org.datacrafts.noschema.ShapelessProduct.{SymbolCollector, SymbolExtractor}
-import org.datacrafts.noschema.operator.ShapelessProductOperator.SymbolBuilder
+import org.datacrafts.noschema.operator.ShapelessProductOperator.ProductBuilder
 
 class ShapelessProductMapper[T](
   override val operation: Operation[T],
   override val shapeless: ShapelessProduct[T, _],
-  allowUnknownField: Boolean = false
+  allowUnknownField: Boolean = false,
+  allowAbsence: Boolean = true
 ) extends ShapelessProductOperator[T, Iterable[(_, _)], Map[String, Any]] {
 
   override protected def parse(input: Iterable[(_, _)]): SymbolExtractor =
@@ -21,7 +22,14 @@ class ShapelessProductMapper[T](
       }
 
       override def getSymbolValue(symbol: Symbol): Any = {
-        map.getOrElse(symbol.name, null) //scalastyle:ignore
+        map.getOrElse(
+          symbol.name,
+          if (allowAbsence) {
+            null //scalastyle:ignore
+          } else {
+            throw new Exception(s"${symbol.name} is absent for ${shapeless.scalaType}")
+          }
+        )
       }
 
       override def allSymbolsExtracted(): Unit = {
@@ -33,8 +41,8 @@ class ShapelessProductMapper[T](
       }
     }
 
-  override protected def newSymbolBuilder(): SymbolBuilder[Map[String, Any]] =
-    new SymbolBuilder[Map[String, Any]] {
+  override protected def newProductBuilder(): ProductBuilder[Map[String, Any]] =
+    new ProductBuilder[Map[String, Any]] {
       private val symbolMap = collection.mutable.Map.empty[Symbol, Any]
 
       override def build(): Map[String, Any] = symbolMap.map {

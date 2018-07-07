@@ -48,6 +48,7 @@ object Operation {
         operation.context.localContext match {
           case Context.MemberVariable(symbol, _) => symbol.map(_.name).get
           case Context.ContainerElement(_) => "element"
+          case Context.CoproductElement(symbol, noSchema) => s"${noSchema.scalaType.tpe}"
         }
       }
     }
@@ -76,8 +77,8 @@ object Operation {
       node: NoSchema[_],
       operator: Operator[_]
     ): String = {
-      s"${node.tpe.typeSymbol.name}(nullable=${node.nullable})" +
-        s"${if (showOperator) s" => ${operator.getClass.getSimpleName}" else ""}\n"
+      s"${node.scalaType.tpe.typeSymbol.name}(${node.category}, nullable=${node.nullable})" +
+        s"${if (showOperator) s" => ${operator}" else ""}\n"
     }
 
     override def formatDependency(depOp: Operation[_],
@@ -97,17 +98,21 @@ object Operation {
 
   trait Operator[T] {
 
+    override def toString: String = s"${this.getClass.getSimpleName}" +
+      s"(allowNull=${allowNull}${if (!allowNull) s",default=${default}" else ""})"
+
     def operation: Operation[T]
 
     final def marshal(input: Any): T = {
       if (Option(input).isDefined) {
         marshalNoneNull(input)
-      } else if (operation.context.noSchema.nullable) {
+      } else if (operation.context.noSchema.nullable && allowNull) {
         null.asInstanceOf[T] // scalastyle:ignore
       } else {
         default.getOrElse(
           throw new Exception(
-            s"input is null, but ${operation.context.noSchema} is not nullable, " +
+            s"input is null, but nullable=${operation.context.noSchema.nullable} " +
+              s"and allowNull=${allowNull}, " +
               s"and operator ${this} has no default"))
       }
     }
@@ -117,14 +122,18 @@ object Operation {
     final def unmarshal(input: T): Any = {
       if (Option(input).isDefined) {
         unmarshalNoneNull(input)
-      } else {
+      } else if (allowNull) {
         input
+      } else {
+        throw new Exception(s"operator ${this} does not allow null value")
       }
     }
 
     protected def unmarshalNoneNull(input: T): Any
 
     def default: Option[T] = None
+
+    def allowNull: Boolean = true
 
   }
 
