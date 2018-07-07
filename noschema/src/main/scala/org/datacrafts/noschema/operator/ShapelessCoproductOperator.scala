@@ -1,16 +1,18 @@
 package org.datacrafts.noschema.operator
 
+import scala.util.{Failure, Success, Try}
+
 import org.datacrafts.logging.Slf4jLogging
 import org.datacrafts.noschema.Operation.Operator
 import org.datacrafts.noschema.ShapelessCoproduct
 import org.datacrafts.noschema.ShapelessCoproduct.{TypeValueExtractor, UnionTypeValueCollector}
 import org.datacrafts.noschema.operator.ShapelessCoproductOperator.CoproductBuilder
 
-abstract class ShapelessCoproductOperator[T, I, O] extends Operator[T] with Slf4jLogging.Default {
+abstract class ShapelessCoproductOperator[T, O] extends Operator[T] with Slf4jLogging.Default {
 
   protected def shapeless: ShapelessCoproduct[T, _]
 
-  protected def parse(input: I): TypeValueExtractor
+  protected def parse(input: Any): TypeValueExtractor
 
   protected def newCoproductBuilder(): CoproductBuilder[O]
 
@@ -22,7 +24,11 @@ abstract class ShapelessCoproductOperator[T, I, O] extends Operator[T] with Slf4
     } else {
       logDebug(s"input ${input}[${className}] is not expected type: " +
         s"${operation.context.noSchema.scalaType.tpe}, parse and perform shapeless transform")
-      shapeless.marshal(parse(input.asInstanceOf[I]), operation)
+      Try(parse(input)) match {
+        case Success(parsed) => shapeless.marshal(parsed, operation)
+        case Failure(f) => throw new Exception(
+          s"failed to parse input $input for\n${operation.format()}", f)
+      }
     }
   }
 

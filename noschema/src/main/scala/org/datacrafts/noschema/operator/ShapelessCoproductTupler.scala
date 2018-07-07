@@ -7,13 +7,16 @@ import org.datacrafts.noschema.operator.ShapelessCoproductOperator.CoproductBuil
 class ShapelessCoproductTupler[T](
   override val operation: Operation[T],
   override val shapeless: ShapelessCoproduct[T, _]
-) extends ShapelessCoproductOperator [T, (_, _), (String, Any)]{
+) extends ShapelessCoproductOperator [T, (String, Any)]{
 
-  override protected def parse(input: Tuple2[_, _]): TypeValueExtractor = new TypeValueExtractor {
-    val (key, value) = input
-    override def getTypeValue(tpe: NoSchema.ScalaType[_]): Option[Any] = {
-      if (s"$key" == tpe.tpe.toString) Some(value) else None
+  override protected def parse(input: Any): TypeValueExtractor = input match {
+    case (key, value) =>
+    new TypeValueExtractor {
+      override def getTypeValue(tpe: NoSchema.ScalaType[_]): Option[Any] = {
+        if (s"$key" == tpe.tpe.toString) Some(value) else None
+      }
     }
+    case _ => throw new Exception(s"input ${input.getClass} does not match key value pair")
   }
 
   override protected def newCoproductBuilder(): CoproductBuilder[(String, Any)] =

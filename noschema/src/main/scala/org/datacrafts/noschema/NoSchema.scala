@@ -6,7 +6,6 @@ import scala.reflect.runtime.universe.TypeTag
 import org.datacrafts.logging.Slf4jLogging
 import org.datacrafts.noschema.Context.LocalContext
 import org.datacrafts.noschema.rule.DefaultRule
-import shapeless.Generic
 
 /**
   * Base NoSchema class
