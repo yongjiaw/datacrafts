@@ -3,6 +3,16 @@ package org.datacrafts.noschema
 import org.datacrafts.noschema.Context.LocalContext
 import org.datacrafts.noschema.Operation.{DefaultFormatter, Formatter, Operator}
 
+/**
+  * For a specific schema context, construct the immutable operators from top down
+  * @param context the schema encapsulated inside a context (path from the root)
+  * @param rule the rule that defines the operator(marshaling/unmarshaling) given the context.
+  *             note that the entire operation object, not just the context,
+  *             needs to be passed as parameter of the rule,
+  *             since for shapeless operators to do recursive marshaling/unmarshaling at runtime,
+  *             it need to retrieve the dependencies' operators from the operation object
+  * @tparam T
+  */
 final class Operation[T](
   val context: Context[T],
   val rule: Operation.Rule
@@ -23,7 +33,8 @@ final class Operation[T](
       dependency,
       throw new Exception(
         s"calling with unrecognized dependency ${dependency}, " +
-          s"not found in ${dependencyOperationMap.keySet}"
+          s"not found in ${dependencyOperationMap.keySet}. " +
+          s"This should not happen under intended usage"
       )
     ).asInstanceOf[Operation[D]]
   }
@@ -35,6 +46,9 @@ final class Operation[T](
   }
 }
 
+/**
+  * Companion object contains all the relevant traits
+  */
 object Operation {
 
   trait Formatter {

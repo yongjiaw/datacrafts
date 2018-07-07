@@ -21,25 +21,29 @@ trait DefaultRule extends Operation.Rule {
 
       case option: OptionContainer[_] =>
         new OptionOperator(
-          option.element, operation.asInstanceOf[Operation[Option[option.Elem]]])
-          .asInstanceOf[Operation.Operator[V]]
+          option.element,
+          operation.asInstanceOf[Operation[Option[option.Elem]]]
+        )
 
       case map: MapContainer[_] =>
         new MapOperator(
-          map.element, operation.asInstanceOf[Operation[Map[String, map.Elem]]])
-          .asInstanceOf[Operation.Operator[V]]
+          map.element,
+          operation.asInstanceOf[Operation[Map[String, map.Elem]]]
+        )
 
       case seq: SeqContainer[_] =>
         new SeqOperator(
-          seq.element, operation.asInstanceOf[Operation[Seq[seq.Elem]]])
-          .asInstanceOf[Operation.Operator[V]]
+          seq.element,
+          operation.asInstanceOf[Operation[Seq[seq.Elem]]]
+        )
 
       case iterable: IterableContainer[_] =>
         new IterableOperator(
-          iterable.element, operation.asInstanceOf[Operation[Iterable[iterable.Elem]]])
-          .asInstanceOf[Operation.Operator[V]]
+          iterable.element,
+          operation.asInstanceOf[Operation[Iterable[iterable.Elem]]]
+        )
     }
-  }
+  }.asInstanceOf[Operation.Operator[V]]
 
 }
 
