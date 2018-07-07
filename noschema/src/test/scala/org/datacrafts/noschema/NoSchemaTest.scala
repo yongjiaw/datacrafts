@@ -1,15 +1,22 @@
 package org.datacrafts.noschema
 
 import org.datacrafts.noschema.NoSchemaTest._
+import org.datacrafts.noschema.rule.DefaultRule
 import org.scalatest.FlatSpec
 
 // scalastyle:off
-class NoSchemaTest extends FlatSpec {
+class NoSchemaTest extends FlatSpec with NoSchemaDsl {
 
   "Marshalling and unmarshalling with Map" should "be successful" in {
 
-    val op = NoSchema.of[TestClass]
+    val op = DefaultRule.withSchema[TestClass]
     println(op.format())
+    // equivalent to the above, just DSL syntactic sugar
+    val op2 = schemaOf[TestClass].operation()
+    println(op2.format())
+    // can just print the schema itself
+    println(schemaOf[TestClass].format())
+
     assert(
       op.operator.marshal(
         Map(

@@ -49,7 +49,6 @@ class ShapelessProductMapper[T](
     case _ => throw new Exception(s"input type ${input.getClass} is not Iterable[(_, _)]")
   }
 
-
   override protected def newProductBuilder(): ProductBuilder[Map[String, Any]] =
     new ProductBuilder[Map[String, Any]] {
       private val symbolMap = collection.mutable.Map.empty[Symbol, Any]
