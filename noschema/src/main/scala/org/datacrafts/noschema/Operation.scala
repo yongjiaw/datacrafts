@@ -99,21 +99,23 @@ object Operation {
   trait Operator[T] {
 
     override def toString: String = s"${this.getClass.getSimpleName}" +
-      s"(allowNull=${allowNull}${if (!allowNull) s",default=${default}" else ""})"
+      s"${if (default.isDefined) s"(default=${default.get})" else ""}"
 
     def operation: Operation[T]
 
     final def marshal(input: Any): T = {
       if (Option(input).isDefined) {
         marshalNoneNull(input)
-      } else if (operation.context.noSchema.nullable && allowNull) {
-        null.asInstanceOf[T] // scalastyle:ignore
       } else {
         default.getOrElse(
-          throw new Exception(
-            s"input is null, but nullable=${operation.context.noSchema.nullable} " +
-              s"and allowNull=${allowNull}, " +
-              s"and operator ${this} has no default"))
+          if (operation.context.noSchema.nullable) {
+            null.asInstanceOf[T] // scalastyle:ignore
+          } else {
+            throw new Exception(
+              s"input is null, but nullable=${operation.context.noSchema.nullable} " +
+                s"and operator ${this} has no default")
+          }
+        )
       }
     }
 
@@ -122,18 +124,14 @@ object Operation {
     final def unmarshal(input: T): Any = {
       if (Option(input).isDefined) {
         unmarshalNoneNull(input)
-      } else if (allowNull) {
-        input
       } else {
-        throw new Exception(s"operator ${this} does not allow null value")
+        null // scalastyle:ignore
       }
     }
 
     protected def unmarshalNoneNull(input: T): Any
 
     def default: Option[T] = None
-
-    def allowNull: Boolean = true
 
   }
 

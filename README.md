@@ -87,37 +87,42 @@ object NoSchemaTest {
 ```
 This is the details of the operation with the case class TestClass
 ```
-println(op.format())
-TestClass(nullable=true) => ShapelessProductMapper
-    ├──v1: Int(nullable=false) => PrimitiveOperator
-    ├──v2: Option(nullable=false) => OptionOperator
-    │   └──element: Seq(nullable=true) => SeqOperator
-    │      └──element: Option(nullable=false) => OptionOperator
-    │         └──element: Double(nullable=false) => PrimitiveOperator
-    ├──v3: Option(nullable=false) => OptionOperator
-    │   └──element: Seq(nullable=true) => SeqOperator
-    │      └──element: Option(nullable=false) => OptionOperator
-    │         └──element: TestClass2(nullable=true) => ShapelessProductMapper
-    │            ├──v21: Int(nullable=false) => PrimitiveOperator
-    │            └──v22: TestClass3(nullable=true) => ShapelessProductMapper
-    │               ├──v: Map(nullable=true) => MapOperator
-    │               │   └──element: Int(nullable=false) => PrimitiveOperator
-    │               ├──v31: Int(nullable=false) => PrimitiveOperator
-    │               └──v32: Iterable(nullable=true) => IterableOperator
-    │                  └──element: Double(nullable=false) => PrimitiveOperator
-    ├──v4: Seq(nullable=true) => SeqOperator
-    │   └──element: Int(nullable=false) => PrimitiveOperator
-    ├──v5: Tuple2(nullable=true) => ShapelessProductMapper
-    │   ├──_1: String(nullable=true) => PrimitiveOperator
-    │   └──_2: Int(nullable=false) => PrimitiveOperator
-    └──v6: Option(nullable=false) => OptionOperator
-       └──element: TestClass3(nullable=true) => ShapelessProductMapper
-          ├──v: Map(nullable=true) => MapOperator
-          │   └──element: Int(nullable=false) => PrimitiveOperator
-          ├──v31: Int(nullable=false) => PrimitiveOperator
-          └──v32: Iterable(nullable=true) => IterableOperator
-             └──element: Double(nullable=false) => PrimitiveOperator
-```
+TestClass(Product, nullable=true) => ShapelessProductMapper
+       ├──v1: Int(Primitive, nullable=false) => PrimitiveOperator
+       ├──v2: Option(Option, nullable=false) => OptionOperator(default=None)
+       │   └──element: Seq(Seq, nullable=true) => SeqOperator
+       │      └──element: Option(Option, nullable=false) => OptionOperator(default=None)
+       │         └──element: Double(Primitive, nullable=false) => PrimitiveOperator
+       ├──v3: Option(Option, nullable=false) => OptionOperator(default=None)
+       │   └──element: Seq(Seq, nullable=true) => SeqOperator
+       │      └──element: Option(Option, nullable=false) => OptionOperator(default=None)
+       │         └──element: TestClass2(Product, nullable=true) => ShapelessProductMapper
+       │            ├──v21: Int(Primitive, nullable=false) => PrimitiveOperator
+       │            └──v22: TestClass3(Product, nullable=true) => ShapelessProductMapper
+       │               ├──v: Map(Map, nullable=true) => MapOperator
+       │               │   └──element: Int(Primitive, nullable=false) => PrimitiveOperator
+       │               ├──v31: Int(Primitive, nullable=false) => PrimitiveOperator
+       │               └──v32: Iterable(Seq, nullable=true) => IterableOperator
+       │                  └──element: Double(Primitive, nullable=false) => PrimitiveOperator
+       ├──v4: Seq(Seq, nullable=true) => SeqOperator
+       │   └──element: Int(Primitive, nullable=false) => PrimitiveOperator
+       ├──v5: Tuple2(Product, nullable=true) => ShapelessProductMapper
+       │   ├──_1: String(Primitive, nullable=true) => PrimitiveOperator
+       │   └──_2: Int(Primitive, nullable=false) => PrimitiveOperator
+       ├──v6: Option(Option, nullable=false) => OptionOperator(default=None)
+       │   └──element: TestClass3(Product, nullable=true) => ShapelessProductMapper
+       │      ├──v: Map(Map, nullable=true) => MapOperator
+       │      │   └──element: Int(Primitive, nullable=false) => PrimitiveOperator
+       │      ├──v31: Int(Primitive, nullable=false) => PrimitiveOperator
+       │      └──v32: Iterable(Seq, nullable=true) => IterableOperator
+       │         └──element: Double(Primitive, nullable=false) => PrimitiveOperator
+       └──v7: Fruit(CoProduct, nullable=true) => ShapelessCoproductTupler
+          ├──org.datacrafts.noschema.NoSchemaTest.Apple: Apple(Product, nullable=true) => ShapelessProductMapper
+          │   └──size: Int(Primitive, nullable=false) => PrimitiveOperator
+          ├──org.datacrafts.noschema.NoSchemaTest.Fruit.Apple: Apple(Product, nullable=true) => ShapelessProductMapper
+          │   └──name: String(Primitive, nullable=true) => PrimitiveOperator
+          └──org.datacrafts.noschema.NoSchemaTest.Pear: Pear(Product, nullable=true) => ShapelessProductMapper
+             └──size: Double(Primitive, nullable=false) => PrimitiveOperator```
 This is the default rule which is only based on schema type.
 Highly customized rules can control behaviors even by context/path of the schema.
 ```
