@@ -133,74 +133,74 @@ object NoSchemaTest {
 ```
 This is the details of the operation with the case class TestClass
 ```
-rg.datacrafts.noschema.NoSchemaTest.TestClass(Product, nullable=true)
-    ├──thriftMap: org.datacrafts.scrooge.shapes.MapExample(Product, nullable=true)
-    │   ├──id: java.lang.String(Primitive, nullable=true)
-    │   └──metadata: scala.Option(Option, nullable=false)
-    │      └──element: scala.collection.Map(Map, nullable=true)
-    │         └──element: java.lang.String(Primitive, nullable=true)
-    ├──thriftNested: org.datacrafts.scrooge.shapes.NestedStructExample(Product, nullable=true)
-    │   ├──qux: scala.Option(Option, nullable=false)
-    │   │   └──element: scala.Long(Primitive, nullable=false)
-    │   └──str: org.datacrafts.scrooge.shapes.StructExample(Product, nullable=true)
-    │      ├──bar: scala.Option(Option, nullable=false)
-    │      │   └──element: java.lang.String(Primitive, nullable=true)
-    │      └──foo: java.lang.String(Primitive, nullable=true)
-    ├──thriftUnion: org.datacrafts.scrooge.shapes.UnionExample(CoProduct, nullable=true)
-    │   ├──A: org.datacrafts.scrooge.shapes.StructExample(Product, nullable=true)
-    │   │   ├──bar: scala.Option(Option, nullable=false)
-    │   │   │   └──element: java.lang.String(Primitive, nullable=true)
-    │   │   └──foo: java.lang.String(Primitive, nullable=true)
-    │   ├──B: scala.Int(Primitive, nullable=false)
-    │   ├──C: java.lang.String(Primitive, nullable=true)
-    │   └──UnknownUnionField: com.twitter.scrooge.TFieldBlob(Product, nullable=true)
-    │      ├──content: com.twitter.io.Buf(Primitive, nullable=false)
-    │      └──field: org.apache.thrift.protocol.TField(Primitive, nullable=false)
-    ├──thriftUnion2: org.datacrafts.scrooge.shapes.UnionExample(CoProduct, nullable=true)
-    │   ├──A: org.datacrafts.scrooge.shapes.StructExample(Product, nullable=true)
-    │   │   ├──bar: scala.Option(Option, nullable=false)
-    │   │   │   └──element: java.lang.String(Primitive, nullable=true)
-    │   │   └──foo: java.lang.String(Primitive, nullable=true)
-    │   ├──B: scala.Int(Primitive, nullable=false)
-    │   ├──C: java.lang.String(Primitive, nullable=true)
-    │   └──UnknownUnionField: com.twitter.scrooge.TFieldBlob(Product, nullable=true)
-    │      ├──content: com.twitter.io.Buf(Primitive, nullable=false)
-    │      └──field: org.apache.thrift.protocol.TField(Primitive, nullable=false)
-    ├──v1: scala.Int(Primitive, nullable=false)
-    ├──v2: scala.Option(Option, nullable=false)
-    │   └──element: scala.collection.Seq(Seq, nullable=true)
-    │      └──element: scala.Option(Option, nullable=false)
-    │         └──element: scala.Double(Primitive, nullable=false)
-    ├──v3: scala.Option(Option, nullable=false)
-    │   └──element: scala.collection.Seq(Seq, nullable=true)
-    │      └──element: scala.Option(Option, nullable=false)
-    │         └──element: org.datacrafts.noschema.NoSchemaTest.TestClass2(Product, nullable=true)
-    │            ├──v21: scala.Int(Primitive, nullable=false)
-    │            └──v22: org.datacrafts.noschema.NoSchemaTest.TestClass3(Product, nullable=true)
-    │               ├──v: scala.collection.immutable.Map(Map, nullable=true)
-    │               │   └──element: scala.Int(Primitive, nullable=false)
-    │               ├──v31: scala.Int(Primitive, nullable=false)
-    │               └──v32: scala.collection.Iterable(Seq, nullable=true)
-    │                  └──element: scala.Double(Primitive, nullable=false)
-    ├──v4: scala.collection.Seq(Seq, nullable=true)
-    │   └──element: scala.Int(Primitive, nullable=false)
-    ├──v5: scala.Tuple2(Product, nullable=true)
-    │   ├──_1: java.lang.String(Primitive, nullable=true)
-    │   └──_2: scala.Int(Primitive, nullable=false)
-    ├──v6: scala.Option(Option, nullable=false)
-    │   └──element: org.datacrafts.noschema.NoSchemaTest.TestClass3(Product, nullable=true)
-    │      ├──v: scala.collection.immutable.Map(Map, nullable=true)
-    │      │   └──element: scala.Int(Primitive, nullable=false)
-    │      ├──v31: scala.Int(Primitive, nullable=false)
-    │      └──v32: scala.collection.Iterable(Seq, nullable=true)
-    │         └──element: scala.Double(Primitive, nullable=false)
-    └──v7: org.datacrafts.noschema.NoSchemaTest.Fruit(CoProduct, nullable=true)
-       ├──Apple: org.datacrafts.noschema.NoSchemaTest.Fruit.Apple(Product, nullable=true)
-       │   └──name: java.lang.String(Primitive, nullable=true)
-       ├──Apple: org.datacrafts.noschema.NoSchemaTest.Apple(Product, nullable=true)
-       │   └──size: scala.Int(Primitive, nullable=false)
-       └──Pear: org.datacrafts.noschema.NoSchemaTest.Pear(Product, nullable=true)
-          └──size: scala.Double(Primitive, nullable=false)
+org.datacrafts.noschema.NoSchemaTest.TestClass(Product, nullable=true) => ShapelessProductMapper
+    ├──thriftMap: org.datacrafts.scrooge.shapes.MapExample(Product, nullable=true) => ShapelessProductMapper
+    │   ├──id: java.lang.String(Primitive, nullable=true) => PrimitiveOperator
+    │   └──metadata: scala.Option(Option, nullable=false) => OptionOperator(default=None)
+    │      └──element: scala.collection.Map(Map, nullable=true) => MapOperator2
+    │         └──element: java.lang.String(Primitive, nullable=true) => PrimitiveOperator
+    ├──thriftNested: org.datacrafts.scrooge.shapes.NestedStructExample(Product, nullable=true) => ShapelessProductMapper
+    │   ├──qux: scala.Option(Option, nullable=false) => OptionOperator(default=None)
+    │   │   └──element: scala.Long(Primitive, nullable=false) => PrimitiveOperator
+    │   └──str: org.datacrafts.scrooge.shapes.StructExample(Product, nullable=true) => ShapelessProductMapper
+    │      ├──bar: scala.Option(Option, nullable=false) => OptionOperator(default=None)
+    │      │   └──element: java.lang.String(Primitive, nullable=true) => PrimitiveOperator
+    │      └──foo: java.lang.String(Primitive, nullable=true) => PrimitiveOperator
+    ├──thriftUnion: org.datacrafts.scrooge.shapes.UnionExample(CoProduct, nullable=true) => ShapelessCoproductTupler
+    │   ├──A: org.datacrafts.scrooge.shapes.StructExample(Product, nullable=true) => ShapelessProductMapper
+    │   │   ├──bar: scala.Option(Option, nullable=false) => OptionOperator(default=None)
+    │   │   │   └──element: java.lang.String(Primitive, nullable=true) => PrimitiveOperator
+    │   │   └──foo: java.lang.String(Primitive, nullable=true) => PrimitiveOperator
+    │   ├──B: scala.Int(Primitive, nullable=false) => PrimitiveOperator
+    │   ├──C: java.lang.String(Primitive, nullable=true) => PrimitiveOperator
+    │   └──UnknownUnionField: com.twitter.scrooge.TFieldBlob(Product, nullable=true) => ShapelessProductMapper
+    │      ├──content: com.twitter.io.Buf(Primitive, nullable=false) => PrimitiveOperator
+    │      └──field: org.apache.thrift.protocol.TField(Primitive, nullable=false) => PrimitiveOperator
+    ├──thriftUnion2: org.datacrafts.scrooge.shapes.UnionExample(CoProduct, nullable=true) => ShapelessCoproductTupler
+    │   ├──A: org.datacrafts.scrooge.shapes.StructExample(Product, nullable=true) => ShapelessProductMapper
+    │   │   ├──bar: scala.Option(Option, nullable=false) => OptionOperator(default=None)
+    │   │   │   └──element: java.lang.String(Primitive, nullable=true) => PrimitiveOperator
+    │   │   └──foo: java.lang.String(Primitive, nullable=true) => PrimitiveOperator
+    │   ├──B: scala.Int(Primitive, nullable=false) => PrimitiveOperator
+    │   ├──C: java.lang.String(Primitive, nullable=true) => PrimitiveOperator
+    │   └──UnknownUnionField: com.twitter.scrooge.TFieldBlob(Product, nullable=true) => ShapelessProductMapper
+    │      ├──content: com.twitter.io.Buf(Primitive, nullable=false) => PrimitiveOperator
+    │      └──field: org.apache.thrift.protocol.TField(Primitive, nullable=false) => PrimitiveOperator
+    ├──v1: scala.Int(Primitive, nullable=false) => PrimitiveOperator
+    ├──v2: scala.Option(Option, nullable=false) => OptionOperator(default=None)
+    │   └──element: scala.collection.Seq(Seq, nullable=true) => SeqOperator
+    │      └──element: scala.Option(Option, nullable=false) => OptionOperator(default=None)
+    │         └──element: scala.Double(Primitive, nullable=false) => PrimitiveOperator
+    ├──v3: scala.Option(Option, nullable=false) => OptionOperator(default=None)
+    │   └──element: scala.collection.Seq(Seq, nullable=true) => SeqOperator
+    │      └──element: scala.Option(Option, nullable=false) => OptionOperator(default=None)
+    │         └──element: org.datacrafts.noschema.NoSchemaTest.TestClass2(Product, nullable=true) => ShapelessProductMapper
+    │            ├──v21: scala.Int(Primitive, nullable=false) => PrimitiveOperator
+    │            └──v22: org.datacrafts.noschema.NoSchemaTest.TestClass3(Product, nullable=true) => ShapelessProductMapper
+    │               ├──v: scala.collection.immutable.Map(Map, nullable=true) => MapOperator
+    │               │   └──element: scala.Int(Primitive, nullable=false) => PrimitiveOperator
+    │               ├──v31: scala.Int(Primitive, nullable=false) => PrimitiveOperator
+    │               └──v32: scala.collection.Iterable(Seq, nullable=true) => IterableOperator
+    │                  └──element: scala.Double(Primitive, nullable=false) => PrimitiveOperator
+    ├──v4: scala.collection.Seq(Seq, nullable=true) => SeqOperator
+    │   └──element: scala.Int(Primitive, nullable=false) => PrimitiveOperator
+    ├──v5: scala.Tuple2(Product, nullable=true) => ShapelessProductMapper
+    │   ├──_1: java.lang.String(Primitive, nullable=true) => PrimitiveOperator
+    │   └──_2: scala.Int(Primitive, nullable=false) => PrimitiveOperator
+    ├──v6: scala.Option(Option, nullable=false) => OptionOperator(default=None)
+    │   └──element: org.datacrafts.noschema.NoSchemaTest.TestClass3(Product, nullable=true) => ShapelessProductMapper
+    │      ├──v: scala.collection.immutable.Map(Map, nullable=true) => MapOperator
+    │      │   └──element: scala.Int(Primitive, nullable=false) => PrimitiveOperator
+    │      ├──v31: scala.Int(Primitive, nullable=false) => PrimitiveOperator
+    │      └──v32: scala.collection.Iterable(Seq, nullable=true) => IterableOperator
+    │         └──element: scala.Double(Primitive, nullable=false) => PrimitiveOperator
+    └──v7: org.datacrafts.noschema.NoSchemaTest.Fruit(CoProduct, nullable=true) => ShapelessCoproductTupler
+       ├──Apple: org.datacrafts.noschema.NoSchemaTest.Fruit.Apple(Product, nullable=true) => ShapelessProductMapper
+       │   └──name: java.lang.String(Primitive, nullable=true) => PrimitiveOperator
+       ├──Apple: org.datacrafts.noschema.NoSchemaTest.Apple(Product, nullable=true) => ShapelessProductMapper
+       │   └──size: scala.Int(Primitive, nullable=false) => PrimitiveOperator
+       └──Pear: org.datacrafts.noschema.NoSchemaTest.Pear(Product, nullable=true) => ShapelessProductMapper
+          └──size: scala.Double(Primitive, nullable=false) => PrimitiveOperator
 ```
 This is the default rule which is only based on schema type.
 Highly customized rules can control behaviors even by context/path of the schema.
