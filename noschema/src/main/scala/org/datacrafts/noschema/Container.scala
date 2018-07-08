@@ -28,6 +28,11 @@ object Container {
     (implicit ot: NoSchema.ScalaType[Map[String, T]])
     extends Container[T, Map[String, T]](NoSchema.Category.Map, element)
 
+  // to support multiple scala Map concrete types
+  case class MapContainer2[T: NoSchema.ScalaType](element: Context.ContainerElement[T])
+    (implicit ot: NoSchema.ScalaType[scala.collection.Map[String, T]])
+    extends Container[T, scala.collection.Map[String, T]](NoSchema.Category.Map, element)
+
   trait Instances {
     implicit def getOptionSchemaFromElementSchema[T: NoSchema.ScalaType](implicit
       node: NoSchema[T],
@@ -48,6 +53,12 @@ object Container {
       node: NoSchema[T],
       ot: NoSchema.ScalaType[Map[String, T]]): MapContainer[T] =
       new MapContainer[T](Context.ContainerElement(node))
+
+    implicit def getMapSchemaFromElementSchema2[T: NoSchema.ScalaType](implicit
+      node: NoSchema[T],
+      ot: NoSchema.ScalaType[scala.collection.Map[String, T]]): MapContainer2[T] =
+      new MapContainer2[T](Context.ContainerElement(node))
+
   }
 
 }

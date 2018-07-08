@@ -1,5 +1,7 @@
 package org.datacrafts.noschema
 
+import shapeless.Typeable
+
 class Primitive[T: NoSchema.ScalaType](nullable: Boolean = false)
   extends NoSchema[T](
     category = NoSchema.Category.Primitive,
@@ -16,6 +18,11 @@ object Primitive {
     implicit val floatPrimitiveType = new Primitive[Float]
     implicit val doublePrimitiveType = new Primitive[Double]
     implicit val stringPrimitiveType = new Primitive[String](true)
+    implicit val byteArrayTypeable = new Typeable[Array[Byte]] {
+      override def cast(t: Any): Option[Array[Byte]] = None
+
+      override def describe: String = "Array[Byte]"
+    }
     implicit val bytesPrimitiveType = new Primitive[Array[Byte]](true)
   }
 

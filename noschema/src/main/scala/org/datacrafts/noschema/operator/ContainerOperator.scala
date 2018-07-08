@@ -93,4 +93,26 @@ object ContainerOperator {
       }
     }
   }
+
+  class MapOperator2[T](
+    override val element: ContainerElement[T],
+    override val operation: Operation[scala.collection.Map[String, T]]
+  ) extends ContainerOperator[T, scala.collection.Map[String, T]] {
+
+    protected override def marshalNoneNull(input: Any): Map[String, T] = {
+      input match {
+        case value: Iterable[_] => value.map {
+          case (k, v) => s"$k" -> elementOperation.operator.marshal(v)
+        }.toMap
+        case None => throw new Exception(s"marshalling ${this} " +
+          s"but input is not Iterable ${input.getClass}, ${input}")
+      }
+    }
+
+    protected override def unmarshalNoneNull(input: scala.collection.Map[String, T]): Any = {
+      input.map {
+        case (k, v) => k -> elementOperation.operator.unmarshal(v)
+      }
+    }
+  }
 }

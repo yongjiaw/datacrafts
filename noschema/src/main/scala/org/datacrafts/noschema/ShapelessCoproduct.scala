@@ -27,19 +27,7 @@ class ShapelessCoproduct[T : NoSchema.ScalaType, R <: Coproduct](
 
 object ShapelessCoproduct {
 
-  trait FallbackImplicits {
-
-    // this helps pass compile time check, and will throw runtime error
-    // if certain type transformer is missing
-    implicit def lowPriorityFallBackImplicit[V: NoSchema.ScalaType, L <: Coproduct](implicit
-      l: ShapelessCoproductAdapter[L]
-    ): ShapelessCoproductAdapter[V :+: L] = {
-      throw new Exception(s"coproduct member ${implicitly[NoSchema.ScalaType[V]]} " +
-        s"does not have NoSchema in scope.")
-    }
-  }
-
-  trait Instances extends FallbackImplicits {
+  trait Instances {
     implicit def shapelessCoproductRecursiveBuilder[K <: Symbol, V, L <: Coproduct](implicit
       headSymbol: Witness.Aux[K],
       head: Lazy[NoSchema[V]],

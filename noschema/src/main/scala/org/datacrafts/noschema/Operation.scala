@@ -62,7 +62,8 @@ object Operation {
         operation.context.localContext match {
           case Context.MemberVariable(symbol, _) => symbol.map(_.name).get
           case Context.ContainerElement(_) => "element"
-          case Context.CoproductElement(symbol, noSchema) => s"${noSchema.scalaType.tpe}"
+          case Context.CoproductElement(symbol, noSchema) =>
+            s"${symbol.name}(${noSchema.scalaType.tpe})"
         }
       }
     }

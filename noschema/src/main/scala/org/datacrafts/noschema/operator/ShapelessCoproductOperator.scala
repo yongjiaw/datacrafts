@@ -17,18 +17,22 @@ abstract class ShapelessCoproductOperator[T, O] extends Operator[T] with Slf4jLo
   protected def newCoproductBuilder(): CoproductBuilder[O]
 
   protected final override def marshalNoneNull(input: Any): T = {
+    val tag = operation.context.noSchema.scalaType.classTag
     val className = input.getClass.getCanonicalName
-    if (className == operation.context.noSchema.scalaType.tpe.toString) {
-      logDebug(s"input is already expected type: ${operation.context.noSchema.scalaType}")
-      input.asInstanceOf[T]
-    } else {
-      logDebug(s"input ${input}[${className}] is not expected type: " +
-        s"${operation.context.noSchema.scalaType.tpe}, parse and perform shapeless transform")
-      Try(parse(input)) match {
-        case Success(parsed) => shapeless.marshal(parsed, operation)
-        case Failure(f) => throw new Exception(
-          s"failed to parse input $input for\n${operation.format()}", f)
-      }
+    input match {
+      case tag(t) =>
+        logDebug(s"input[${className}] is already expected type: " +
+          s"${operation.context.noSchema.scalaType}")
+        t
+      case _ =>
+        logDebug(s"input ${input}[${className}] is not expected type: " +
+          s"${operation.context.noSchema.scalaType}, " +
+          s"parse and perform shapeless transform")
+        Try(parse(input)) match {
+          case Success(parsed) => shapeless.marshal(parsed, operation)
+          case Failure(f) => throw new Exception(
+            s"failed to parse input $input for\n${operation.format()}", f)
+        }
     }
   }
 

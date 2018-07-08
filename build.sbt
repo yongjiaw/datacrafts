@@ -4,12 +4,17 @@ import xerial.sbt.Sonatype._
 
 sonatypeProfileName := "org.datacrafts"
 
+val scalaTestVersion = "3.0.5"
+val scroogeVersion = "18.2.0"
+val shapelessVersion = "2.3.3"
+val thriftVersion = "0.9.2"
+
 val commenSettings = Seq(
   organization := "org.datacrafts",
   scalaVersion := "2.12.6",
   crossScalaVersions := Seq("2.12.6"),
   libraryDependencies ++= Seq(
-    "org.scalatest" %% "scalatest" % "3.0.4" % Test
+    "org.scalatest" %% "scalatest" % scalaTestVersion % Test
   ),
 
   releaseCrossBuild := true,
@@ -51,9 +56,11 @@ lazy val logging = project.settings(
 lazy val noschema = project.settings(
   commenSettings,
   libraryDependencies ++= Seq(
-    "com.chuusai" %% "shapeless" % "2.3.3",
+    "com.chuusai" %% "shapeless" % shapelessVersion,
     "com.stripe" %% "scrooge-shapes" % "0.1.0",
-    "org.slf4j" % "slf4j-log4j12" % "1.7.25" % Test
+    "org.slf4j" % "slf4j-log4j12" % "1.7.25" % Test,
+    "org.apache.thrift" % "libthrift" % thriftVersion % Test,
+    "com.twitter" %% "scrooge-core" % scroogeVersion % Test exclude("com.twitter", "libthrift")
   )
 ).dependsOn(logging)
 

@@ -6,6 +6,7 @@ import scala.reflect.runtime.universe.TypeTag
 import org.datacrafts.logging.Slf4jLogging
 import org.datacrafts.noschema.Context.LocalContext
 import org.datacrafts.noschema.rule.DefaultRule
+import shapeless.Typeable
 
 /**
   * Base NoSchema class
@@ -20,19 +21,24 @@ abstract class NoSchema[T: NoSchema.ScalaType](
 
   final lazy val scalaType = implicitly[NoSchema.ScalaType[T]]
 
-  override def toString: String = s"${scalaType.tpe}(nullable = ${nullable})"
+  override def toString: String = s"${scalaType.typeString}(nullable = ${nullable})"
 
 }
 
 object NoSchema {
 
   // this is for future extensibility to require extra information about the type
-  implicit def noSchemaType[T: TypeTag : ClassTag]: ScalaType[T] = new ScalaType[T]
+  implicit def noSchemaType[T: TypeTag : ClassTag : Typeable]: ScalaType[T] = new ScalaType[T]
 
-  class ScalaType[T: TypeTag : ClassTag] {
+  class ScalaType[T: TypeTag : ClassTag : Typeable] {
+    // this can get error:
+    // unsafe symbol Generated (child of package annotation) in runtime reflection universe
     lazy val tpe = implicitly[TypeTag[T]].tpe
 
-    override def toString: String = s"NoSchema.Type[${tpe}]"
+    lazy val classTag = implicitly[ClassTag[T]]
+    lazy val typeString = classTag.toString()
+
+    override def toString: String = s"NoSchema.Type[${classTag}]"
   }
 
   object Category extends Enumeration {

@@ -3,7 +3,7 @@ package org.datacrafts.noschema.rule
 import org.datacrafts.noschema._
 import org.datacrafts.noschema.Container._
 import org.datacrafts.noschema.operator.{PrimitiveOperator, ShapelessCoproductTupler, ShapelessProductMapper}
-import org.datacrafts.noschema.operator.ContainerOperator.{IterableOperator, MapOperator, OptionOperator, SeqOperator}
+import org.datacrafts.noschema.operator.ContainerOperator._
 
 trait DefaultRule extends Operation.Rule {
 
@@ -29,6 +29,12 @@ trait DefaultRule extends Operation.Rule {
         new MapOperator(
           map.element,
           operation.asInstanceOf[Operation[Map[String, map.Elem]]]
+        )
+
+      case map: MapContainer2[_] =>
+        new MapOperator2(
+          map.element,
+          operation.asInstanceOf[Operation[scala.collection.Map[String, map.Elem]]]
         )
 
       case seq: SeqContainer[_] =>
