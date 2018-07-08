@@ -62,8 +62,7 @@ object Operation {
         operation.context.localContext match {
           case Context.MemberVariable(symbol, _) => symbol.map(_.name).get
           case Context.ContainerElement(_) => "element"
-          case Context.CoproductElement(symbol, noSchema) =>
-            s"${symbol.name}(${noSchema.scalaType.tpe})"
+          case Context.CoproductElement(symbol, _) => s"${symbol.name}"
         }
       }
     }
@@ -92,7 +91,7 @@ object Operation {
       node: NoSchema[_],
       operator: Operator[_]
     ): String = {
-      s"${node.scalaType.tpe.typeSymbol.name}(${node.category}, nullable=${node.nullable})" +
+      s"${node.scalaType.fullName}(${node.category}, nullable=${node.nullable})" +
         s"${if (showOperator) s" => ${operator}" else ""}\n"
     }
 

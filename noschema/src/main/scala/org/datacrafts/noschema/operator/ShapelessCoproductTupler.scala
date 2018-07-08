@@ -11,11 +11,13 @@ class ShapelessCoproductTupler[T](
 
   override protected def parse(input: Any): TypeValueExtractor = input match {
     case (key, value) =>
-    new TypeValueExtractor {
-      override def getTypeValue(tpe: NoSchema.ScalaType[_]): Option[Any] = {
-        if (s"$key" == tpe.tpe.toString) Some(value) else None
+      new TypeValueExtractor {
+        override def getTypeValue(scalaType: NoSchema.ScalaType[_]): Option[Any] = {
+          if (s"$key" == scalaType.fullName) Some(value) else None
+        }
+
+        override def toString: String = s"UnionTypeExtractor: input=${input}"
       }
-    }
     case _ => throw new Exception(s"input ${input.getClass} does not match key value pair")
   }
 
@@ -26,13 +28,13 @@ class ShapelessCoproductTupler[T](
       override def build(): (String, Any) = tuple.getOrElse(
         throw new Exception("union type value is empty"))
 
-      override def addTypeValue(tpe: NoSchema.ScalaType[_],
+      override def addTypeValue(scalaType: NoSchema.ScalaType[_],
         value: Any
       ): ShapelessCoproduct.UnionTypeValueCollector = {
         if (tuple.isDefined) {
           throw new Exception(s"adding value for corpoduct should only be invoked once")
         }
-        tuple = Some((tpe.tpe.toString, value))
+        tuple = Some((scalaType.fullName, value))
         this
       }
     }

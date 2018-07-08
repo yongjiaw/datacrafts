@@ -1,14 +1,9 @@
 package org.datacrafts.noschema
 
-import scala.reflect.ClassTag
-import scala.util.Try
-
 import org.datacrafts.noschema.NoSchemaTest._
 import org.datacrafts.noschema.rule.DefaultRule
 import org.datacrafts.scrooge.shapes.{MapExample, NestedStructExample, StructExample, UnionExample}
-import org.datacrafts.scrooge.shapes.UnionExample.UnknownUnionField
 import org.scalatest.FlatSpec
-import shapeless.LabelledGeneric
 
 // scalastyle:off
 class NoSchemaTest extends FlatSpec with NoSchemaDsl {
@@ -39,7 +34,7 @@ class NoSchemaTest extends FlatSpec with NoSchemaDsl {
           "v7" -> ("org.datacrafts.noschema.NoSchemaTest.Fruit.Apple", Map("name" -> "bigApple")),
           "thriftMap" -> Map("id" -> "1"),
           "thriftNested" -> Map("str" -> Map("foo" -> "bar")),
-          "thriftUnion" -> ("Int", 1),
+          "thriftUnion" -> ("scala.Int", 1),
           "thriftUnion2" -> UnionExample.C(c = "test")
         )) == TestClass(
         v1 = 10,
@@ -82,7 +77,7 @@ class NoSchemaTest extends FlatSpec with NoSchemaDsl {
         ),
         "thriftMap" -> Map("id" -> "1", "metadata" -> null),
         "thriftNested" -> Map("str" -> Map("foo" -> "bar", "bar" -> null), "qux" -> null),
-        "thriftUnion" -> ("Int", 1),
+        "thriftUnion" -> ("scala.Int", 1),
         "thriftUnion2" -> ("org.datacrafts.scrooge.shapes.StructExample", Map("foo" -> "bar", "bar" -> null))
       )
     )

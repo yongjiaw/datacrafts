@@ -19,24 +19,26 @@ abstract class NoSchema[T: NoSchema.ScalaType](
 
   final lazy val scalaType = implicitly[NoSchema.ScalaType[T]]
 
-  override def toString: String = s"${scalaType.typeString}(nullable = ${nullable})"
+  override def toString: String = s"NoSchema[${scalaType.fullName}](" +
+    s"nullable=${nullable}, ${category}${dependencies.map(_.noSchema).mkString("{", ",", "}")})"
 
 }
 
 object NoSchema {
 
   // this is for future extensibility to require extra information about the type
-  implicit def noSchemaType[T: TypeTag : ClassTag]: ScalaType[T] = new ScalaType[T]
+  implicit def noSchemaType[T: TypeTag : ClassTag : Manifest]: ScalaType[T] = new ScalaType[T]
 
-  class ScalaType[T: TypeTag : ClassTag] {
-    // this can get error:
+  class ScalaType[T: TypeTag : ClassTag : Manifest] {
+    // typeTag.tpe.toString can get error:
     // unsafe symbol Generated (child of package annotation) in runtime reflection universe
-    lazy val tpe = implicitly[TypeTag[T]].tpe
-
+    lazy val typeTag = implicitly[TypeTag[T]]
     lazy val classTag = implicitly[ClassTag[T]]
-    lazy val typeString = classTag.toString()
+    lazy val manifest = implicitly[Manifest[T]]
 
-    override def toString: String = s"NoSchema.Type[${classTag}]"
+    def fullName: String = typeTag.tpe.typeSymbol.fullName
+
+    override def toString: String = s"ScalaType[${fullName}]"
   }
 
   object Category extends Enumeration {

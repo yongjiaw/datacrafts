@@ -86,7 +86,8 @@ object ShapelessCoproduct {
               Inl[FieldType[K, V], CNil](
                 field[K](operation.dependencyOperation(headValueContext).operator.marshal(value)))
             case None =>
-              throw new Exception(s"no value found for any type")
+              throw new Exception(s"no value found for any type from $typeExtractor\n" +
+                s"${operation.format()}")
           }
         }
 
@@ -128,7 +129,6 @@ object ShapelessCoproduct {
   trait TypeValueExtractor {
     // can control the whether the symbol is allowed to be absent and treated as null
     def getTypeValue(tpe: NoSchema.ScalaType[_]): Option[Any]
-
   }
 
   trait UnionTypeValueCollector {
