@@ -73,7 +73,7 @@ class NoSchemaTest extends FlatSpec with NoSchemaDsl {
         "v2" -> null,
         // the rest are default values
         "v6" -> null,
-        "v7" -> ("org.datacrafts.noschema.NoSchemaTest.Apple", Apple(1)),
+        "v7" -> ("org.datacrafts.noschema.NoSchemaTest.Apple", Map("size" -> 1)),
         "v5" -> Map("_2" -> 2, "_1" -> "a"),
         "v4" -> null,
         "v3" -> Seq(
@@ -85,7 +85,7 @@ class NoSchemaTest extends FlatSpec with NoSchemaDsl {
         "thriftMap" -> Map("id" -> "1", "metadata" -> null),
         "thriftNested" -> Map("str" -> Map("foo" -> "bar", "bar" -> null), "qux" -> null),
         "thriftUnion" -> ("Int", 1),
-        "thriftUnion2" -> ("org.datacrafts.scrooge.shapes.StructExample", StructExample(foo = "bar"))
+        "thriftUnion2" -> ("org.datacrafts.scrooge.shapes.StructExample", Map("foo" -> "bar", "bar" -> null))
       )
     )
 

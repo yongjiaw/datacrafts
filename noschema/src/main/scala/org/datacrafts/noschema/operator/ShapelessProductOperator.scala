@@ -3,8 +3,8 @@ package org.datacrafts.noschema.operator
 import scala.util.{Failure, Success, Try}
 
 import org.datacrafts.logging.Slf4jLogging
-import org.datacrafts.noschema.{Operation, ShapelessProduct}
 import org.datacrafts.noschema.Operation.Operator
+import org.datacrafts.noschema.ShapelessProduct
 import org.datacrafts.noschema.ShapelessProduct.{SymbolCollector, SymbolExtractor}
 import org.datacrafts.noschema.operator.ShapelessProductOperator.ProductBuilder
 

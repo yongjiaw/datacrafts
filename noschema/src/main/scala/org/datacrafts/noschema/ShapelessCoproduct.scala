@@ -1,8 +1,7 @@
 package org.datacrafts.noschema
 
 import org.datacrafts.noschema.ShapelessCoproduct.{ShapelessCoproductAdapter, TypeValueExtractor, UnionTypeValueCollector}
-import org.datacrafts.noschema.ShapelessProduct.FallbackImplicits
-import shapeless.{:+:, CNil, Coproduct, Generic, Inl, Inr, LabelledGeneric, Lazy, Witness}
+import shapeless.{:+:, CNil, Coproduct, Inl, Inr, LabelledGeneric, Lazy, Witness}
 import shapeless.labelled.{field, FieldType}
 
 class ShapelessCoproduct[T : NoSchema.ScalaType, R <: Coproduct](
@@ -57,7 +56,10 @@ object ShapelessCoproduct {
           emptyUnion: UnionTypeValueCollector, operation: Operation[_]
         ): UnionTypeValueCollector = {
           coproduct match {
-            case Inl(headValue) => emptyUnion.addTypeValue(head.value.scalaType, headValue)
+            case Inl(headValue) => emptyUnion.addTypeValue(
+              head.value.scalaType,
+              operation.dependencyOperation(headValueContext).operator.unmarshal(headValue)
+            )
             case Inr(tailValue) => tail.value.unmarshalCoproduct(
               tailValue, emptyUnion, operation
             )
@@ -93,7 +95,10 @@ object ShapelessCoproduct {
           emptyUnion: UnionTypeValueCollector, operation: Operation[_]
         ): UnionTypeValueCollector = {
           coproduct match {
-            case Inl(value) => emptyUnion.addTypeValue(headValue.scalaType, value)
+            case Inl(value) => emptyUnion.addTypeValue(
+              headValue.scalaType,
+              operation.dependencyOperation(headValueContext).operator.unmarshal(value)
+            )
             case _ => throw new Exception("impossible")
           }
         }
