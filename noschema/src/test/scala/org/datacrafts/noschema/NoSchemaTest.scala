@@ -15,12 +15,10 @@ class NoSchemaTest extends FlatSpec with NoSchemaDsl {
 
   "Marshalling and unmarshalling with Map" should "be successful" in {
 
-    //Try(implicitly[scala.reflect.runtime.universe.TypeTag[UnionExample]].tpe)
-    //println(implicitly[ClassTag[UnionExample]])
-    //println(implicitly[scala.reflect.runtime.universe.TypeTag[UnionExample]])
-
+    // these 2 types are under the UnkownUnionField of scrooge Union type
+    // ideally the shapeless representation should not include them
+    // just provide the implicit types here so the entire shapeless structure can be parsed
     implicit val twitterBufPrimitiveType = new Primitive[com.twitter.io.Buf]
-
     implicit val tFieldPrimitiveType = new Primitive[org.apache.thrift.protocol.TField]
 
     val op = DefaultRule.withSchema[TestClass]
