@@ -34,7 +34,7 @@ object ShapelessProduct {
     implicit def lowPriorityFallBackImplicit[K <: Symbol, V: NoSchema.ScalaType, L <: HList]
     (implicit
       w: Witness.Aux[K],
-      l: ShapelessProductAdapter[L]
+      l: Lazy[ShapelessProductAdapter[L]]
     ): ShapelessProductAdapter[FieldType[K, V] :: L] = {
       throw new Exception(s"field ${w.value.name} of ${implicitly[NoSchema.ScalaType[V]]} " +
         s"does not have NoSchema in scope.")
