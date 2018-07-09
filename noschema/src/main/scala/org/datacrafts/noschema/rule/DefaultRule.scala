@@ -49,6 +49,9 @@ trait DefaultRule extends Operation.Rule with Slf4jLogging.Default {
           iterable.element,
           operation.asInstanceOf[Operation[Iterable[iterable.Elem]]]
         )
+
+      case other =>
+        throw new Exception(s"no default operator defined for ${other}")
     }
   }.asInstanceOf[Operation.Operator[V]]
 

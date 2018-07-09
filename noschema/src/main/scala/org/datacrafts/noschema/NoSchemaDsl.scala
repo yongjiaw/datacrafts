@@ -16,7 +16,7 @@ trait NoSchemaDsl {
 
     def format(): String = {
       operation().format(
-        new DefaultFormatter(false)
+        new DefaultFormatter(showOperator = false)
       )
     }
   }

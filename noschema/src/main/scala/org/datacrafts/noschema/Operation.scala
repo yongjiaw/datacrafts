@@ -18,7 +18,7 @@ final class Operation[T](
   val rule: Operation.Rule
 ) {
 
-  val operator: Operation.Operator[T] = rule.getOperator(this)
+  lazy val operator: Operation.Operator[T] = rule.getOperator(this)
 
   lazy val dependencyOperationMap: Map[Context.LocalContext[_], Operation[_]] =
     context.noSchema.dependencies.map {
@@ -53,7 +53,7 @@ object Operation {
 
   trait Formatter {
 
-    def formatNode(node: NoSchema[_], operator: Operator[_]): String
+    def formatNode(operation: Operation[_]): String
 
     def formatDependency(
       depOp: Operation[_],
@@ -84,7 +84,7 @@ object Operation {
           s"(...cycle detected, the actual depth depends on runtime instantiation)\n"
       }
       else {
-        s"${formatNode(operation.context.noSchema, operation.operator)}${
+        s"${formatNode(operation)}${
 
           val dependencies = operation.dependencyOperationMap.values.toSeq.sortBy(_.contextName)
           (0 until operation.dependencyOperationMap.size).map {
@@ -110,9 +110,10 @@ object Operation {
 
   class DefaultFormatter(showOperator: Boolean) extends Formatter {
     override def formatNode(
-      node: NoSchema[_],
-      operator: Operator[_]
+      operation: Operation[_]
     ): String = {
+      def node = operation.context.noSchema
+      def operator = operation.operator
       s"${node.scalaType.fullName}(${node.category}, nullable=${node.nullable})" +
         s"${if (showOperator) s" => ${operator}" else ""}\n"
     }
