@@ -32,6 +32,7 @@ class NoSchemaTest extends FlatSpec with NoSchemaDsl {
           "v3" -> Iterable(Seq("v21" -> 3)),
           "v6" -> TestClass3(v31 = 5),
           "v7" -> ("org.datacrafts.noschema.NoSchemaTest.Fruit.Apple", Map("name" -> "bigApple")),
+          "v8" -> Map("v" -> Seq(Map("v" -> Seq.empty, "v2" -> 2)), "v2" -> 1),
           "thriftMap" -> Map("id" -> "1"),
           "thriftNested" -> Map("str" -> Map("foo" -> "bar")),
           "thriftUnion" -> ("scala.Int", 1),
@@ -48,6 +49,7 @@ class NoSchemaTest extends FlatSpec with NoSchemaDsl {
         v2 = None,
         v4 = null,
         v7 = Fruit.Apple("bigApple"),
+        v8 = Recursive(Seq(Recursive(v2 = 2)), v2 = 1),
         thriftNested = NestedStructExample(str = StructExample(foo = "bar")),
         thriftMap = MapExample(id = "1"),
         thriftUnion = UnionExample.B(b = 1),
@@ -67,6 +69,7 @@ class NoSchemaTest extends FlatSpec with NoSchemaDsl {
         // the rest are default values
         "v6" -> null,
         "v7" -> ("org.datacrafts.noschema.NoSchemaTest.Apple", Map("size" -> 1)),
+        "v8" -> Map("v2" -> 1, "v" -> Seq.empty),
         "v5" -> Map("_2" -> 2, "_1" -> "a"),
         "v4" -> null,
         "v3" -> Seq(
@@ -95,6 +98,7 @@ object NoSchemaTest {
     v5: (String, Int) = ("a", 2),
     v6: Option[TestClass3] = None,
     v7: Fruit = Apple(),
+    v8: Recursive = Recursive(),
     thriftNested: NestedStructExample = NestedStructExample(str = StructExample(foo = "bar")),
     thriftMap: MapExample = MapExample(id = "1"),
     thriftUnion: UnionExample = UnionExample.B(b = 1),
@@ -110,9 +114,11 @@ object NoSchemaTest {
     v: Map[String, Int] = Map.empty
   )
 
-  // recursive definition should be supported,
-  // unless there are members with the recursive type and non-empty default value
-  case class Recursive(v: Seq[Recursive] = Seq.empty,
+  // if there are members with the recursive type and non-empty default value
+  // it'll cause runtime instantiation failure due to infinite recursion
+  // type wise, it should be supported regardless
+  case class Recursive(
+    v: Seq[Recursive] = Seq.empty,
     v2: Int = 1
   )
 

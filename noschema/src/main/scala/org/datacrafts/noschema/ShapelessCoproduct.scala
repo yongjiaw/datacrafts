@@ -27,14 +27,15 @@ class ShapelessCoproduct[T : NoSchema.ScalaType, R <: Coproduct](
 object ShapelessCoproduct {
 
   trait Instances {
-    implicit def shapelessCoproductRecursiveBuilder[K <: Symbol, V, L <: Coproduct](implicit
+    implicit def shapelessCoproductRecursiveBuilder
+    [K <: Symbol, V : NoSchema.ScalaType, L <: Coproduct](implicit
       headSymbol: Witness.Aux[K],
       head: Lazy[NoSchema[V]],
       tail: Lazy[ShapelessCoproductAdapter[L]]
     ): ShapelessCoproductAdapter[FieldType[K, V] :+: L] = {
 
       val headValueContext =
-        Context.CoproductElement(headSymbol.value, head.value)
+        Context.CoproductElement(headSymbol.value, NoSchema.getLazySchema(head))
 
       new ShapelessCoproductAdapter[FieldType[K, V] :+: L](
         members = tail.value.members :+ headValueContext) {
@@ -68,20 +69,21 @@ object ShapelessCoproduct {
       }
     }
 
-    implicit def shapelessCoproductRecursiveBuilderTerminator[K <: Symbol, V](implicit
+    implicit def shapelessCoproductRecursiveBuilderTerminator[K <: Symbol, V: NoSchema.ScalaType](
+      implicit
       headSymbol: Witness.Aux[K],
-      headValue: NoSchema[V]
+      headValue: Lazy[NoSchema[V]]
     ): ShapelessCoproductAdapter[FieldType[K, V] :+: CNil] = {
 
       val headValueContext =
-        Context.CoproductElement(headSymbol.value, headValue)
+        Context.CoproductElement(headSymbol.value, NoSchema.getLazySchema(headValue))
 
       new ShapelessCoproductAdapter[FieldType[K, V] :+: CNil](
         members = Seq(headValueContext)) {
 
         override def marshalCoproduct(
           typeExtractor: TypeValueExtractor, operation: Operation[_]): FieldType[K, V] :+: CNil = {
-          typeExtractor.getTypeValue(headValue.scalaType) match {
+          typeExtractor.getTypeValue(headValueContext.noSchema.scalaType) match {
             case Some(value) =>
               Inl[FieldType[K, V], CNil](
                 field[K](operation.dependencyOperation(headValueContext).operator.marshal(value)))
@@ -97,7 +99,7 @@ object ShapelessCoproduct {
         ): UnionTypeValueCollector = {
           coproduct match {
             case Inl(value) => emptyUnion.addTypeValue(
-              headValue.scalaType,
+              headValueContext.noSchema.scalaType,
               operation.dependencyOperation(headValueContext).operator.unmarshal(value)
             )
             case _ => throw new Exception("impossible")

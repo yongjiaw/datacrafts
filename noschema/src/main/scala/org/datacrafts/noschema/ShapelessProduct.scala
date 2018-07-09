@@ -57,14 +57,15 @@ object ShapelessProduct {
       }
     }
 
-    implicit def shapelessProductRecursiveBuilder[K <: Symbol, V, L <: HList](implicit
+    implicit def shapelessProductRecursiveBuilder[K <: Symbol, V: NoSchema.ScalaType, L <: HList](
+      implicit
       headSymbol: Witness.Aux[K],
       headValue: Lazy[NoSchema[V]],
       tail: Lazy[ShapelessProductAdapter[L]]
     ): ShapelessProductAdapter[FieldType[K, V] :: L] = {
 
       val headValueContext =
-        Context.MemberVariable(Some(headSymbol.value), headValue.value)
+        Context.MemberVariable(headSymbol.value, NoSchema.getLazySchema(headValue))
 
       new ShapelessProductAdapter[FieldType[K, V] :: L](
         members = tail.value.members :+ headValueContext) {

@@ -1,5 +1,7 @@
 package org.datacrafts.noschema
 
+import shapeless.Lazy
+
 abstract class Container[T: NoSchema.ScalaType, C: NoSchema.ScalaType](
   category: NoSchema.Category.Value,
   element: Context.ContainerElement[T],
@@ -35,29 +37,29 @@ object Container {
 
   trait Instances {
     implicit def getOptionSchemaFromElementSchema[T: NoSchema.ScalaType](implicit
-      node: NoSchema[T],
+      node: Lazy[NoSchema[T]],
       ot: NoSchema.ScalaType[Option[T]]): OptionContainer[T] =
-      new OptionContainer[T](Context.ContainerElement(node))
+      new OptionContainer[T](Context.ContainerElement(NoSchema.getLazySchema(node)))
 
     implicit def getSeqSchemaFromElementSchema[T: NoSchema.ScalaType](implicit
-      node: NoSchema[T],
+      node: Lazy[NoSchema[T]],
       ot: NoSchema.ScalaType[Seq[T]]): SeqContainer[T] =
-      new SeqContainer[T](Context.ContainerElement(node))
+      new SeqContainer[T](Context.ContainerElement(NoSchema.getLazySchema(node)))
 
     implicit def getIterableSchemaFromElementSchema[T: NoSchema.ScalaType](implicit
-      node: NoSchema[T],
+      node: Lazy[NoSchema[T]],
       ot: NoSchema.ScalaType[Iterable[T]]): IterableContainer[T] =
-      new IterableContainer[T](Context.ContainerElement(node))
+      new IterableContainer[T](Context.ContainerElement(NoSchema.getLazySchema(node)))
 
     implicit def getMapSchemaFromElementSchema[T: NoSchema.ScalaType](implicit
-      node: NoSchema[T],
+      node: Lazy[NoSchema[T]],
       ot: NoSchema.ScalaType[Map[String, T]]): MapContainer[T] =
-      new MapContainer[T](Context.ContainerElement(node))
+      new MapContainer[T](Context.ContainerElement(NoSchema.getLazySchema(node)))
 
     implicit def getMapSchemaFromElementSchema2[T: NoSchema.ScalaType](implicit
-      node: NoSchema[T],
+      node: Lazy[NoSchema[T]],
       ot: NoSchema.ScalaType[scala.collection.Map[String, T]]): MapContainer2[T] =
-      new MapContainer2[T](Context.ContainerElement(node))
+      new MapContainer2[T](Context.ContainerElement(NoSchema.getLazySchema(node)))
 
   }
 

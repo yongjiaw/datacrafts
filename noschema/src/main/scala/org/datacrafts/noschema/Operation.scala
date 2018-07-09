@@ -20,7 +20,7 @@ final class Operation[T](
 
   val operator: Operation.Operator[T] = rule.getOperator(this)
 
-  val dependencyOperationMap: Map[Context.LocalContext[_], Operation[_]] =
+  lazy val dependencyOperationMap: Map[Context.LocalContext[_], Operation[_]] =
     context.noSchema.dependencies.map {
       dependency =>
         dependency -> new Operation(context.dependencyContext(dependency), rule)
@@ -42,7 +42,7 @@ final class Operation[T](
   def format(
     formatter: Formatter = new DefaultFormatter(true)
   ): String = {
-    formatter.formatRecursive(this, Set.empty)
+    formatter.formatRecursive(this, Set.empty, Seq.empty)
   }
 }
 
@@ -55,34 +55,56 @@ object Operation {
 
     def formatNode(node: NoSchema[_], operator: Operator[_]): String
 
-    def formatDependency(depOp: Operation[_], openLevels: Set[Int]): String
+    def formatDependency(
+      depOp: Operation[_],
+      openLevels: Set[Int],
+      previousTypes: Seq[NoSchema.ScalaType[_]]): String
 
     implicit class OperationConverter(operation: Operation[_]) {
       def contextName: String = {
         operation.context.localContext match {
-          case Context.MemberVariable(symbol, _) => symbol.map(_.name).get
+          case Context.MemberVariable(symbol, _) => symbol.name
           case Context.ContainerElement(_) => "element"
           case Context.CoproductElement(symbol, _) => s"${symbol.name}"
+          case Context.Root(_) => throw new Exception(s"root should not trigger this")
         }
       }
     }
 
-    final def formatRecursive(operation: Operation[_], openLevels: Set[Int]): String = {
-      s"${formatNode(operation.context.noSchema, operation.operator)}${
-        val dependencies = operation.dependencyOperationMap.values.toSeq.sortBy(_.contextName)
-        (0 until operation.dependencyOperationMap.size).map {
-          i =>
-            val op = dependencies(i)
-            val depOpenLevels = if (i == dependencies.size - 1) {
-              openLevels - op.context.level
-            } else {
-              openLevels + op.context.level
-            }
-            formatDependency(
-              op,
-              depOpenLevels
-            )
-        }.mkString("")}"
+    final def formatRecursive(
+      operation: Operation[_],
+      openLevels: Set[Int],
+      previousTypes: Seq[NoSchema.ScalaType[_]]
+    ): String = {
+      val level = previousTypes.size
+      val currentType = operation.context.noSchema.scalaType
+      if (! currentType.hasTypeArgs && previousTypes.contains(currentType)
+      ) {
+        s"${operation.context.noSchema.scalaType.fullName}" +
+          s"(...cycle detected, the actual depth depends on runtime instantiation)\n"
+      }
+      else {
+        s"${formatNode(operation.context.noSchema, operation.operator)}${
+
+          val dependencies = operation.dependencyOperationMap.values.toSeq.sortBy(_.contextName)
+          (0 until operation.dependencyOperationMap.size).map {
+            i =>
+              val op = dependencies(i)
+              val depOpenLevels = if (i == dependencies.size - 1) {
+                openLevels - level
+              } else {
+                openLevels + level
+              }
+              formatDependency(
+                op,
+                depOpenLevels,
+                previousTypes :+ currentType
+              )
+          }.mkString("")
+
+        }"
+      }
+
     }
   }
 
@@ -95,14 +117,17 @@ object Operation {
         s"${if (showOperator) s" => ${operator}" else ""}\n"
     }
 
-    override def formatDependency(depOp: Operation[_],
-      openLevels: Set[Int]
+    override def formatDependency(
+      depOp: Operation[_],
+      openLevels: Set[Int],
+      previousTypes: Seq[NoSchema.ScalaType[_]]
     ): String = {
+      val level = previousTypes.size - 1
       s"${
-        (0 to depOp.context.level - 1)
+        (0 to level - 1)
           .map(i => if (openLevels.contains(i)) " │  " else "   " ).mkString("") // scalastyle:ignore
-      }${if (openLevels.contains(depOp.context.level)) " ├──" else " └──" // scalastyle:ignore
-      }${depOp.contextName}: ${formatRecursive(depOp, openLevels)}"
+      }${if (openLevels.contains(level)) " ├──" else " └──" // scalastyle:ignore
+      }${depOp.contextName}: ${formatRecursive(depOp, openLevels, previousTypes)}"
     }
   }
 
