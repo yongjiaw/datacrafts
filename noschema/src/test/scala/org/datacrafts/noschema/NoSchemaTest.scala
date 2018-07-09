@@ -10,12 +10,6 @@ class NoSchemaTest extends FlatSpec with NoSchemaDsl {
 
   "Marshalling and unmarshalling with Map" should "be successful" in {
 
-    // these 2 types are under the UnkownUnionField of scrooge Union type
-    // ideally the shapeless representation should not include them
-    // just provide the implicit types here so the entire shapeless structure can be parsed
-    implicit val twitterBufPrimitiveType = new Primitive[com.twitter.io.Buf]
-    implicit val tFieldPrimitiveType = new Primitive[org.apache.thrift.protocol.TField]
-
     val op = DefaultRule.withSchema[TestClass]
     println(op.format())
     // equivalent to the above, just DSL syntactic sugar
@@ -130,5 +124,4 @@ object NoSchemaTest {
   object Fruit {
     case class Apple(name: String = "red") extends Fruit
   }
-
 }

@@ -58,9 +58,9 @@ lazy val noschema = project.settings(
   libraryDependencies ++= Seq(
     "com.chuusai" %% "shapeless" % shapelessVersion,
     "com.stripe" %% "scrooge-shapes" % "0.1.0",
-    "org.slf4j" % "slf4j-log4j12" % "1.7.25" % Test,
-    "org.apache.thrift" % "libthrift" % thriftVersion % Test,
-    "com.twitter" %% "scrooge-core" % scroogeVersion % Test exclude("com.twitter", "libthrift")
+    "org.apache.thrift" % "libthrift" % thriftVersion,
+    "com.twitter" %% "scrooge-core" % scroogeVersion exclude("com.twitter", "libthrift"),
+    "org.slf4j" % "slf4j-log4j12" % "1.7.25" % Test
   )
 ).dependsOn(logging)
 

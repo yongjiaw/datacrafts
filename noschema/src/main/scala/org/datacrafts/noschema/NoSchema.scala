@@ -27,7 +27,19 @@ abstract class NoSchema[T: NoSchema.ScalaType](
 object NoSchema extends Slf4jLogging.Default {
 
   // this is for future extensibility to require extra information about the type
-  implicit def noSchemaType[T: TypeTag : ClassTag : Manifest]: ScalaType[T] = new ScalaType[T]
+  implicit def noSchemaType[T: TypeTag : ClassTag : Manifest]: ScalaType[T] =
+    _scalaTypeInstances.synchronized {
+      val fullName = implicitly[TypeTag[T]].tpe.typeSymbol.fullName
+      _scalaTypeInstances.getOrElseUpdate(
+        fullName,
+        {
+          logDebug(s"creating ScalaType[${fullName}]")
+          new ScalaType[T]
+        }
+      )
+    }.asInstanceOf[ScalaType[T]]
+
+  private val _scalaTypeInstances = collection.mutable.Map.empty[String, ScalaType[_]]
 
   class ScalaType[T: TypeTag : ClassTag : Manifest] {
     // typeTag.tpe.toString can get error:
@@ -62,19 +74,27 @@ object NoSchema extends Slf4jLogging.Default {
     if (scalaType.hasTypeArgs) {
       // nested type parameters with cyclic structure is not supported by shapeless
       // therefore, can ignore any type with type arguments
-      // composition nesting with cyclic structure can be supported by using
-      // lazy reference
+      // The uniqueness of such types depends on
+      // all type arguments terminated at a concrete type which will involve many levels,
+      // and can only be determined by using TypeTag (sometimes buggy)
       logDebug(s"${scalaType.fullName} has type args, create new instance")
       new HasLazySchema[T] {
         override def lazySchema: NoSchema[T] = shapelessLazySchema.value
       }
     } else {
+      // for concrete types
+      // composition nesting with cyclic structure can be supported by using
+      // lazy reference
       logDebug(s"${scalaType.fullName} is concrete type, " +
         s"resolve lazily to deal with cyclic reference")
       val reference = scalaType.fullName
       if (!_instanceMarks.contains(reference)) {
         logDebug(s"${scalaType.fullName} is new, mark and create instance")
         _instanceMarks += reference
+        // invoking shapelessLazySchema.value will trigger creating the schema which may
+        // invoke creating the same schema if there's cyclic reference.
+        // therefore, must mark it before to avoid infinite recursion
+        // this is to leave marks along the recursive call stack
         _instances.put(
           reference, shapelessLazySchema.value
         )
@@ -85,12 +105,10 @@ object NoSchema extends Slf4jLogging.Default {
         override def lazySchema: NoSchema[T] = {
           _instances.get(reference).getOrElse(
             throw new Exception(
-              s"${reference} cannot be resolved, make sure to invoke through lazy or def")
+              s"${reference} cannot be resolved, this is not possible")
           )
         }.asInstanceOf[NoSchema[T]]
       }
     }
-
-
   }
 }
