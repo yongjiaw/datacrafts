@@ -26,7 +26,7 @@ class NoSchemaTest extends FlatSpec with NoSchemaDsl {
           "v5" -> Map("_2" -> 12),
           "v3" -> Iterable(Seq("v21" -> 3)),
           "v6" -> TestClass3(v31 = 5),
-          "v7" -> ("org.datacrafts.noschema.NoSchemaTest.Fruit.Apple", Map("name" -> "bigApple")),
+          "v7" -> ("org.datacrafts.noschema.Fruit1.Apple", Map("name" -> "bigApple")),
           "v8" -> Map("v" -> Seq(Map("v" -> Seq.empty, "v2" -> 2)), "v2" -> 1),
           "thriftMap" -> Map("id" -> "1"),
           "thriftNested" -> Map("str" -> Map("foo" -> "bar")),
@@ -43,7 +43,7 @@ class NoSchemaTest extends FlatSpec with NoSchemaDsl {
         v6 = Some(TestClass3(v31 = 5)),
         v2 = None,
         v4 = null,
-        v7 = Fruit.Apple("bigApple"),
+        v7 = Fruit1.Apple("bigApple"),
         v8 = Recursive(Seq(Recursive(v2 = 2)), v2 = 1),
         thriftNested = NestedStructExample(str = StructExample(foo = "bar")),
         thriftMap = MapExample(id = "1"),
@@ -63,7 +63,7 @@ class NoSchemaTest extends FlatSpec with NoSchemaDsl {
         "v2" -> null,
         // the rest are default values
         "v6" -> null,
-        "v7" -> ("org.datacrafts.noschema.NoSchemaTest.Apple", Map("size" -> 1)),
+        "v7" -> ("org.datacrafts.noschema.Apple", Map("size" -> 1)),
         "v8" -> Map("v2" -> 1, "v" -> Seq.empty),
         "v9" -> null,
         "v5" -> Map("_2" -> 2, "_1" -> "a"),
@@ -122,12 +122,13 @@ object NoSchemaTest {
   // this type doesn't make much sense, just to assert cyclic reference with generic type is handled
   case class GenericType[T](v1: T, v2: GenericType[GenericType[Double]] = null)
 
-  sealed trait Fruit
+}
 
-  case class Apple(size: Int = 1) extends Fruit
-  case class Pear(size: Double = 1.5) extends Fruit
+sealed trait Fruit
 
-  object Fruit {
-    case class Apple(name: String = "red") extends Fruit
-  }
+case class Apple(size: Int = 1) extends Fruit
+case class Pear(size: Double = 1.5) extends Fruit
+
+object Fruit1 {
+  case class Apple(name: String = "red") extends Fruit
 }
