@@ -78,9 +78,9 @@ object Operation {
     ): String = {
       val level = previousTypes.size
       val currentType = operation.context.noSchema.scalaType
-      if (! currentType.hasTypeArgs && previousTypes.contains(currentType)
+      if (previousTypes.map(_.uniqueKey).contains(currentType.uniqueKey)
       ) {
-        s"${operation.context.noSchema.scalaType.fullName}" +
+        s"${operation.context.noSchema.scalaType.uniqueKey}" +
           s"(...cycle detected, the actual depth depends on runtime instantiation)\n"
       }
       else {

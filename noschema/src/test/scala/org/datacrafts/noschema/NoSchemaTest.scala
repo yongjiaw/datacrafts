@@ -65,6 +65,7 @@ class NoSchemaTest extends FlatSpec with NoSchemaDsl {
         "v6" -> null,
         "v7" -> ("org.datacrafts.noschema.NoSchemaTest.Apple", Map("size" -> 1)),
         "v8" -> Map("v2" -> 1, "v" -> Seq.empty),
+        "v9" -> null,
         "v5" -> Map("_2" -> 2, "_1" -> "a"),
         "v4" -> null,
         "v3" -> Seq(
@@ -94,6 +95,7 @@ object NoSchemaTest {
     v6: Option[TestClass3] = None,
     v7: Fruit = Apple(),
     v8: Recursive = Recursive(),
+    v9: GenericType[Int] = null,
     thriftNested: NestedStructExample = NestedStructExample(str = StructExample(foo = "bar")),
     thriftMap: MapExample = MapExample(id = "1"),
     thriftUnion: UnionExample = UnionExample.B(b = 1),
@@ -116,6 +118,9 @@ object NoSchemaTest {
     v: Seq[Recursive] = Seq.empty,
     v2: Int = 1
   )
+
+  // this type doesn't make much sense, just to assert cyclic reference with generic type is handled
+  case class GenericType[T](v1: T, v2: GenericType[GenericType[Double]] = null)
 
   sealed trait Fruit
 
