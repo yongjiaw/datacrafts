@@ -23,7 +23,7 @@ trait NoSchemaDsl {
 
   implicit class OperationRuleConverter(rule: Operation.Rule) {
     def withSchema[T: NoSchema]: Operation[T] = {
-      new Operation[T](Context.root(implicitly[NoSchema[T]]), rule)
+      new Operation[T](Context.root(schemaOf[T]), rule)
     }
   }
 }

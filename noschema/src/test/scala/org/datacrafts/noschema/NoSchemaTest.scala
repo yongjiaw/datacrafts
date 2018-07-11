@@ -10,6 +10,8 @@ class NoSchemaTest extends FlatSpec with NoSchemaDsl {
 
   "Marshalling and unmarshalling with Map" should "be successful" in {
 
+    println(schemaOf[Recursive].format())
+
     // can just print the schema itself
     println(schemaOf[TestClass].format())
 

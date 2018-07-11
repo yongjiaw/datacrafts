@@ -94,7 +94,7 @@ object ShapelessProduct {
     implicit def shapelessProductBridging[T: NoSchema.ScalaType, R <: HList](implicit
       generic: LabelledGeneric.Aux[T, R],
       shapeless: Lazy[ShapelessProductAdapter[R]]
-    ): NoSchema[T] = shapeless.value.composeWithGeneric(generic)
+    ): NoSchema[T] = NoSchema.getOrElseCreateSchema(shapeless.value.composeWithGeneric(generic))
 
   }
 

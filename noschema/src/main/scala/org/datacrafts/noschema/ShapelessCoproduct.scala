@@ -111,7 +111,7 @@ object ShapelessCoproduct {
     implicit def shapelessCoproductBridging[T: NoSchema.ScalaType, R <: Coproduct](implicit
       generic: LabelledGeneric.Aux[T, R],
       shapeless: Lazy[ShapelessCoproductAdapter[R]]
-    ): NoSchema[T] = shapeless.value.composeWithGeneric(generic)
+    ): NoSchema[T] = NoSchema.getOrElseCreateSchema(shapeless.value.composeWithGeneric(generic))
   }
 
   abstract class ShapelessCoproductAdapter[R <: Coproduct](
