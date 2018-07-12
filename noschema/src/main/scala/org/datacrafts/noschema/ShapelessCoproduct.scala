@@ -125,7 +125,13 @@ object ShapelessCoproduct {
 
     def composeWithGeneric[T: NoSchema.ScalaType](
       generic: LabelledGeneric.Aux[T, R]): ShapelessCoproduct[T, R] =
-      new ShapelessCoproduct[T, R](members, generic, this)
+      new ShapelessCoproduct[T, R](
+        // filter the UnknownUnionField
+        // this field will not produce value in unmarshaling,
+        // and is not intended to take value in marshaling,
+        // since schema evolution should never leave out already known types to unknown
+        members.filter(_.noSchema.scalaType.fullName != "com.twitter.scrooge.TFieldBlob"),
+        generic, this)
   }
 
   trait TypeValueExtractor {
