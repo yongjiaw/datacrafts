@@ -109,27 +109,43 @@ object Operation {
   }
 
   class DefaultFormatter(showOperator: Boolean) extends Formatter {
-    override def formatNode(
+    final override def formatNode(
       operation: Operation[_]
     ): String = {
       def node = operation.context.noSchema
       def operator = operation.operator
-      s"${node.scalaType.fullName}(${node.category}, nullable=${node.nullable})" +
-        s"${if (showOperator) s" => ${operator}" else ""}\n"
+      s"${formatNode(node)}${if (showOperator) s" => ${formatOperator(operator)}" else ""}\n"
     }
 
-    override def formatDependency(
+    def formatNode(node: NoSchema[_]): String = {
+      s"${node.scalaType.fullName}(${node.category}, nullable=${node.nullable})"
+    }
+
+    def formatOperator(operator: Operation.Operator[_]): String = {
+      s"${operator}"
+    }
+
+    final override def formatDependency(
       depOp: Operation[_],
       openLevels: Set[Int],
       previousTypes: Seq[NoSchema.ScalaType[_]]
     ): String = {
       val level = previousTypes.size - 1
-      s"${
-        (0 to level - 1)
-          .map(i => if (openLevels.contains(i)) " │  " else "   " ).mkString("") // scalastyle:ignore
-      }${if (openLevels.contains(level)) " ├──" else " └──" // scalastyle:ignore
-      }${depOp.contextName}: ${formatRecursive(depOp, openLevels, previousTypes)}"
+      s"${formatIndentation(openLevels, level)
+      }${formatLabel(depOp)}${formatRecursive(depOp, openLevels, previousTypes)}"
     }
+
+    def formatIndentation(
+      openLevels: Set[Int],
+      indentLevels: Int): String = {
+      s"${
+        (0 to indentLevels - 1)
+          .map(i => if (openLevels.contains(i)) " │  " else "    " ).mkString("") // scalastyle:ignore
+      }${if (openLevels.contains(indentLevels)) " ├──" else " └──" // scalastyle:ignore
+      }"
+    }
+
+    def formatLabel(operation: Operation[_]): String = s"${operation.contextName}: "
   }
 
   trait Rule {

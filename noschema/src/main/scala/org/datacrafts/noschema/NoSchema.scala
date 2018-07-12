@@ -64,7 +64,7 @@ object NoSchema extends Slf4jLogging.Default {
     lazy val classTag = implicitly[ClassTag[T]]
     lazy val manifest = implicitly[Manifest[T]]
     lazy val fullName: String = typeTag.tpe.typeSymbol.fullName
-
+    lazy val shortName: String = typeTag.tpe.typeSymbol.name.toString
     override def toString: String = s"ScalaType[${uniqueKey}]"
   }
 
