@@ -41,21 +41,18 @@ object NoSchema extends Slf4jLogging.Default {
     )
   }.asInstanceOf[ScalaType[T]]
 
-  case class TypeUniqueKey(fullName: String,
-    typeArgs: Seq[TypeUniqueKey]
-  ) {
+  case class TypeUniqueKey(fullName: String, typeArgs: Seq[TypeUniqueKey]) {
     override def toString: String = {
       s"${fullName}${if (typeArgs.isEmpty) "" else typeArgs.mkString("[", ",", "]")}"
     }
   }
-
 
   private val _scalaTypeInstances = collection.mutable.Map.empty[TypeUniqueKey, ScalaType[_]]
 
   implicit class TypeTagConverter(tpe: scala.reflect.runtime.universe.Type) {
     def uniqueKey: TypeUniqueKey = TypeUniqueKey(
       fullName = tpe.typeSymbol.fullName,
-      typeArgs = tpe.typeArgs.map(_.uniqueKey)
+      typeArgs = tpe.dealias.typeArgs.map(_.uniqueKey)
     )
   }
 
@@ -77,7 +74,6 @@ object NoSchema extends Slf4jLogging.Default {
   }
 
   private val _instances = collection.mutable.Map.empty[TypeUniqueKey, NoSchema[_]]
-  private val _instanceMarks = collection.mutable.Set.empty[TypeUniqueKey]
 
   def schemaInstances: Map[TypeUniqueKey, NoSchema[_]] = _instances.toMap
 
@@ -102,32 +98,52 @@ object NoSchema extends Slf4jLogging.Default {
       instance.asInstanceOf[NoSchema[T]]
     }
 
-  // invoked for all lazy instances as intermediate inputs to the recursive implicit resolution
+  private val _stackTraceMark = collection.mutable.Map.empty[TypeUniqueKey, Int]
+  // Understanding this requires some knowledge of how the schema are created with shapeless and
+  // recursive implicit resolution.
+  // This method is invoked for all lazy instances (created by shapeless), as intermediate inputs
+  // to the recursive implicit resolution.
+  // To prevent infinite recursion with cyclic reference, each schema is marked on the call stack.
+  // Although the call stack is local, there is no way to pass the call stack mark since many calls
+  // are created by shapeless macro. The solution here is to use a global stack mark.
   // the root schema won't trigger this
   def getLazySchema[T: ScalaType](shapelessLazySchema: Lazy[NoSchema[T]]): HasLazySchema[T] =
     this.synchronized {
+
+      def stackTraceDepth = Thread.currentThread().getStackTrace().size
       val scalaType = implicitly[ScalaType[T]]
       val reference = scalaType.uniqueKey
-      if (!_instanceMarks.contains(reference)) {
-        logDebug(s"${reference} has not been marked, " +
-          s"invoke lazy instance. ${_instances.size} registered instances")
-        _instanceMarks += reference
-        // invoking shapelessLazySchema.value will trigger creating the schema which may
-        // invoke creating the same schema if there's cyclic reference.
-        // therefore, must mark it first to avoid infinite recursion
-        // this is to leave marks along the recursive call stack
-        Try(
-          _instances.put(
-            reference, shapelessLazySchema.value
-          )) match {
-          case Success(_) =>
-            logDebug(s"${reference} added. ${_instances.size} instances")
-          case Failure(f) =>
-            if (!_instances.contains(reference)) _instanceMarks -= reference
-            throw new Exception(s"failed to add instance ${reference}", f)
+      if (_instances.contains(reference)) {
+        logDebug(s"${reference} schema has already been created")
+      }
+      else {
+        _stackTraceMark.get(reference) match {
+          case Some(stackFrameDepth) =>
+            logDebug(s"${reference} has already been marked on the schema create stack at " +
+              s"depth=${stackFrameDepth}, current depth=${stackTraceDepth}, " +
+              s"and will be created after returning. " +
+              s"${_stackTraceMark.size} schema being created along the stack"
+            )
+          case None =>
+            logDebug(s"${reference} has not been created, " +
+              s"invoke lazy instance. ${_instances.size} registered instances")
+            _stackTraceMark += reference -> stackTraceDepth
+            // invoking shapelessLazySchema.value will trigger creating the schema which may
+            // invoke creating the same schema if there's cyclic reference.
+            // therefore, must mark it first to avoid infinite recursion
+            // this is to leave marks along the recursive call stack
+            try {
+              _instances.put(reference, shapelessLazySchema.value)
+              logDebug(s"${reference} schema created, ${_instances.size} registered instances")
+            }
+            finally {
+              // remove the stackTrace mark after returning
+              _stackTraceMark -= reference
+              logDebug(s"${reference} stackTrace mark removed, " +
+                s"${_stackTraceMark.size} still in stack.")
+            }
         }
-      } else {
-        logDebug(s"${reference} has already been marked, and will be created")
+
       }
       new HasLazySchema[T] {
         override def lazySchema: NoSchema[T] = {
