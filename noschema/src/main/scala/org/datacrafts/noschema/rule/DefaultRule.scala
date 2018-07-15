@@ -6,7 +6,9 @@ import org.datacrafts.noschema.Container._
 import org.datacrafts.noschema.operator.{PrimitiveOperator, ShapelessCoproductTupler, ShapelessProductMapper}
 import org.datacrafts.noschema.operator.ContainerOperator._
 
-trait DefaultRule extends Operation.Rule with Slf4jLogging.Default {
+trait DefaultRule extends Operation.Rule {
+
+  Self: Slf4jLogging =>
 
   override def getOperator[V](operation: Operation[V]): Operation.Operator[V] = {
     logDebug(s"getting operator for ${operation.context.noSchema.scalaType.fullName}")
@@ -57,4 +59,4 @@ trait DefaultRule extends Operation.Rule with Slf4jLogging.Default {
 
 }
 
-object DefaultRule extends DefaultRule
+object DefaultRule extends DefaultRule with Slf4jLogging.Default

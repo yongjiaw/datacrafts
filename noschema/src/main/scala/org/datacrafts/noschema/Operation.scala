@@ -108,6 +108,8 @@ object Operation {
     }
   }
 
+  class SchemaFormatter extends DefaultFormatter(showOperator = false)
+
   class DefaultFormatter(showOperator: Boolean) extends Formatter {
     final override def formatNode(
       operation: Operation[_]

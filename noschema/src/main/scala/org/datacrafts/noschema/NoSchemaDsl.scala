@@ -1,6 +1,6 @@
 package org.datacrafts.noschema
 
-import org.datacrafts.noschema.Operation.DefaultFormatter
+import org.datacrafts.noschema.Operation.{DefaultFormatter, SchemaFormatter}
 import org.datacrafts.noschema.rule.DefaultRule
 
 trait NoSchemaDsl {
@@ -14,10 +14,8 @@ trait NoSchemaDsl {
       new Operation[T](Context.root(noschema), rule)
     }
 
-    def format(): String = {
-      operation().format(
-        new DefaultFormatter(showOperator = false)
-      )
+    def format(formatter: SchemaFormatter = new SchemaFormatter): String = {
+      operation().format(formatter)
     }
   }
 
