@@ -2,7 +2,6 @@ package org.datacrafts.noschema
 
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe.TypeTag
-import scala.util.{Failure, Success, Try}
 
 import org.datacrafts.logging.Slf4jLogging
 import org.datacrafts.noschema.Context.LocalContext
@@ -145,6 +144,7 @@ object NoSchema extends Slf4jLogging.Default {
         }
 
       }
+
       new HasLazySchema[T] {
         override def lazySchema: NoSchema[T] = {
           _instances.get(reference).getOrElse(
