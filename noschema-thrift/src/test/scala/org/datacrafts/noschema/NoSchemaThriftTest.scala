@@ -1,12 +1,12 @@
 package org.datacrafts.noschema
 
-import org.datacrafts.noschema.NoSchemaTest._
+import org.datacrafts.noschema.NoSchemaThriftTest._
 import org.datacrafts.noschema.rule.DefaultRule
 import org.datacrafts.scrooge.shapes.{MapExample, NestedStructExample, StructExample, UnionExample}
 import org.scalatest.FlatSpec
 
 // scalastyle:off
-class NoSchemaTest extends FlatSpec with NoSchemaDsl {
+class NoSchemaThriftTest extends FlatSpec with NoSchemaDsl with ScroogeSupport {
 
   "Marshalling and unmarshalling with Map" should "be successful" in {
 
@@ -29,7 +29,11 @@ class NoSchemaTest extends FlatSpec with NoSchemaDsl {
           "v3" -> Iterable(Seq("v21" -> 3)),
           "v6" -> TestClass3(v31 = 5),
           "v7" -> ("org.datacrafts.noschema.Fruit1.Apple", Map("name" -> "bigApple")),
-          "v8" -> Map("v" -> Seq(Map("v" -> Seq.empty, "v2" -> 2)), "v2" -> 1)
+          "v8" -> Map("v" -> Seq(Map("v" -> Seq.empty, "v2" -> 2)), "v2" -> 1),
+          "thriftMap" -> Map("id" -> "1"),
+          "thriftNested" -> Map("str" -> Map("foo" -> "bar")),
+          "thriftUnion" -> ("scala.Int", 1),
+          "thriftUnion2" -> UnionExample.C(c = "test")
         )) == TestClass(
         v1 = 10,
         v5 = (null, 12),
@@ -42,7 +46,11 @@ class NoSchemaTest extends FlatSpec with NoSchemaDsl {
         v2 = None,
         v4 = null,
         v7 = Fruit1.Apple("bigApple"),
-        v8 = Recursive(Seq(Recursive(v2 = 2)), v2 = 1)
+        v8 = Recursive(Seq(Recursive(v2 = 2)), v2 = 1),
+        thriftNested = NestedStructExample(str = StructExample(foo = "bar")),
+        thriftMap = MapExample(id = "1"),
+        thriftUnion = UnionExample.B(b = 1),
+        thriftUnion2 = UnionExample.C(c = "test")
       )
     )
 
@@ -67,14 +75,18 @@ class NoSchemaTest extends FlatSpec with NoSchemaDsl {
             "v21" -> 3,
             "v22" -> Map("v" -> Map(), "v32" -> Seq(12.0), "v31" -> 0)
           )
-        )
+        ),
+        "thriftMap" -> Map("id" -> "1", "metadata" -> null),
+        "thriftNested" -> Map("str" -> Map("foo" -> "bar", "bar" -> null), "qux" -> null),
+        "thriftUnion" -> ("scala.Int", 1),
+        "thriftUnion2" -> ("org.datacrafts.scrooge.shapes.StructExample", Map("foo" -> "bar", "bar" -> null))
       )
     )
 
   }
 }
 
-object NoSchemaTest {
+object NoSchemaThriftTest {
 
   case class TestClass(
     v1: Int,
@@ -85,7 +97,11 @@ object NoSchemaTest {
     v6: Option[TestClass3] = None,
     v7: Fruit = Apple(),
     v8: Recursive = Recursive(),
-    v9: GenericType[Int] = null
+    v9: GenericType[Int] = null,
+    thriftNested: NestedStructExample = NestedStructExample(str = StructExample(foo = "bar")),
+    thriftMap: MapExample = MapExample(id = "1"),
+    thriftUnion: UnionExample = UnionExample.B(b = 1),
+    thriftUnion2: UnionExample = UnionExample.A(StructExample(foo = "bar"))
   )
 
   case class TestClass2(v21: Int = 3,

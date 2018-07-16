@@ -8,6 +8,7 @@ val scalaTestVersion = "3.0.5"
 val scroogeVersion = "18.7.0"
 val shapelessVersion = "2.3.3"
 val thriftVersion = "0.11.0"
+val avroVersion = "1.8.2"
 
 val commenSettings = Seq(
   organization := "org.datacrafts",
@@ -57,12 +58,27 @@ lazy val noschema = project.settings(
   commenSettings,
   libraryDependencies ++= Seq(
     "com.chuusai" %% "shapeless" % shapelessVersion,
+    "org.slf4j" % "slf4j-log4j12" % "1.7.25" % Test
+  )
+).dependsOn(logging)
+
+lazy val `noschema-thrift` = project.settings(
+  commenSettings,
+  libraryDependencies ++= Seq(
     "com.stripe" %% "scrooge-shapes" % "0.1.0",
     "org.apache.thrift" % "libthrift" % thriftVersion,
     "com.twitter" %% "scrooge-core" % scroogeVersion exclude("com.twitter", "libthrift"),
     "org.slf4j" % "slf4j-log4j12" % "1.7.25" % Test
   )
-).dependsOn(logging)
+).dependsOn(noschema)
+
+lazy val `noschema-avro` = project.settings(
+  commenSettings,
+  libraryDependencies ++= Seq(
+    "org.apache.avro" % "avro" % avroVersion,
+    "org.slf4j" % "slf4j-log4j12" % "1.7.25" % Test
+  )
+).dependsOn(noschema)
 
 lazy val datacrafts = (project in file("."))
   .settings(
@@ -73,5 +89,6 @@ lazy val datacrafts = (project in file("."))
   )
   .aggregate(
     logging,
-    noschema
+    noschema,
+    `noschema-thrift`
   )
