@@ -14,52 +14,70 @@ abstract class Container[T: NoSchema.ScalaType, C: NoSchema.ScalaType](
 
 object Container {
 
-  case class OptionContainer[T: NoSchema.ScalaType](element: Context.ContainerElement[T])
-    (implicit ot: NoSchema.ScalaType[Option[T]])
+  case class OptionContainer[T](element: Context.ContainerElement[T])
+    (implicit ot: NoSchema.ScalaType[Option[T]],
+      st: NoSchema.ScalaType[T])
     extends Container[T, Option[T]](NoSchema.Category.Option, element, false)
 
-  case class SeqContainer[T: NoSchema.ScalaType](element: Context.ContainerElement[T])
-    (implicit ot: NoSchema.ScalaType[Seq[T]])
+  case class SeqContainer[T](element: Context.ContainerElement[T])
+    (implicit ot: NoSchema.ScalaType[Seq[T]],
+      st: NoSchema.ScalaType[T])
     extends Container[T, Seq[T]](NoSchema.Category.Seq, element)
 
-  case class IterableContainer[T: NoSchema.ScalaType](element: Context.ContainerElement[T])
-    (implicit ot: NoSchema.ScalaType[Iterable[T]])
+  case class IterableContainer[T](element: Context.ContainerElement[T])
+    (implicit ot: NoSchema.ScalaType[Iterable[T]],
+      st: NoSchema.ScalaType[T])
     extends Container[T, Iterable[T]](NoSchema.Category.Seq, element)
 
-  case class MapContainer[T: NoSchema.ScalaType](element: Context.ContainerElement[T])
-    (implicit ot: NoSchema.ScalaType[Map[String, T]])
+  case class MapContainer[T](element: Context.ContainerElement[T])
+    (implicit ot: NoSchema.ScalaType[Map[String, T]],
+      st: NoSchema.ScalaType[T])
     extends Container[T, Map[String, T]](NoSchema.Category.Map, element)
 
   // to support multiple scala Map concrete types
-  case class MapContainer2[T: NoSchema.ScalaType](element: Context.ContainerElement[T])
-    (implicit ot: NoSchema.ScalaType[scala.collection.Map[String, T]])
+  case class MapContainer2[T](element: Context.ContainerElement[T])
+    (implicit ot: NoSchema.ScalaType[scala.collection.Map[String, T]],
+      st: NoSchema.ScalaType[T])
     extends Container[T, scala.collection.Map[String, T]](NoSchema.Category.Map, element)
 
   trait Instances {
-    implicit def getOptionSchemaFromElementSchema[T: NoSchema.ScalaType](implicit
+    implicit def getOptionSchemaFromElementSchema[T](implicit
       node: Lazy[NoSchema[T]],
-      ot: NoSchema.ScalaType[Option[T]]): OptionContainer[T] =
-      new OptionContainer[T](Context.ContainerElement(NoSchema.getLazySchema(node)))
+      ot: Lazy[NoSchema.ScalaType[Option[T]]],
+      st: Lazy[NoSchema.ScalaType[T]]
+    ): OptionContainer[T] =
+      new OptionContainer[T](Context.ContainerElement(NoSchema.getLazySchema(node)(st.value))
+      )(ot.value, st.value)
 
-    implicit def getSeqSchemaFromElementSchema[T: NoSchema.ScalaType](implicit
+    implicit def getSeqSchemaFromElementSchema[T](implicit
       node: Lazy[NoSchema[T]],
-      ot: NoSchema.ScalaType[Seq[T]]): SeqContainer[T] =
-      new SeqContainer[T](Context.ContainerElement(NoSchema.getLazySchema(node)))
+      ot: Lazy[NoSchema.ScalaType[Seq[T]]],
+      st: Lazy[NoSchema.ScalaType[T]]
+    ): SeqContainer[T] =
+      new SeqContainer[T](Context.ContainerElement(NoSchema.getLazySchema(node)(st.value))
+      )(ot.value, st.value)
 
-    implicit def getIterableSchemaFromElementSchema[T: NoSchema.ScalaType](implicit
+    implicit def getIterableSchemaFromElementSchema[T](implicit
       node: Lazy[NoSchema[T]],
-      ot: NoSchema.ScalaType[Iterable[T]]): IterableContainer[T] =
-      new IterableContainer[T](Context.ContainerElement(NoSchema.getLazySchema(node)))
+      ot: Lazy[NoSchema.ScalaType[Iterable[T]]],
+      st: Lazy[NoSchema.ScalaType[T]]
+    ): IterableContainer[T] =
+      new IterableContainer[T](Context.ContainerElement(NoSchema.getLazySchema(node)(st.value))
+      )(ot.value, st.value)
 
-    implicit def getMapSchemaFromElementSchema[T: NoSchema.ScalaType](implicit
+    implicit def getMapSchemaFromElementSchema[T](implicit
       node: Lazy[NoSchema[T]],
-      ot: NoSchema.ScalaType[Map[String, T]]): MapContainer[T] =
-      new MapContainer[T](Context.ContainerElement(NoSchema.getLazySchema(node)))
+      ot: Lazy[NoSchema.ScalaType[Map[String, T]]],
+      st: Lazy[NoSchema.ScalaType[T]]): MapContainer[T] =
+      new MapContainer[T](Context.ContainerElement(NoSchema.getLazySchema(node)(st.value))
+      )(ot.value, st.value)
 
-    implicit def getMapSchemaFromElementSchema2[T: NoSchema.ScalaType](implicit
+    implicit def getMapSchemaFromElementSchema2[T](implicit
       node: Lazy[NoSchema[T]],
-      ot: NoSchema.ScalaType[scala.collection.Map[String, T]]): MapContainer2[T] =
-      new MapContainer2[T](Context.ContainerElement(NoSchema.getLazySchema(node)))
+      ot: Lazy[NoSchema.ScalaType[scala.collection.Map[String, T]]],
+      st: Lazy[NoSchema.ScalaType[T]]): MapContainer2[T] =
+      new MapContainer2[T](Context.ContainerElement(NoSchema.getLazySchema(node)(st.value))
+      )(ot.value, st.value)
 
   }
 

@@ -2,7 +2,6 @@ package org.datacrafts.noschema
 
 import org.datacrafts.noschema.NoSchemaTest._
 import org.datacrafts.noschema.rule.DefaultRule
-import org.datacrafts.scrooge.shapes.{MapExample, NestedStructExample, StructExample, UnionExample}
 import org.scalatest.FlatSpec
 
 // scalastyle:off

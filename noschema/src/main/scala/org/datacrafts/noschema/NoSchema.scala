@@ -125,7 +125,8 @@ object NoSchema extends Slf4jLogging.Default {
             )
           case None =>
             logDebug(s"${reference} has not been created, " +
-              s"invoke lazy instance. ${_instances.size} registered instances")
+              s"invoke lazy instance, current depth=${stackTraceDepth}. " +
+              s"${_instances.size} registered instances")
             _stackTraceMark += reference -> stackTraceDepth
             // invoking shapelessLazySchema.value will trigger creating the schema which may
             // invoke creating the same schema if there's cyclic reference.

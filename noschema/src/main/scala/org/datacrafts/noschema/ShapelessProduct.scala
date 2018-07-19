@@ -1,19 +1,19 @@
 package org.datacrafts.noschema
 
-import org.datacrafts.noschema.ShapelessCoproduct.{ShapelessCoproductAdapter, TypeValueExtractor, UnionTypeValueCollector}
 import org.datacrafts.noschema.ShapelessProduct.{ShapelessProductAdapter, SymbolCollector, SymbolExtractor}
-import shapeless.{:+:, ::, CNil, Coproduct, Generic, HList, HNil, Inl, Inr, LabelledGeneric, Lazy, Witness}
+import shapeless.{::, HList, HNil, LabelledGeneric, Lazy, Witness}
 import shapeless.labelled.{field, FieldType}
 
-class ShapelessProduct[T : NoSchema.ScalaType, R <: HList](
-  dependencies: Seq[Context.MemberVariable[_]],
+class ShapelessProduct[T, R <: HList](
+  override val dependencies: Seq[Context.MemberVariable[_]],
   generic: LabelledGeneric.Aux[T, R],
-  shapeless: ShapelessProductAdapter[R]
+  shapeless: ShapelessProductAdapter[R],
+  st: NoSchema.ScalaType[T]
 ) extends NoSchema[T](
   category = NoSchema.Category.Product,
   nullable = true,
   dependencies = dependencies
-)
+)(st)
 {
   def marshal(symbolExtractor: SymbolExtractor, operation: Operation[T]): T = {
     generic.from(shapeless.marshalHList(symbolExtractor, operation))
@@ -31,12 +31,13 @@ object ShapelessProduct {
 
     // this helps pass compile time check, and will throw runtime error
     // if certain type transformer is missing
-    implicit def lowPriorityFallBackImplicit[K <: Symbol, V: NoSchema.ScalaType, L <: HList]
+    implicit def lowPriorityFallBackImplicit[K <: Symbol, V, L <: HList]
     (implicit
-      w: Witness.Aux[K],
-      l: Lazy[ShapelessProductAdapter[L]]
+      w: Lazy[Witness.Aux[K]],
+      l: Lazy[ShapelessProductAdapter[L]],
+      st: Lazy[NoSchema.ScalaType[V]]
     ): ShapelessProductAdapter[FieldType[K, V] :: L] = {
-      throw new Exception(s"field ${w.value.name} of ${implicitly[NoSchema.ScalaType[V]]} " +
+      throw new Exception(s"field ${w.value.value.name} of ${st.value} " +
         s"does not have NoSchema in scope.")
     }
 
@@ -57,15 +58,16 @@ object ShapelessProduct {
       }
     }
 
-    implicit def shapelessProductRecursiveBuilder[K <: Symbol, V: NoSchema.ScalaType, L <: HList](
+    implicit def shapelessProductRecursiveBuilder[K <: Symbol, V, L <: HList](
       implicit
-      headSymbol: Witness.Aux[K],
+      headSymbol: Lazy[Witness.Aux[K]],
       headValue: Lazy[NoSchema[V]],
-      tail: Lazy[ShapelessProductAdapter[L]]
+      tail: Lazy[ShapelessProductAdapter[L]],
+      st: Lazy[NoSchema.ScalaType[V]]
     ): ShapelessProductAdapter[FieldType[K, V] :: L] = {
 
       val headValueContext =
-        Context.MemberVariable(headSymbol.value, NoSchema.getLazySchema(headValue))
+        Context.MemberVariable(headSymbol.value.value, NoSchema.getLazySchema(headValue)(st.value))
 
       new ShapelessProductAdapter[FieldType[K, V] :: L](
         members = tail.value.members :+ headValueContext) {
@@ -74,8 +76,9 @@ object ShapelessProduct {
           symbolExtractor: SymbolExtractor, operation: Operation[_]): FieldType[K, V] :: L = {
           field[K](
             operation.dependencyOperation(headValueContext).operator
-                          .marshal(symbolExtractor.getSymbolValue(headSymbol.value))
-          ) :: tail.value.marshalHList(symbolExtractor.removeSymbol(headSymbol.value), operation)
+                          .marshal(symbolExtractor.getSymbolValue(headSymbol.value.value))
+          ) :: tail.value.marshalHList(
+            symbolExtractor.removeSymbol(headSymbol.value.value), operation)
         }
 
         override def unmarshalHList(
@@ -83,7 +86,7 @@ object ShapelessProduct {
         ): SymbolCollector = {
           tail.value.unmarshalHList(hList.tail, emptyBuilder, operation)
             .addSymbolValue(
-              symbol = headSymbol.value,
+              symbol = headSymbol.value.value,
               value = operation.dependencyOperation(headValueContext)
                 .operator.unmarshal(hList.head)
             )
@@ -91,10 +94,12 @@ object ShapelessProduct {
       }
     }
 
-    implicit def shapelessProductBridging[T: NoSchema.ScalaType, R <: HList](implicit
-      generic: LabelledGeneric.Aux[T, R],
-      shapeless: Lazy[ShapelessProductAdapter[R]]
-    ): NoSchema[T] = NoSchema.getOrElseCreateSchema(shapeless.value.composeWithGeneric(generic))
+    implicit def shapelessProductBridging[T, R <: HList](implicit
+      generic: Lazy[LabelledGeneric.Aux[T, R]],
+      shapeless: Lazy[ShapelessProductAdapter[R]],
+      st: Lazy[NoSchema.ScalaType[T]]
+    ): NoSchema[T] = NoSchema.getOrElseCreateSchema(
+      shapeless.value.composeWithGeneric(generic.value, st.value))(st.value)
 
   }
 
@@ -128,8 +133,9 @@ object ShapelessProduct {
     def unmarshalHList(hList: R, emptyCollector: SymbolCollector, operation: Operation[_]
     ): SymbolCollector
 
-    def composeWithGeneric[T: NoSchema.ScalaType](
-      generic: LabelledGeneric.Aux[T, R]): NoSchema[T] =
-      new ShapelessProduct(members, generic, this)
+    def composeWithGeneric[T](
+      generic: LabelledGeneric.Aux[T, R],
+      st: NoSchema.ScalaType[T]): NoSchema[T] =
+      new ShapelessProduct(members, generic, this, st)
   }
 }

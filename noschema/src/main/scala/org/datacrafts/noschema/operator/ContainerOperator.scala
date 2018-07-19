@@ -33,7 +33,9 @@ object ContainerOperator {
         .getOrElse(null) // scalastyle:ignore
     }
 
-    override def default: Option[Option[T]] = Some(None)
+    final override def default: Option[Option[T]] = {
+      Option(elementOperation.operator.default)
+    }
   }
 
   class SeqOperator[T](

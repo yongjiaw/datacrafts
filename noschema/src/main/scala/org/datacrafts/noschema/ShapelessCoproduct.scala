@@ -4,15 +4,16 @@ import org.datacrafts.noschema.ShapelessCoproduct.{ShapelessCoproductAdapter, Ty
 import shapeless.{:+:, CNil, Coproduct, Inl, Inr, LabelledGeneric, Lazy, Witness}
 import shapeless.labelled.{field, FieldType}
 
-class ShapelessCoproduct[T : NoSchema.ScalaType, R <: Coproduct](
+class ShapelessCoproduct[T, R <: Coproduct](
   dependencies: Seq[Context.CoproductElement[_]],
   generic: LabelledGeneric.Aux[T, R],
-  shapeless: ShapelessCoproductAdapter[R]
+  shapeless: ShapelessCoproductAdapter[R],
+  st: NoSchema.ScalaType[T]
 ) extends NoSchema[T](
   category = NoSchema.Category.CoProduct,
   nullable = true,
   dependencies = dependencies
-)
+)(st)
 {
   def marshal(typeExtractor: TypeValueExtractor, operation: Operation[T]): T = {
     generic.from(shapeless.marshalCoproduct(typeExtractor, operation))
@@ -28,14 +29,15 @@ object ShapelessCoproduct {
 
   trait Instances {
     implicit def shapelessCoproductRecursiveBuilder
-    [K <: Symbol, V : NoSchema.ScalaType, L <: Coproduct](implicit
-      headSymbol: Witness.Aux[K],
+    [K <: Symbol, V, L <: Coproduct](implicit
+      headSymbol: Lazy[Witness.Aux[K]],
       head: Lazy[NoSchema[V]],
-      tail: Lazy[ShapelessCoproductAdapter[L]]
+      tail: Lazy[ShapelessCoproductAdapter[L]],
+      st: Lazy[NoSchema.ScalaType[V]]
     ): ShapelessCoproductAdapter[FieldType[K, V] :+: L] = {
 
       val headValueContext =
-        Context.CoproductElement(headSymbol.value, NoSchema.getLazySchema(head))
+        Context.CoproductElement(headSymbol.value.value, NoSchema.getLazySchema(head)(st.value))
 
       new ShapelessCoproductAdapter[FieldType[K, V] :+: L](
         members = tail.value.members :+ headValueContext) {
@@ -69,14 +71,16 @@ object ShapelessCoproduct {
       }
     }
 
-    implicit def shapelessCoproductRecursiveBuilderTerminator[K <: Symbol, V: NoSchema.ScalaType](
+    implicit def shapelessCoproductRecursiveBuilderTerminator[K <: Symbol, V](
       implicit
-      headSymbol: Witness.Aux[K],
-      headValue: Lazy[NoSchema[V]]
+      headSymbol: Lazy[Witness.Aux[K]],
+      headValue: Lazy[NoSchema[V]],
+      st: Lazy[NoSchema.ScalaType[V]]
     ): ShapelessCoproductAdapter[FieldType[K, V] :+: CNil] = {
 
       val headValueContext =
-        Context.CoproductElement(headSymbol.value, NoSchema.getLazySchema(headValue))
+        Context.CoproductElement(
+          headSymbol.value.value, NoSchema.getLazySchema(headValue)(st.value))
 
       new ShapelessCoproductAdapter[FieldType[K, V] :+: CNil](
         members = Seq(headValueContext)) {
@@ -108,10 +112,12 @@ object ShapelessCoproduct {
       }
     }
 
-    implicit def shapelessCoproductBridging[T: NoSchema.ScalaType, R <: Coproduct](implicit
-      generic: LabelledGeneric.Aux[T, R],
-      shapeless: Lazy[ShapelessCoproductAdapter[R]]
-    ): NoSchema[T] = NoSchema.getOrElseCreateSchema(shapeless.value.composeWithGeneric(generic))
+    implicit def shapelessCoproductBridging[T, R <: Coproduct](implicit
+      generic: Lazy[LabelledGeneric.Aux[T, R]],
+      shapeless: Lazy[ShapelessCoproductAdapter[R]],
+      st: Lazy[NoSchema.ScalaType[T]]
+    ): NoSchema[T] = NoSchema.getOrElseCreateSchema(
+      shapeless.value.composeWithGeneric(generic.value, st.value))(st.value)
   }
 
   abstract class ShapelessCoproductAdapter[R <: Coproduct](
@@ -123,15 +129,16 @@ object ShapelessCoproduct {
       coproduct: R, emptyUnion: UnionTypeValueCollector, operation: Operation[_]
     ): UnionTypeValueCollector
 
-    def composeWithGeneric[T: NoSchema.ScalaType](
-      generic: LabelledGeneric.Aux[T, R]): ShapelessCoproduct[T, R] =
+    def composeWithGeneric[T](
+      generic: LabelledGeneric.Aux[T, R],
+      st: NoSchema.ScalaType[T]): ShapelessCoproduct[T, R] =
       new ShapelessCoproduct[T, R](
         // filter the UnknownUnionField
         // this field will not produce value in unmarshaling,
         // and is not intended to take value in marshaling,
         // since schema evolution should never leave out already known types to unknown
         members.filter(_.noSchema.scalaType.fullName != "com.twitter.scrooge.TFieldBlob"),
-        generic, this)
+        generic, this, st)
   }
 
   trait TypeValueExtractor {
