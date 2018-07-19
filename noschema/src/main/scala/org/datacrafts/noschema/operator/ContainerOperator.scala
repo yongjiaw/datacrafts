@@ -6,6 +6,7 @@ import org.datacrafts.noschema.Operation
 trait ContainerOperator[T, C] extends Operation.Operator[C] {
   val element: ContainerElement[T]
   lazy val elementOperation: Operation[T] = operation.dependencyOperation(element)
+  type Elem = T
 }
 
 object ContainerOperator {

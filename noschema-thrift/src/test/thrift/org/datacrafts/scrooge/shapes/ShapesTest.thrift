@@ -20,3 +20,10 @@ struct MapExample {
   1: required string id
   3: optional map<string,string> metadata
 }
+
+enum TweetType {
+    Tweet = 1,
+    Retweet = 2,
+    Dm = 3,
+    Reply = 4
+}

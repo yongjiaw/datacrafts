@@ -28,8 +28,8 @@ object NoSchema extends Slf4jLogging.Default {
 
   // this is for future extensibility to require extra information about the type
   implicit def noSchemaType[T: TypeTag : ClassTag : Manifest]: ScalaType[T] = this.synchronized {
-    val tpe = implicitly[TypeTag[T]].tpe
-    val uniqueKey = tpe.uniqueKey
+    logDebug(s"creating ScalaType[classTag=${implicitly[ClassTag[T]]}]")
+    lazy val uniqueKey = implicitly[TypeTag[T]].tpe.uniqueKey
 
     _scalaTypeInstances.getOrElseUpdate(
       uniqueKey,
@@ -49,10 +49,15 @@ object NoSchema extends Slf4jLogging.Default {
   private val _scalaTypeInstances = collection.mutable.Map.empty[TypeUniqueKey, ScalaType[_]]
 
   implicit class TypeTagConverter(tpe: scala.reflect.runtime.universe.Type) {
-    def uniqueKey: TypeUniqueKey = TypeUniqueKey(
-      fullName = tpe.typeSymbol.fullName,
-      typeArgs = tpe.dealias.typeArgs.map(_.uniqueKey)
-    )
+    def uniqueKey: TypeUniqueKey = {
+      logDebug(s"creating unique key for ${tpe.typeSymbol.fullName}")
+      val uk = TypeUniqueKey(
+        fullName = tpe.typeSymbol.fullName,
+        typeArgs = tpe.dealias.typeArgs.map(_.uniqueKey)
+      )
+      logDebug(s"created uniqueKey ${uk}")
+      uk
+    }
   }
 
   class ScalaType[T: TypeTag : ClassTag : Manifest](val uniqueKey: TypeUniqueKey) {
