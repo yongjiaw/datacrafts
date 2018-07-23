@@ -1,6 +1,5 @@
 package org.datacrafts.noschema
 
-import com.twitter.scrooge.ThriftUnion
 import org.datacrafts.noschema.NoSchemaThriftTest._
 import org.datacrafts.noschema.rule.DefaultRule
 import org.datacrafts.scrooge.shapes._
@@ -13,7 +12,9 @@ class NoSchemaThriftTest extends FlatSpec with NoSchemaDsl with ScroogeSupport {
 
     println(schemaOf[Recursive].format())
 
-    println(schemaOf[TweetType].format())
+    // scrooge thrift enum does not work with scala 2.11
+    // https://github.com/circe/circe/pull/644/files
+    // println(schemaOf[TweetType].format())
 
     // can just print the schema itself
     println(schemaOf[TestClass].format())
@@ -36,8 +37,8 @@ class NoSchemaThriftTest extends FlatSpec with NoSchemaDsl with ScroogeSupport {
           "thriftMap" -> Map("id" -> "1"),
           "thriftNested" -> Map("str" -> Map("foo" -> "bar")),
           "thriftUnion" -> ("scala.Int", 1),
-          "thriftUnion2" -> UnionExample.C(c = "test"),
-          "thriftEnum" -> ("org.datacrafts.scrooge.shapes.TweetType.Tweet", Map())
+          "thriftUnion2" -> UnionExample.C(c = "test")
+          // "thriftEnum" -> ("org.datacrafts.scrooge.shapes.TweetType.Tweet", Map())
         )) == TestClass(
         v1 = 10,
         v5 = (null, 12),
@@ -83,8 +84,8 @@ class NoSchemaThriftTest extends FlatSpec with NoSchemaDsl with ScroogeSupport {
         "thriftMap" -> Map("id" -> "1", "metadata" -> null),
         "thriftNested" -> Map("str" -> Map("foo" -> "bar", "bar" -> null), "qux" -> null),
         "thriftUnion" -> ("scala.Int", 1),
-        "thriftUnion2" -> ("org.datacrafts.scrooge.shapes.StructExample", Map("foo" -> "bar", "bar" -> null)),
-        "thriftEnum" -> ("org.datacrafts.scrooge.shapes.TweetType.Tweet", Map())
+        "thriftUnion2" -> ("org.datacrafts.scrooge.shapes.StructExample", Map("foo" -> "bar", "bar" -> null))
+        // "thriftEnum" -> ("org.datacrafts.scrooge.shapes.TweetType.Tweet", Map())
       )
     )
 
@@ -106,8 +107,8 @@ object NoSchemaThriftTest {
     thriftNested: NestedStructExample = NestedStructExample(str = StructExample(foo = "bar")),
     thriftMap: MapExample = MapExample(id = "1"),
     thriftUnion: UnionExample = UnionExample.B(b = 1),
-    thriftUnion2: UnionExample = UnionExample.A(StructExample(foo = "bar")),
-    thriftEnum: TweetType = TweetType.Tweet
+    thriftUnion2: UnionExample = UnionExample.A(StructExample(foo = "bar"))
+    // thriftEnum: TweetType = TweetType.Tweet
   )
 
   case class TestClass2(v21: Int = 3,
