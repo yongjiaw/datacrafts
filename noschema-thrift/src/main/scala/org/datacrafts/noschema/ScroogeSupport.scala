@@ -8,6 +8,11 @@ trait ScroogeSupport extends com.stripe.scrooge.shapes.GenericInstances {
   // they will not participate in marshaling/unmarshaling, just for type description
   implicit val twitterBufPrimitiveType = new Primitive[com.twitter.io.Buf]
   implicit val tFieldPrimitiveType = new Primitive[org.apache.thrift.protocol.TField]
+
+  // eliminate the node from the final schema tree
+  // they are required to build the complete schema,
+  // but do not participate in actual marshal/unmarshal operations
+  schemaClassFilter += "com.twitter.scrooge.TFieldBlob"
 }
 
 object ScroogeSupport extends ScroogeSupport

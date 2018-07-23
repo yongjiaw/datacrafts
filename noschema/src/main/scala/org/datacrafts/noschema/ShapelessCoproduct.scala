@@ -137,7 +137,7 @@ object ShapelessCoproduct {
         // this field will not produce value in unmarshaling,
         // and is not intended to take value in marshaling,
         // since schema evolution should never leave out already known types to unknown
-        members.filter(_.noSchema.scalaType.fullName != "com.twitter.scrooge.TFieldBlob"),
+        members.filter(clazz => !schemaClassFilter.contains(clazz.noSchema.scalaType.fullName)),
         generic, this, st)
   }
 
