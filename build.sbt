@@ -91,5 +91,6 @@ lazy val datacrafts = (project in file("."))
   .aggregate(
     logging,
     noschema,
-    `noschema-thrift`
+    `noschema-thrift`,
+    `noschema-avro`
   )
