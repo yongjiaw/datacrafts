@@ -8,10 +8,10 @@ import org.apache.avro.Schema
 import org.apache.avro.Schema.Field
 import org.datacrafts.logging.Slf4jLogging
 import org.datacrafts.noschema.{NoSchemaDsl, Operation, Primitive, ShapelessCoproduct, ShapelessProduct}
-import org.datacrafts.noschema.operator.PrimitiveOperator
-import org.datacrafts.noschema.Operation.Operator
 import org.datacrafts.noschema.Container._
-import org.datacrafts.noschema.operator.ContainerOperator.{IterableOperator, MapOperator, MapOperator2, SeqOperator}
+import org.datacrafts.noschema.Operation.Operator
+import org.datacrafts.noschema.operator.ContainerOperator._
+import org.datacrafts.noschema.operator.PrimitiveOperator
 import org.datacrafts.noschema.rule.DefaultRule
 
 object DefaultAvroRule extends DefaultAvroRule with Slf4jLogging.Default {
@@ -141,7 +141,7 @@ trait DefaultAvroRule extends DefaultRule with NoSchemaDsl {
                       // when generating avro record from scala class.
                       // default in avro schema plays the same role as the default in operator,
                       // which is needed when marshaling from avro input to scala class
-                      null.asInstanceOf[Any]
+                      null.asInstanceOf[Any] // scalastyle:ignore
                     )
                   }
                 ).asJava

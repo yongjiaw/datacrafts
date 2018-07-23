@@ -2,6 +2,7 @@ package org.datacrafts.noschema.avro
 
 import java.io.ByteArrayOutputStream
 
+// scalastyle:off
 object AvroSchemaTest extends AvroOperationDsl {
   def main(args: Array[String]): Unit = {
 

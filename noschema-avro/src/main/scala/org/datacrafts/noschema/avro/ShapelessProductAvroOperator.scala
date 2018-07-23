@@ -3,8 +3,8 @@ package org.datacrafts.noschema.avro
 import org.apache.avro.Schema
 import org.apache.avro.generic.{GenericRecord, GenericRecordBuilder}
 import org.datacrafts.noschema.{Operation, ShapelessProduct}
-import org.datacrafts.noschema.operator.ShapelessProductOperator
 import org.datacrafts.noschema.ShapelessProduct.SymbolExtractor
+import org.datacrafts.noschema.operator.ShapelessProductOperator
 import org.datacrafts.noschema.operator.ShapelessProductOperator.ProductBuilder
 
 class ShapelessProductAvroOperator[T](

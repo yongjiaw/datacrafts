@@ -2,8 +2,8 @@ package org.datacrafts.noschema.avro
 
 import org.apache.avro.generic.GenericData
 import org.datacrafts.noschema.{NoSchema, NoSchemaDsl, Operation, ShapelessCoproduct}
-import org.datacrafts.noschema.operator.ShapelessCoproductOperator
 import org.datacrafts.noschema.ShapelessCoproduct.TypeValueExtractor
+import org.datacrafts.noschema.operator.ShapelessCoproductOperator
 import org.datacrafts.noschema.operator.ShapelessCoproductOperator.CoproductBuilder
 
 class ShapelessCoproductAvroOperator[T] (
