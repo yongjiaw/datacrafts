@@ -1,20 +1,21 @@
 package org.datacrafts.noschema.avro
 
-import org.apache.avro.generic.GenericData
+import org.apache.avro.generic.{GenericData, GenericRecordBuilder}
 import org.datacrafts.noschema.{NoSchema, NoSchemaDsl, Operation, ShapelessCoproduct}
 import org.datacrafts.noschema.ShapelessCoproduct.TypeValueExtractor
 import org.datacrafts.noschema.operator.ShapelessCoproductOperator
 import org.datacrafts.noschema.operator.ShapelessCoproductOperator.CoproductBuilder
+import org.datacrafts.noschema.Context.CoproductElement
 
 class ShapelessCoproductAvroOperator[T] (
   override val shapeless: ShapelessCoproduct[T, _],
   override val operation: Operation[T],
-  avroRules: DefaultAvroRule
+  val avroRule: DefaultAvroRule
 ) extends ShapelessCoproductOperator[T, Any] with NoSchemaDsl {
 
   override protected def parse(input: Any): TypeValueExtractor = {
     new TypeValueExtractor {
-      override def getTypeValue(tpe: NoSchema.ScalaType[_]): Option[Any] = {
+      override def getTypeValue(coproductElement: CoproductElement[_]): Option[Any] = {
         // only based on avro instance, there is no way to determine the type
         // enum and union of primitives can infer from value
         // for structured type such as case class, different types can have the same structure
@@ -25,21 +26,29 @@ class ShapelessCoproductAvroOperator[T] (
     }
   }
 
-  private lazy val avroOperation = new AvroOperation(operation, avroRules)
+  private lazy val avroOperation = new AvroOperation(operation, avroRule)
+
   override protected def newCoproductBuilder(): CoproductBuilder[Any] = {
     new CoproductBuilder[Any] {
-      private var _value: Option[(NoSchema.ScalaType[_], Any)] = None
+      private var _value: Option[(CoproductElement[_], Any)] = None
 
       override def build(): Any = _value match {
-        case Some((noschema, value)) =>
-        if (avroRules.isEnum(shapeless)) {
-          new GenericData.EnumSymbol(avroOperation.avroSchema, noschema.shortName)
+        case Some((coproductElement, value)) =>
+        if (avroOperation.schemaInfo.isEnum) {
+          new GenericData.EnumSymbol(
+            avroOperation.avroSchema, coproductElement.noSchema.scalaType.shortName)
         }
-        else if (avroRules.isUnion(shapeless)) {
-          value
+        else if (avroOperation.schemaInfo.isUnion) {
+          avroOperation.schemaInfo.getWrappedSchema(coproductElement) match {
+            case Some(wrappedSchema) =>
+              new GenericRecordBuilder(wrappedSchema)
+                .set(wrappedSchema.getFields.get(0).name(), value)
+                .build()
+            case None => value
+          }
         }
         else {
-          throw new Exception(s"neither enum or union\n${shapeless.format()}")
+          throw new Exception(s"neither enum nor union\n${shapeless.format()}")
         }
         case None =>
           // if this happens, there is a bug somewhere that failed to collect the symbol value,
@@ -47,10 +56,10 @@ class ShapelessCoproductAvroOperator[T] (
           throw new Exception(s"no value produced for coproduct, this is impossible")
       }
 
-      override def addTypeValue(tpe: NoSchema.ScalaType[_],
+      override def addTypeValue(coproductElement: CoproductElement[_],
         value: Any
       ): ShapelessCoproduct.UnionTypeValueCollector = {
-        _value = Some((tpe, value))
+        _value = Some((coproductElement, value))
         this
       }
     }

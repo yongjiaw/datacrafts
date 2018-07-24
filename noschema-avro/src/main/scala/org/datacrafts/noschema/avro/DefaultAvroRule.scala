@@ -7,12 +7,14 @@ import com.fasterxml.jackson.module.scala.experimental.ScalaObjectMapper
 import org.apache.avro.Schema
 import org.apache.avro.Schema.Field
 import org.datacrafts.logging.Slf4jLogging
-import org.datacrafts.noschema.{NoSchemaDsl, Operation, Primitive, ShapelessCoproduct, ShapelessProduct}
+import org.datacrafts.noschema.{NoSchema, NoSchemaDsl, Operation, Primitive, ShapelessCoproduct, ShapelessProduct}
 import org.datacrafts.noschema.Container._
 import org.datacrafts.noschema.Operation.Operator
 import org.datacrafts.noschema.operator.ContainerOperator._
 import org.datacrafts.noschema.operator.PrimitiveOperator
 import org.datacrafts.noschema.rule.DefaultRule
+import org.datacrafts.noschema.Context.CoproductElement
+import org.datacrafts.noschema.avro.AvroOperation.SchemaInfo
 
 object DefaultAvroRule extends DefaultAvroRule with Slf4jLogging.Default {
 
@@ -101,51 +103,49 @@ trait DefaultAvroRule extends DefaultRule with NoSchemaDsl {
     }
   }
 
-  def getAvroSchema[V](operation: Operation[V]): Schema = {
+  def getAvroSchema[V](operation: Operation[V]): SchemaInfo = {
     import scala.reflect.runtime.universe.typeOf
     import scala.collection.JavaConverters._
-    val schema =
+    val schemaInfo =
       operation.context.noSchema match {
         case primitive: Primitive[_] =>
           primitive.scalaType.typeTag.tpe match {
-            case t if t <:< typeOf[Short] => Schema.create(Schema.Type.INT)
-            case t if t <:< typeOf[Int] => Schema.create(Schema.Type.INT)
-            case t if t <:< typeOf[Long] => Schema.create(Schema.Type.LONG)
-            case t if t <:< typeOf[Double] => Schema.create(Schema.Type.DOUBLE)
-            case t if t <:< typeOf[Float] => Schema.create(Schema.Type.FLOAT)
-            case t if t <:< typeOf[Boolean] => Schema.create(Schema.Type.BOOLEAN)
-            case t if t <:< typeOf[String] => Schema.create(Schema.Type.STRING)
-            case t if t <:< typeOf[Array[Byte]] => Schema.create(Schema.Type.BYTES)
+            case t if t <:< typeOf[Short] => SchemaInfo(Schema.create(Schema.Type.INT))
+            case t if t <:< typeOf[Int] => SchemaInfo(Schema.create(Schema.Type.INT))
+            case t if t <:< typeOf[Long] => SchemaInfo(Schema.create(Schema.Type.LONG))
+            case t if t <:< typeOf[Double] => SchemaInfo(Schema.create(Schema.Type.DOUBLE))
+            case t if t <:< typeOf[Float] => SchemaInfo(Schema.create(Schema.Type.FLOAT))
+            case t if t <:< typeOf[Boolean] => SchemaInfo(Schema.create(Schema.Type.BOOLEAN))
+            case t if t <:< typeOf[String] => SchemaInfo(Schema.create(Schema.Type.STRING))
+            case t if t <:< typeOf[Array[Byte]] => SchemaInfo(Schema.create(Schema.Type.BYTES))
           }
         case shapeless: ShapelessProduct[_, _] =>
           shapeless.scalaType.fullName match {
             case NameSpacePattern(namespace, name) =>
-              Schema.createRecord(
-                name,
-                toJson(
-                  Map("record" -> shapeless.scalaType.uniqueKey)
-                ),
-                namespace,
-                false,
-                shapeless.dependencies.map(
-                  dep => {
-                    val depOp = new AvroOperation(operation.dependencyOperation(dep), this)
-                    new Field(
-                      dep.symbol.name,
-                      depOp.avroSchema,
-                      toJson(
-                        Map(dep.symbol.name -> dep.noSchema.scalaType.uniqueKey)
-                      ),
-                      // no default value needed for avro schema,
-                      // since there won't be missing values
-                      // when generating avro record from scala class.
-                      // default in avro schema plays the same role as the default in operator,
-                      // which is needed when marshaling from avro input to scala class
-                      null.asInstanceOf[Any] // scalastyle:ignore
-                    )
-                  }
-                ).asJava
-              )
+              SchemaInfo(
+                Schema.createRecord(
+                  name,
+                  getRecordDoc(operation, false),
+                  namespace,
+                  false,
+                  shapeless.dependencies.map(
+                    dep => {
+                      val depOp = operation.dependencyOperation(dep)
+                      val depAvroOp = new AvroOperation(depOp, this)
+                      new Field(
+                        dep.symbol.name,
+                        depAvroOp.avroSchema,
+                        getRecordFieldDoc(depAvroOp, false),
+                        // no default value needed for avro schema,
+                        // since there won't be missing values
+                        // when generating avro record from scala class.
+                        // default in avro schema plays the same role as the default in operator,
+                        // which is needed when marshaling from avro input to scala class
+                        null.asInstanceOf[Any] // scalastyle:ignore
+                      )
+                    }
+                  ).asJava
+                ))
             case _ =>
               throw new Exception(
                 s"${shapeless.scalaType.fullName} cannot extract namespace.name")
@@ -154,26 +154,55 @@ trait DefaultAvroRule extends DefaultRule with NoSchemaDsl {
         case shapeless: ShapelessCoproduct[_, _] =>
           if (isUnion(shapeless)
           ) { // enum sealed trait contains case objects, except for the default unknown value
-            Schema.createUnion(
-              shapeless.dependencies.map {
-                dep =>
-                  val depOp = new AvroOperation(operation.dependencyOperation(dep), this)
-                  depOp.avroSchema
-              }.asJava
+
+            val depSchemaWrapMap: Map[CoproductElement[_], (Schema, Boolean)] =
+            shapeless.dependencies.map {
+              dep =>
+                val depOp = operation.dependencyOperation(dep)
+                val depAvroOp = new AvroOperation(depOp, this)
+                dep -> {
+                  if (wrapUnionMember(operation, depAvroOp)) {
+                    (Schema.createRecord(
+                      dep.symbol.name,
+                      getRecordDoc(operation, true),
+                      shapeless.scalaType.fullName,
+                      false,
+                      Seq(
+                        new Field(
+                          getUnionWrapFieldName(depAvroOp),
+                          depAvroOp.avroSchema,
+                          getRecordFieldDoc(depAvroOp, true),
+                          null.asInstanceOf[Any]
+                        )
+                      ).asJava
+                    ), true)
+                  }
+                  else {
+                    (depAvroOp.avroSchema, false)
+                  }
+                }
+            }.toMap
+
+            SchemaInfo(
+              avroSchema = Schema.createUnion(
+                depSchemaWrapMap.values.map(_._1).toSeq.asJava
+              ),
+              unionMemberWrappedSchema = depSchemaWrapMap.map {
+                case (dep, (schema, wrapped)) => dep -> (if (wrapped) Some(schema) else None)
+              }.toMap
             )
           } else if (isEnum(shapeless)) {
             shapeless.scalaType.fullName match {
-              case NameSpacePattern(_, name) =>
-                Schema.createEnum(
-                  name,
-                  toJson(
-                    Map("enumClass" -> shapeless.scalaType.uniqueKey)
-                  ),
-                  shapeless.scalaType.fullName,
-                  shapeless.dependencies.map {
-                    dep => dep.noSchema.scalaType.shortName
-                  }.asJava
-                )
+              case NameSpacePattern(namespace, name) =>
+                SchemaInfo(
+                  Schema.createEnum(
+                    name,
+                    getEnumDoc(operation),
+                    namespace,
+                    shapeless.dependencies.map {
+                      dep => dep.noSchema.scalaType.shortName
+                    }.asJava
+                  ))
               case _ =>
                 throw new Exception(
                   s"${shapeless.scalaType.fullName} cannot extract namespace.name")
@@ -187,6 +216,7 @@ trait DefaultAvroRule extends DefaultRule with NoSchemaDsl {
           val elementSchema =
             new AvroOperation(operation.dependencyOperation(option.element), this).avroSchema
           // create union type to allow null value if scala type is Option
+          SchemaInfo(
           if (elementSchema.getType == Schema.Type.UNION) {
             elementSchema
           } else {
@@ -195,30 +225,31 @@ trait DefaultAvroRule extends DefaultRule with NoSchemaDsl {
               elementSchema
             )
           }
+          )
 
         case map: MapContainer[_] =>
           val elementSchema =
             new AvroOperation(operation.dependencyOperation(map.element), this).avroSchema
-          Schema.createMap(elementSchema)
+          SchemaInfo(Schema.createMap(elementSchema))
 
         case map: MapContainer2[_] =>
           val elementSchema =
             new AvroOperation(operation.dependencyOperation(map.element), this).avroSchema
-          Schema.createMap(elementSchema)
+          SchemaInfo(Schema.createMap(elementSchema))
 
         case seq: SeqContainer[_] =>
           val elementSchema =
             new AvroOperation(operation.dependencyOperation(seq.element), this).avroSchema
-          Schema.createArray(elementSchema)
+          SchemaInfo(Schema.createArray(elementSchema))
 
         case iterable: IterableContainer[_] =>
           val elementSchema =
             new AvroOperation(operation.dependencyOperation(iterable.element), this).avroSchema
-          Schema.createArray(elementSchema)
+          SchemaInfo(Schema.createArray(elementSchema))
 
         case other => throw new Exception(s"Missing avro schema rule for:\n${other.format()}")
       }
-    schema
+    schemaInfo
   }
 
   // from shapeless' perspective, there's really no well defined way to tell enum from union
@@ -236,4 +267,29 @@ trait DefaultAvroRule extends DefaultRule with NoSchemaDsl {
       .knownDirectSubclasses.forall(_.isModuleClass)
   }
 
+  def getRecordDoc(operation: Operation[_], isUnionWrapper: Boolean): String = {
+    null
+  }
+
+  def getRecordFieldDoc(fieldOperation: AvroOperation[_], isUnionWrapper: Boolean
+  ): String = {
+    null
+  }
+
+  def getEnumDoc(operation: Operation[_]): String = {
+    null
+  }
+
+  def wrapUnionMember(
+    uionClassOperation: Operation[_],
+    unionMemberOperation: AvroOperation[_]
+  ): Boolean = {
+    // avro does not support nested union
+    // if the member of a union is also a union, must wrap it
+    unionMemberOperation.avroSchema.getType == Schema.Type.UNION
+  }
+
+  def getUnionWrapFieldName(unionMemberOperation: AvroOperation[_]): String = {
+    unionMemberOperation.operation.context.noSchema.scalaType.shortName
+  }
 }

@@ -11,11 +11,14 @@ import org.apache.avro.file.DataFileWriter
 import org.apache.avro.generic.GenericDatumWriter
 import org.datacrafts.logging.Slf4jLogging
 import org.datacrafts.noschema.{NoSchemaDsl, Operation}
+import org.datacrafts.noschema.Context.{CoproductElement, LocalContext}
+import org.datacrafts.noschema.avro.AvroOperation.SchemaInfo
 
-class AvroOperation[T](val operation: Operation[T], avroRule: DefaultAvroRule)
+class AvroOperation[T](val operation: Operation[T], val avroRule: DefaultAvroRule)
   extends Slf4jLogging.Default {
 
-  lazy val avroSchema: Schema = avroRule.getAvroSchema(operation)
+  lazy val schemaInfo: SchemaInfo = avroRule.getAvroSchema(operation)
+  lazy val avroSchema: Schema = schemaInfo.avroSchema
 
   def toAvro(input: T): Any = {
     val result = operation.operator.unmarshal(input)
@@ -59,4 +62,24 @@ class AvroOperation[T](val operation: Operation[T], avroRule: DefaultAvroRule)
 
   }
 
+}
+
+object AvroOperation {
+  case class SchemaInfo(
+    avroSchema: Schema,
+    unionMemberWrappedSchema: Map[CoproductElement[_], Option[Schema]] = Map.empty
+  ) {
+    val isEnum = avroSchema.getType == Schema.Type.ENUM
+    val isUnion = avroSchema.getType == Schema.Type.UNION
+
+    def getWrappedSchema(coproductElement: CoproductElement[_]): Option[Schema] = {
+      unionMemberWrappedSchema.get(coproductElement).getOrElse(
+        throw new Exception(
+          s"calling with unrecognized member ${coproductElement}, " +
+            s"not found in ${unionMemberWrappedSchema.keySet}. " +
+            s"This should not happen under intended usage"
+        )
+      )
+    }
+  }
 }

@@ -79,7 +79,10 @@ lazy val `noschema-avro` = project.settings(
     "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.9.6",
     "org.slf4j" % "slf4j-log4j12" % "1.7.25" % Test
   )
-).dependsOn(noschema)
+).dependsOn(
+  noschema,
+  `noschema-thrift` % "test->test"
+)
 
 lazy val datacrafts = (project in file("."))
   .settings(

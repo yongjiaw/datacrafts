@@ -1,11 +1,12 @@
 package org.datacrafts.noschema
 
+import org.datacrafts.noschema.Context.CoproductElement
 import org.datacrafts.noschema.ShapelessCoproduct.{ShapelessCoproductAdapter, TypeValueExtractor, UnionTypeValueCollector}
 import shapeless.{:+:, CNil, Coproduct, Inl, Inr, LabelledGeneric, Lazy, Witness}
 import shapeless.labelled.{field, FieldType}
 
 class ShapelessCoproduct[T, R <: Coproduct](
-  dependencies: Seq[Context.CoproductElement[_]],
+  override val dependencies: Seq[Context.CoproductElement[_]],
   generic: LabelledGeneric.Aux[T, R],
   shapeless: ShapelessCoproductAdapter[R],
   st: NoSchema.ScalaType[T]
@@ -45,7 +46,7 @@ object ShapelessCoproduct {
         override def marshalCoproduct(
           typeValueExtractor: TypeValueExtractor, operation: Operation[_]
         ): FieldType[K, V] :+: L = {
-          typeValueExtractor.getTypeValue(head.value.scalaType) match {
+          typeValueExtractor.getTypeValue(headValueContext) match {
             case Some(value) =>
               Inl[FieldType[K, V], L](
                 field[K](operation.dependencyOperation(headValueContext).operator.marshal(value)))
@@ -60,7 +61,7 @@ object ShapelessCoproduct {
         ): UnionTypeValueCollector = {
           coproduct match {
             case Inl(headValue) => emptyUnion.addTypeValue(
-              head.value.scalaType,
+              headValueContext,
               operation.dependencyOperation(headValueContext).operator.unmarshal(headValue)
             )
             case Inr(tailValue) => tail.value.unmarshalCoproduct(
@@ -87,7 +88,7 @@ object ShapelessCoproduct {
 
         override def marshalCoproduct(
           typeExtractor: TypeValueExtractor, operation: Operation[_]): FieldType[K, V] :+: CNil = {
-          typeExtractor.getTypeValue(headValueContext.noSchema.scalaType) match {
+          typeExtractor.getTypeValue(headValueContext) match {
             case Some(value) =>
               Inl[FieldType[K, V], CNil](
                 field[K](operation.dependencyOperation(headValueContext).operator.marshal(value)))
@@ -103,7 +104,7 @@ object ShapelessCoproduct {
         ): UnionTypeValueCollector = {
           coproduct match {
             case Inl(value) => emptyUnion.addTypeValue(
-              headValueContext.noSchema.scalaType,
+              headValueContext,
               operation.dependencyOperation(headValueContext).operator.unmarshal(value)
             )
             case _ => throw new Exception("impossible")
@@ -143,10 +144,10 @@ object ShapelessCoproduct {
 
   trait TypeValueExtractor {
     // can control the whether the symbol is allowed to be absent and treated as null
-    def getTypeValue(tpe: NoSchema.ScalaType[_]): Option[Any]
+    def getTypeValue(coproductElement: CoproductElement[_]): Option[Any]
   }
 
   trait UnionTypeValueCollector {
-    def addTypeValue(tpe: NoSchema.ScalaType[_], value: Any): UnionTypeValueCollector
+    def addTypeValue(coproductElement: CoproductElement[_], value: Any): UnionTypeValueCollector
   }
 }

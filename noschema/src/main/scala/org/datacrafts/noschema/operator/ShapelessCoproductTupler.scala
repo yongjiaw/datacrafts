@@ -3,6 +3,7 @@ package org.datacrafts.noschema.operator
 import org.datacrafts.noschema.{NoSchema, Operation, ShapelessCoproduct, ShapelessProduct}
 import org.datacrafts.noschema.ShapelessCoproduct.TypeValueExtractor
 import org.datacrafts.noschema.operator.ShapelessCoproductOperator.CoproductBuilder
+import org.datacrafts.noschema.Context.CoproductElement
 
 class ShapelessCoproductTupler[T](
   override val operation: Operation[T],
@@ -12,8 +13,8 @@ class ShapelessCoproductTupler[T](
   override protected def parse(input: Any): TypeValueExtractor = input match {
     case (key, value) =>
       new TypeValueExtractor {
-        override def getTypeValue(scalaType: NoSchema.ScalaType[_]): Option[Any] = {
-          if (s"$key" == scalaType.fullName) Some(value) else None
+        override def getTypeValue(coproductElement: CoproductElement[_]): Option[Any] = {
+          if (s"$key" == coproductElement.noSchema.scalaType.fullName) Some(value) else None
         }
 
         override def toString: String = s"UnionTypeExtractor: input=${input}"
@@ -28,13 +29,13 @@ class ShapelessCoproductTupler[T](
       override def build(): (String, Any) = tuple.getOrElse(
         throw new Exception("union type value is empty"))
 
-      override def addTypeValue(scalaType: NoSchema.ScalaType[_],
+      override def addTypeValue(coproductElement: CoproductElement[_],
         value: Any
       ): ShapelessCoproduct.UnionTypeValueCollector = {
         if (tuple.isDefined) {
           throw new Exception(s"adding value for corpoduct should only be invoked once")
         }
-        tuple = Some((scalaType.fullName, value))
+        tuple = Some((coproductElement.noSchema.scalaType.fullName, value))
         this
       }
     }

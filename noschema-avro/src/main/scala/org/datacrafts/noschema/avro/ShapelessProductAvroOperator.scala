@@ -10,7 +10,7 @@ import org.datacrafts.noschema.operator.ShapelessProductOperator.ProductBuilder
 class ShapelessProductAvroOperator[T](
   override val shapeless: ShapelessProduct[T, _],
   override val operation: Operation[T],
-  avroRules: DefaultAvroRule
+  val avroRule: DefaultAvroRule
 ) extends ShapelessProductOperator[T, GenericRecord] {
 
   override protected def parse(input: Any): ShapelessProduct.SymbolExtractor = {
@@ -28,7 +28,7 @@ class ShapelessProductAvroOperator[T](
     }
   }
 
-  private lazy val avroOperation = new AvroOperation(operation, avroRules)
+  private lazy val avroOperation = new AvroOperation(operation, avroRule)
 
   override protected def newProductBuilder(): ProductBuilder[GenericRecord] =
     new ProductBuilder[GenericRecord] {
