@@ -1,5 +1,6 @@
 package org.datacrafts.noschema
 
+import org.datacrafts.noschema.Context.MemberVariable
 import org.datacrafts.noschema.ShapelessProduct.{ShapelessProductAdapter, SymbolCollector, SymbolExtractor}
 import shapeless.{::, HList, HNil, LabelledGeneric, Lazy, Witness}
 import shapeless.labelled.{field, FieldType}
@@ -76,9 +77,9 @@ object ShapelessProduct {
           symbolExtractor: SymbolExtractor, operation: Operation[_]): FieldType[K, V] :: L = {
           field[K](
             operation.dependencyOperation(headValueContext).operator
-                          .marshal(symbolExtractor.getSymbolValue(headSymbol.value.value))
+                          .marshal(symbolExtractor.getSymbolValue(headValueContext))
           ) :: tail.value.marshalHList(
-            symbolExtractor.removeSymbol(headSymbol.value.value), operation)
+            symbolExtractor.removeSymbol(headValueContext), operation)
         }
 
         override def unmarshalHList(
@@ -86,7 +87,7 @@ object ShapelessProduct {
         ): SymbolCollector = {
           tail.value.unmarshalHList(hList.tail, emptyBuilder, operation)
             .addSymbolValue(
-              symbol = headSymbol.value.value,
+              symbol = headValueContext,
               value = operation.dependencyOperation(headValueContext)
                 .operator.unmarshal(hList.head)
             )
@@ -104,10 +105,10 @@ object ShapelessProduct {
   }
 
   trait SymbolExtractor {
-    def removeSymbol(symbol: Symbol): SymbolExtractor
+    def removeSymbol(symbol: MemberVariable[_]): SymbolExtractor
 
     // can control the whether the symbol is allowed to be absent and treated as null
-    def getSymbolValue(symbol: Symbol): Any
+    def getSymbolValue(symbol: MemberVariable[_]): Any
 
     def allSymbolsExtracted(): Unit
   }
@@ -116,7 +117,7 @@ object ShapelessProduct {
 
     // add symbol value pairs disassembled from the structured class
     // can control the behavior when the symbol has null or empty value
-    def addSymbolValue(symbol: Symbol, value: Any): SymbolCollector
+    def addSymbolValue(symbol: MemberVariable[_], value: Any): SymbolCollector
 
   }
 

@@ -27,3 +27,9 @@ enum TweetType {
     Dm = 3,
     Reply = 4
 }
+
+union NestedUnion {
+  1: UnionExample a
+  2: i32 b
+  3: string c
+}

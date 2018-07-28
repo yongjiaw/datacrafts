@@ -1,16 +1,16 @@
 package org.datacrafts.noschema.avro
 
-import org.apache.avro.generic.GenericData
-import org.datacrafts.noschema.{NoSchemaDsl, ShapelessCoproduct}
+import org.apache.avro.generic.{GenericData, GenericRecordBuilder}
+import org.datacrafts.noschema.{NoSchema, NoSchemaDsl, Operation, ShapelessCoproduct}
 import org.datacrafts.noschema.ShapelessCoproduct.TypeValueExtractor
 import org.datacrafts.noschema.operator.ShapelessCoproductOperator
 import org.datacrafts.noschema.operator.ShapelessCoproductOperator.CoproductBuilder
 import org.datacrafts.noschema.Context.CoproductElement
 
-class ShapelessCoproductAvroOperator[T] (
+class ShapelessCoproductAvroOperatorOld[T] (
   override val shapeless: ShapelessCoproduct[T, _],
-  override val operation: AvroOperation[T],
-  val avroRule: AvroRule
+  override val operation: Operation[T],
+  val avroRule: DefaultAvroRule
 ) extends ShapelessCoproductOperator[T, Any] with NoSchemaDsl {
 
   override protected def parse(input: Any): TypeValueExtractor = {
@@ -26,34 +26,33 @@ class ShapelessCoproductAvroOperator[T] (
     }
   }
 
+  private lazy val avroOperation = new AvroOperationOld(operation, avroRule)
+
   override protected def newCoproductBuilder(): CoproductBuilder[Any] = {
     new CoproductBuilder[Any] {
       private var _value: Option[(CoproductElement[_], Any)] = None
 
       override def build(): Any = _value match {
         case Some((coproductElement, value)) =>
-          if (operation.isEnum) {
-            new GenericData.EnumSymbol(
-              operation.avroSchema, avroRule.getEnumValue(coproductElement))
-          }
-          else if (operation.isUnion) {
-            if (operation.schemaWrapper.isDefined) {
-              // wrap the value inside a record
-              val record = new GenericData.Record(operation.avroSchema)
-              record.put(operation.avroSchema.getFields.get(0).name(), value)
+        if (avroOperation.schemaInfo.isEnum) {
+          new GenericData.EnumSymbol(
+            avroOperation.avroSchema, coproductElement.noSchema.scalaType.shortName)
+        }
+        else if (avroOperation.schemaInfo.isUnion) {
+          avroOperation.schemaInfo.getWrappedSchema(coproductElement) match {
+            case Some(wrappedSchema) =>
+              val record = new GenericData.Record(wrappedSchema)
+              record.put(wrappedSchema.getFields.get(0).name(), value)
               record
-            }
-            else {
-              value
-            }
+            case None => value
           }
-          else {
-            throw new Exception(s"neither enum nor union\n${shapeless.format()}")
-          }
+        }
+        else {
+          throw new Exception(s"neither enum nor union\n${shapeless.format()}")
+        }
         case None =>
           // if this happens, there is a bug somewhere that failed to collect the symbol value,
-          // or this method is invoked in some unexpected way
-          // the value must exist with any scala instance
+          // which must exist with any scala instance
           throw new Exception(s"no value produced for coproduct, this is impossible")
       }
 

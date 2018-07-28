@@ -17,10 +17,10 @@ abstract class ShapelessProductOperator[T, O] extends Operator[T] with Slf4jLogg
   protected def newProductBuilder(): ProductBuilder[O]
 
   protected final override def marshalNoneNull(input: Any): T = {
-    val tag = operation.context.noSchema.scalaType.classTag
     val className = input.getClass.getCanonicalName
-    input match {
-      case tag(t) =>
+    operation.context.noSchema.scalaType.matchInput(input) match {
+        // this match might be very expensive
+      case Some(t) =>
         logDebug(s"input[${className}] is already expected type: " +
           s"${operation.context.noSchema.scalaType}")
         t

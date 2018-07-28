@@ -3,6 +3,7 @@ package org.datacrafts.noschema.operator
 import org.datacrafts.noschema.{Operation, ShapelessProduct}
 import org.datacrafts.noschema.ShapelessProduct.{SymbolCollector, SymbolExtractor}
 import org.datacrafts.noschema.operator.ShapelessProductOperator.ProductBuilder
+import org.datacrafts.noschema.Context.MemberVariable
 
 class ShapelessProductMapper[T](
   override val operation: Operation[T],
@@ -22,18 +23,18 @@ class ShapelessProductMapper[T](
             }
           }
 
-        override def removeSymbol(symbol: Symbol): SymbolExtractor = {
-          map -= symbol.name
+        override def removeSymbol(symbol: MemberVariable[_]): SymbolExtractor = {
+          map -= symbol.symbol.name
           this
         }
 
-        override def getSymbolValue(symbol: Symbol): Any = {
+        override def getSymbolValue(symbol: MemberVariable[_]): Any = {
           map.getOrElse(
-            symbol.name,
+            symbol.symbol.name,
             if (allowAbsence) {
               null //scalastyle:ignore
             } else {
-              throw new Exception(s"${symbol.name} is absent for ${shapeless.scalaType}")
+              throw new Exception(s"${symbol.symbol.name} is absent for ${shapeless.scalaType}")
             }
           )
         }
@@ -57,10 +58,10 @@ class ShapelessProductMapper[T](
         case (k, v) => k.name -> v
       }.toMap
 
-      override def addSymbolValue(symbol: Symbol,
+      override def addSymbolValue(symbol: MemberVariable[_],
         value: Any
       ): SymbolCollector = {
-        symbolMap += symbol -> value
+        symbolMap += symbol.symbol -> value
         this
       }
     }

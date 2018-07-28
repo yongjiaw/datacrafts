@@ -67,6 +67,7 @@ object NoSchema extends Slf4jLogging.Default {
     lazy val fullName: String = typeTag.tpe.typeSymbol.fullName
     lazy val shortName: String = typeTag.tpe.typeSymbol.name.toString
     override def toString: String = s"ScalaType[${uniqueKey}]"
+    def matchInput(input: Any): Option[T] = classTag.unapply(input)
   }
 
   object Category extends Enumeration {

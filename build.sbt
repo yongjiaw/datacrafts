@@ -76,7 +76,6 @@ lazy val `noschema-avro` = project.settings(
   commenSettings,
   libraryDependencies ++= Seq(
     "org.apache.avro" % "avro" % avroVersion,
-    "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.9.6",
     "org.slf4j" % "slf4j-log4j12" % "1.7.25" % Test
   )
 ).dependsOn(

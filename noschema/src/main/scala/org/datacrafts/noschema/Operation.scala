@@ -13,7 +13,7 @@ import org.datacrafts.noschema.Operation.{DefaultFormatter, Formatter, Operator}
   *             it need to retrieve the dependencies' operators from the operation object
   * @tparam T
   */
-final class Operation[T](
+class Operation[T](
   val context: Context[T],
   val rule: Operation.Rule
 ) {
