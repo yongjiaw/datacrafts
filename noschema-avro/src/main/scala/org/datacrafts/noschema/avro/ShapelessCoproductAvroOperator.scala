@@ -2,10 +2,10 @@ package org.datacrafts.noschema.avro
 
 import org.apache.avro.generic.GenericData
 import org.datacrafts.noschema.{NoSchemaDsl, ShapelessCoproduct}
+import org.datacrafts.noschema.Context.CoproductElement
 import org.datacrafts.noschema.ShapelessCoproduct.TypeValueExtractor
 import org.datacrafts.noschema.operator.ShapelessCoproductOperator
 import org.datacrafts.noschema.operator.ShapelessCoproductOperator.CoproductBuilder
-import org.datacrafts.noschema.Context.CoproductElement
 
 class ShapelessCoproductAvroOperator[T] (
   override val shapeless: ShapelessCoproduct[T, _],

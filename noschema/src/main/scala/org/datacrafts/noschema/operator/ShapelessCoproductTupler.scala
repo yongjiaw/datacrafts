@@ -1,9 +1,9 @@
 package org.datacrafts.noschema.operator
 
-import org.datacrafts.noschema.{NoSchema, Operation, ShapelessCoproduct, ShapelessProduct}
+import org.datacrafts.noschema.{Operation, ShapelessCoproduct}
+import org.datacrafts.noschema.Context.CoproductElement
 import org.datacrafts.noschema.ShapelessCoproduct.TypeValueExtractor
 import org.datacrafts.noschema.operator.ShapelessCoproductOperator.CoproductBuilder
-import org.datacrafts.noschema.Context.CoproductElement
 
 class ShapelessCoproductTupler[T](
   override val operation: Operation[T],

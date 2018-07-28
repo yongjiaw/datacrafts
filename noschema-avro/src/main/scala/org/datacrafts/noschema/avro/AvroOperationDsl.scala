@@ -6,11 +6,7 @@ trait AvroOperationDsl extends NoSchemaDsl {
 
   def avroOperationOf[T: NoSchema](
     avroRule: AvroRule = AvroRule.Default): AvroOperation[T] = {
-    new AvroOperation[T](
-      Context.root(schemaOf[T]),
-      avroRule,
-      None
-    )
+    new AvroOperation[T](Context.root(schemaOf[T]), avroRule, None)
   }
 
 }

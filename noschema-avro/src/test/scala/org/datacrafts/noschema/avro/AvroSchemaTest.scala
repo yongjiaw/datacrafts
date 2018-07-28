@@ -41,7 +41,7 @@ class AvroSchemaTest extends FlatSpec with AvroOperationDsl with ScroogeSupport 
     println(avro)
     val expectedString = """{"v1": 1.1, "v10": {"UnionExample": {"bar": null, "foo": "bar"}}, "v2": {"v3": 12, "v4": null}, "v3": {"v1": 1}, "v4": "BE", "v5": {"x": {"v1": "a"}}, "v6": [1.5], "v7": {"bytes": ""}, "v8": [["1", "2"], [], ["3"]], "v9": null}"""
     assert(avro.toString == expectedString)
-
+    
     // write to avro file should be successful too
     val buffer = new ByteArrayOutputStream(1000)
     val avroWriter = avroOp.newWriter(buffer)

@@ -1,11 +1,11 @@
 package org.datacrafts.noschema.avro
 
 import org.apache.avro.generic.{GenericData, GenericRecord}
-import org.datacrafts.noschema.{Operation, ShapelessProduct}
+import org.datacrafts.noschema.Context.MemberVariable
+import org.datacrafts.noschema.ShapelessProduct
 import org.datacrafts.noschema.ShapelessProduct.SymbolExtractor
 import org.datacrafts.noschema.operator.ShapelessProductOperator
 import org.datacrafts.noschema.operator.ShapelessProductOperator.ProductBuilder
-import org.datacrafts.noschema.Context.MemberVariable
 
 class ShapelessProductAvroOperator[T](
   override val shapeless: ShapelessProduct[T, _],
