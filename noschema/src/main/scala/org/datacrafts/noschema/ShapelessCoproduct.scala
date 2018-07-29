@@ -1,5 +1,7 @@
 package org.datacrafts.noschema
 
+import scala.util.{Failure, Success, Try}
+
 import org.datacrafts.noschema.Context.CoproductElement
 import org.datacrafts.noschema.ShapelessCoproduct.{ShapelessCoproductAdapter, TypeValueExtractor, UnionTypeValueCollector}
 import shapeless.{:+:, CNil, Coproduct, Inl, Inr, LabelledGeneric, Lazy, Witness}
@@ -46,10 +48,23 @@ object ShapelessCoproduct {
         override def marshalCoproduct(
           typeValueExtractor: TypeValueExtractor, operation: Operation[_]
         ): FieldType[K, V] :+: L = {
+          // if the extractor can determine the current product element does not match,
+          // it should return None.
+          // This is the case for Enum where the element.symbol matches with the input EnumSymbol.
+          // For record type, however, the input is the record structure,
+          // there is no way to determine its type directly,
+          // but has to always return the Some(input) and let each of the type to try marshaling it
           typeValueExtractor.getTypeValue(headValueContext) match {
             case Some(value) =>
-              Inl[FieldType[K, V], L](
+              Try(
+                Inl[FieldType[K, V], L](
                 field[K](operation.dependencyOperation(headValueContext).operator.marshal(value)))
+              ) match {
+                case Success(result) => result
+                case Failure(f) =>
+                  Inr[FieldType[K, V], L](
+                    tail.value.marshalCoproduct(typeValueExtractor, operation))
+              }
             case None =>
               Inr[FieldType[K, V], L](tail.value.marshalCoproduct(typeValueExtractor, operation))
           }
@@ -88,6 +103,12 @@ object ShapelessCoproduct {
 
         override def marshalCoproduct(
           typeExtractor: TypeValueExtractor, operation: Operation[_]): FieldType[K, V] :+: CNil = {
+
+          if (schemaClassFilter.contains(headValueContext.noSchema.scalaType.fullName)) {
+            throw new Exception(s"${headValueContext} is last in coproduct and blacklisted," +
+              s" no value found for any type from $typeExtractor\n" +
+              s"${operation.format()}")
+          }
           typeExtractor.getTypeValue(headValueContext) match {
             case Some(value) =>
               Inl[FieldType[K, V], CNil](

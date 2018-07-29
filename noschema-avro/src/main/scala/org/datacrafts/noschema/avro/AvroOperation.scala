@@ -82,6 +82,10 @@ class AvroOperation[T](
     result
   }
 
+  def fromAvro(input: Any): T = {
+    operator.marshal(input)
+  }
+
   def scalaType: ScalaType[T] = context.noSchema.scalaType
 
   def anyToAvro(input: Any): Any = {

@@ -17,15 +17,29 @@ class ShapelessProductAvroOperator[T](
     input match {
       case record: GenericRecord =>
         new SymbolExtractor {
-
           override def removeSymbol(symbol: MemberVariable[_]): SymbolExtractor = this
 
-          override def getSymbolValue(symbol: MemberVariable[_]): Any =
-            record.get(symbol.symbol.name)
+          override def getSymbolValue(symbol: MemberVariable[_]): Any = {
+            val result = record.get(symbol.symbol.name)
+            if (Option(result).isEmpty) {
+              throw new Exception(s"avro record must contain all values")
+            }
+            result
+          }
 
           override def allSymbolsExtracted(): Unit = {}
         }
-      case _ => throw new Exception(s"input type ${input.getClass} is not GenericRecord")
+      // enum is just empty struct
+      case enum: GenericData.EnumSymbol =>
+        new SymbolExtractor {
+
+          override def removeSymbol(symbol: MemberVariable[_]): SymbolExtractor = this
+
+          override def getSymbolValue(symbol: MemberVariable[_]): Any = null
+
+          override def allSymbolsExtracted(): Unit = {}
+        }
+      case _ => throw new Exception(s"unknown input type ${input.getClass}: $input")
     }
   }
 

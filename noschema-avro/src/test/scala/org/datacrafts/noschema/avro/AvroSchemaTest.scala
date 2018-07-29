@@ -4,8 +4,11 @@ import java.io.ByteArrayOutputStream
 
 import org.apache.avro.Schema
 import org.apache.avro.Schema.Field
+import org.apache.avro.generic.GenericData
+import org.apache.avro.generic.GenericData.EnumSymbol
+import org.datacrafts.logging.Slf4jLogging
 import org.datacrafts.noschema.ScroogeSupport
-import org.datacrafts.scrooge.shapes.{NestedUnion, StructExample, UnionExample}
+import org.datacrafts.scrooge.shapes.{NestedUnion, StructExample, TweetType, UnionExample}
 import org.scalatest.FlatSpec
 
 // scalastyle:off
@@ -34,19 +37,51 @@ class AvroSchemaTest extends FlatSpec with AvroOperationDsl with ScroogeSupport 
     assert(schema == expectedSchema)
   }
 
-  "case class and thrift unmarshal to avro" should "be successful" in {
+  "Enum marshal/unmarshal" should "be successful" in {
+    val avroOp = avroOperationOf[TestEnum]()
+    assert(avroOp.toAvro(AE) == new EnumSymbol(avroOp.avroSchema, "AE"))
+    assert(avroOp.toAvro(BE) == new EnumSymbol(avroOp.avroSchema, "BE"))
+    assert(avroOp.fromAvro(avroOp.toAvro(BE)) == BE)
+
+  }
+
+  def assertRoundTrip[T](avroOp: AvroOperation[T], input: T): Unit = {
+    assert(avroOp.fromAvro(avroOp.toAvro(input)) == input)
+  }
+
+  "Union marshal/unmarshal" should "be successful" in {
+    val avroOp = avroOperationOf[TestUnion]()
+    assertRoundTrip(avroOp, AU(1))
+    assertRoundTrip(avroOp, BU("a"))
+  }
+
+  "NestedUnion marshal/unmarshal" should "be successful" in {
+    val avroOp = avroOperationOf[NestedUnion]()
+    println(avroOp.format())
+    assertRoundTrip(avroOp, NestedUnion.A(UnionExample.B(2)))
+    assertRoundTrip(avroOp, NestedUnion.A(UnionExample.C("c")))
+    assertRoundTrip(avroOp, NestedUnion.B(1))
+    assertRoundTrip(avroOp, NestedUnion.C("c"))
+  }
+
+  "case class and thrift marshal/unmarshal" should "be successful" in {
     val avroOp = avroOperationOf[Test2]()
     val value = Test2(1.1, Test(12))
     val avro = avroOp.toAvro(value)
     println(avro)
     val expectedString = """{"v1": 1.1, "v10": {"UnionExample": {"bar": null, "foo": "bar"}}, "v2": {"v3": 12, "v4": null}, "v3": {"v1": 1}, "v4": "BE", "v5": {"x": {"v1": "a"}}, "v6": [1.5], "v7": {"bytes": ""}, "v8": [["1", "2"], [], ["3"]], "v9": null}"""
     assert(avro.toString == expectedString)
-    
+
+    assert(avroOp.fromAvro(avro) == value)
+
     // write to avro file should be successful too
     val buffer = new ByteArrayOutputStream(1000)
     val avroWriter = avroOp.newWriter(buffer)
     avroWriter.write(value)
   }
+}
+
+object AvroScroogeRule extends AvroRule with Slf4jLogging.Default {
 
 }
 
