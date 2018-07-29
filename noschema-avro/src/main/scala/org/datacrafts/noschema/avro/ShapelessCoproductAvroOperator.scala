@@ -37,10 +37,8 @@ class ShapelessCoproductAvroOperator[T] (
           }
         }
         else if (operation.isUnion) {
-          val elemOp = operation.dependencyOperation(coproductElement)
-
           // account for wrapping
-          val finalValue = operation.schemaWrapper match {
+          operation.schemaWrapper match {
             case Some(SchemaWrapper(_, _, wrapperField)) =>
               input match {
                 // if some other union member happen to have the same field as the wrap
@@ -50,14 +48,6 @@ class ShapelessCoproductAvroOperator[T] (
               }
             case None => Some(input)
           }
-
-          elemOp.context.noSchema match {
-
-            case p: Primitive[_] => finalValue.map(p.scalaType.matchInput).flatten
-
-            case _ => finalValue
-          }
-
         }
         else {
           throw new Exception(s"neither enum nor union\n${shapeless.format()}")

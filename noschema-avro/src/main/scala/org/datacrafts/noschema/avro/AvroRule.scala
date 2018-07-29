@@ -81,22 +81,20 @@ trait AvroRule extends DefaultRule with NoSchemaDsl {
     wrappedOperation.context.noSchema.scalaType.shortName
   }
 
-  import scala.reflect.runtime.universe.typeOf
-
   def getSchema(operation: AvroOperation[_]): Schema = {
     operation.context.noSchema match {
 
       // primitive
       case primitive: Primitive[_] =>
-        primitive.scalaType.typeTag.tpe match {
-          case t if t <:< typeOf[Short] => Schema.create(Schema.Type.INT)
-          case t if t <:< typeOf[Int] => Schema.create(Schema.Type.INT)
-          case t if t <:< typeOf[Long] => Schema.create(Schema.Type.LONG)
-          case t if t <:< typeOf[Double] => Schema.create(Schema.Type.DOUBLE)
-          case t if t <:< typeOf[Float] => Schema.create(Schema.Type.FLOAT)
-          case t if t <:< typeOf[Boolean] => Schema.create(Schema.Type.BOOLEAN)
-          case t if t <:< typeOf[String] => Schema.create(Schema.Type.STRING)
-          case t if t <:< typeOf[Array[Byte]] => Schema.create(Schema.Type.BYTES)
+        primitive.refinedType match {
+          case Primitive.Type.Short => Schema.create(Schema.Type.INT)
+          case Primitive.Type.Int => Schema.create(Schema.Type.INT)
+          case Primitive.Type.Long => Schema.create(Schema.Type.LONG)
+          case Primitive.Type.Double => Schema.create(Schema.Type.DOUBLE)
+          case Primitive.Type.Float => Schema.create(Schema.Type.FLOAT)
+          case Primitive.Type.Boolean => Schema.create(Schema.Type.BOOLEAN)
+          case Primitive.Type.String => Schema.create(Schema.Type.STRING)
+          case Primitive.Type.Bytes => Schema.create(Schema.Type.BYTES)
           case _ => throw new Exception(s"no primitive avro schema for ${primitive}")
         }
 
@@ -200,7 +198,7 @@ trait AvroRule extends DefaultRule with NoSchemaDsl {
     import scala.reflect.runtime.universe.typeOf
     operation.context.noSchema match {
 
-      case bytes: Primitive[V] if bytes.scalaType.typeTag.tpe <:< typeOf[Array[Byte]] =>
+      case bytes: Primitive[V] if bytes.refinedType == Primitive.Type.Bytes =>
         new PrimitiveOperator[Array[Byte]](
           operation.asInstanceOf[Operation[Array[Byte]]]
         ) {

@@ -63,9 +63,9 @@ object ShapelessCoproduct extends Slf4jLogging.Default {
               ) match {
                 case Success(result) => result
                 case Failure(f) =>
-                  logInfo(
-                    s"coproduct marshaling failure is expected: " +
-                      s"failed to marshal value $value for structured type " +
+                  logDebug(
+                    s"coproduct marshaling intermediate attempt failures are expected: " +
+                      s"failed to marshal value $value for " +
                       s"${headValueContext}\nreason=${f.getMessage}")
                   Inr[FieldType[K, V], L](
                     tail.value.marshalCoproduct(typeValueExtractor, operation))

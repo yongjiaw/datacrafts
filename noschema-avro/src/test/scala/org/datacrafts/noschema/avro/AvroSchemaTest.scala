@@ -4,11 +4,10 @@ import java.io.ByteArrayOutputStream
 
 import org.apache.avro.Schema
 import org.apache.avro.Schema.Field
-import org.apache.avro.generic.GenericData
 import org.apache.avro.generic.GenericData.EnumSymbol
 import org.datacrafts.logging.Slf4jLogging
 import org.datacrafts.noschema.ScroogeSupport
-import org.datacrafts.scrooge.shapes.{NestedUnion, StructExample, TweetType, UnionExample}
+import org.datacrafts.scrooge.shapes.{NestedUnion, StructExample, UnionExample}
 import org.scalatest.FlatSpec
 
 // scalastyle:off
