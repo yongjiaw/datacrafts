@@ -1,5 +1,7 @@
 package org.datacrafts.noschema.operator
 
+import scala.collection.JavaConverters._
+
 import org.datacrafts.noschema.Context.ContainerElement
 import org.datacrafts.noschema.Operation
 
@@ -47,8 +49,11 @@ object ContainerOperator {
     protected override def marshalNoneNull(input: Any): Seq[T] = {
       input match {
         case value: Iterable[_] => value.map(elementOperation.operator.marshal).toSeq
-        case None => throw new Exception(s"marshalling ${this} " +
-          s"but input is not Iterable ${input.getClass}, ${input}")
+        case value: java.lang.Iterable[_] =>
+          value.asScala.map(elementOperation.operator.marshal).toSeq
+        case _ => throw new Exception(
+          s"marshalling ${operation.context.noSchema.scalaType.uniqueKey} " +
+            s"but input type is not covered ${input.getClass}, ${input}")
       }
     }
 
@@ -65,8 +70,11 @@ object ContainerOperator {
     protected override def marshalNoneNull(input: Any): Iterable[T] = {
       input match {
         case value: Iterable[_] => value.map(elementOperation.operator.marshal).toSeq
-        case None => throw new Exception(s"marshalling ${this} " +
-          s"but input is not Iterable ${input.getClass}, ${input}")
+        case value: java.lang.Iterable[_] =>
+          value.asScala.map(elementOperation.operator.marshal).toSeq
+        case _ => throw new Exception(
+          s"marshalling ${operation.context.noSchema.scalaType.uniqueKey} " +
+            s"but input type is not covered ${input.getClass}, ${input}")
       }
     }
 
@@ -85,8 +93,12 @@ object ContainerOperator {
         case value: Iterable[_] => value.map {
           case (k, v) => s"$k" -> elementOperation.operator.marshal(v)
         }.toMap
-        case None => throw new Exception(s"marshalling ${this} " +
-          s"but input is not Iterable ${input.getClass}, ${input}")
+        case value: java.util.Map[_, _] => value.asScala.map {
+          case (k, v) => s"$k" -> elementOperation.operator.marshal(v)
+        }.toMap
+        case _ => throw new Exception(
+          s"marshalling ${operation.context.noSchema.scalaType.uniqueKey} " +
+          s"but input type is not covered ${input.getClass}, ${input}")
       }
     }
 
@@ -107,8 +119,12 @@ object ContainerOperator {
         case value: Iterable[_] => value.map {
           case (k, v) => s"$k" -> elementOperation.operator.marshal(v)
         }.toMap
-        case None => throw new Exception(s"marshalling ${this} " +
-          s"but input is not Iterable ${input.getClass}, ${input}")
+        case value: java.util.Map[_, _] => value.asScala.map {
+          case (k, v) => s"$k" -> elementOperation.operator.marshal(v)
+        }.toMap
+        case _ => throw new Exception(
+          s"marshalling ${operation.context.noSchema.scalaType.uniqueKey} " +
+            s"but input type is not covered ${input.getClass}, ${input}")
       }
     }
 

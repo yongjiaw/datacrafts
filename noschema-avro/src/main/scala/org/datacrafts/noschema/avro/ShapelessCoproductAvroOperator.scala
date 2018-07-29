@@ -39,24 +39,23 @@ class ShapelessCoproductAvroOperator[T] (
         else if (operation.isUnion) {
           val elemOp = operation.dependencyOperation(coproductElement)
 
-          // try to account for potential wrapping
-          // if the input is wrapped with the expected structure, than treat it as wrapped
-          // marshaling may need to deal with more situations if needed
+          // account for wrapping
           val finalValue = operation.schemaWrapper match {
             case Some(SchemaWrapper(_, _, wrapperField)) =>
               input match {
-                case record: GenericRecord =>
-                  Option(record.get(wrapperField)).getOrElse(record)
-                case _ => input
+                // if some other union member happen to have the same field as the wrap
+                // there's no way to tell
+                case record: GenericRecord => Option(record.get(wrapperField))
+                case _ => None
               }
-            case None => input
+            case None => Some(input)
           }
 
           elemOp.context.noSchema match {
 
-            case p: Primitive[_] => p.scalaType.matchInput(finalValue)
+            case p: Primitive[_] => finalValue.map(p.scalaType.matchInput).flatten
 
-            case _ => Some(finalValue)
+            case _ => finalValue
           }
 
         }

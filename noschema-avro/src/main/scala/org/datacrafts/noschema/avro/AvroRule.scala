@@ -204,6 +204,12 @@ trait AvroRule extends DefaultRule with NoSchemaDsl {
         new PrimitiveOperator[Array[Byte]](
           operation.asInstanceOf[Operation[Array[Byte]]]
         ) {
+          override def marshalNoneNull(input: Any): Array[Byte] = {
+            input match {
+              case byteBuffer: java.nio.ByteBuffer => byteBuffer.array()
+              case _ => super.marshalNoneNull(input)
+            }
+          }
           override def unmarshalNoneNull(input: Array[Byte]): Any = {
             java.nio.ByteBuffer.wrap(input)
           }
@@ -220,6 +226,7 @@ trait AvroRule extends DefaultRule with NoSchemaDsl {
           map.element,
           operation.asInstanceOf[Operation[Map[String, map.Elem]]]
         ) {
+
           protected override def unmarshalNoneNull(input: Map[String, Elem]): Any =
             input.map {
               case (k, v) => k -> elementOperation.operator.unmarshal(v)

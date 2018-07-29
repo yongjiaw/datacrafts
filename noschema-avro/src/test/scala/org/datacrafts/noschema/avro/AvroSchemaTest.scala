@@ -37,16 +37,17 @@ class AvroSchemaTest extends FlatSpec with AvroOperationDsl with ScroogeSupport 
     assert(schema == expectedSchema)
   }
 
+  def assertRoundTrip[T](avroOp: AvroOperation[T], input: T): Unit = {
+    assert(avroOp.fromAvro(avroOp.toAvro(input)) == input)
+  }
+
   "Enum marshal/unmarshal" should "be successful" in {
     val avroOp = avroOperationOf[TestEnum]()
     assert(avroOp.toAvro(AE) == new EnumSymbol(avroOp.avroSchema, "AE"))
     assert(avroOp.toAvro(BE) == new EnumSymbol(avroOp.avroSchema, "BE"))
-    assert(avroOp.fromAvro(avroOp.toAvro(BE)) == BE)
+    assertRoundTrip(avroOp, AE)
+    assertRoundTrip(avroOp, BE)
 
-  }
-
-  def assertRoundTrip[T](avroOp: AvroOperation[T], input: T): Unit = {
-    assert(avroOp.fromAvro(avroOp.toAvro(input)) == input)
   }
 
   "Union marshal/unmarshal" should "be successful" in {
@@ -58,18 +59,23 @@ class AvroSchemaTest extends FlatSpec with AvroOperationDsl with ScroogeSupport 
   "NestedUnion marshal/unmarshal" should "be successful" in {
     val avroOp = avroOperationOf[NestedUnion]()
     println(avroOp.format())
+    assertRoundTrip(avroOp, NestedUnion.A(UnionExample.A(StructExample(foo = "bar"))))
     assertRoundTrip(avroOp, NestedUnion.A(UnionExample.B(2)))
     assertRoundTrip(avroOp, NestedUnion.A(UnionExample.C("c")))
     assertRoundTrip(avroOp, NestedUnion.B(1))
-    assertRoundTrip(avroOp, NestedUnion.C("c"))
+    assertRoundTrip(avroOp, NestedUnion.C("1"))
   }
 
   "case class and thrift marshal/unmarshal" should "be successful" in {
+
+    val op = schemaOf[Option[Option[Option[Double]]]].operation()
+    println(op.operator.marshal(null)) // Some(Some(None))) instead of None
+
     val avroOp = avroOperationOf[Test2]()
     val value = Test2(1.1, Test(12))
     val avro = avroOp.toAvro(value)
     println(avro)
-    val expectedString = """{"v1": 1.1, "v10": {"UnionExample": {"bar": null, "foo": "bar"}}, "v2": {"v3": 12, "v4": null}, "v3": {"v1": 1}, "v4": "BE", "v5": {"x": {"v1": "a"}}, "v6": [1.5], "v7": {"bytes": ""}, "v8": [["1", "2"], [], ["3"]], "v9": null}"""
+    val expectedString = """{"v1": 1.1, "v10": {"UnionExample": {"bar": null, "foo": "bar"}}, "v2": {"v3": 12, "v4": 0.1}, "v3": {"v1": 1}, "v4": "BE", "v5": {"x": {"v2": "a"}}, "v6": [1.5], "v7": {"bytes": ""}, "v8": [["1", "2"], [], ["3"]], "v9": null}"""
     assert(avro.toString == expectedString)
 
     assert(avroOp.fromAvro(avro) == value)
@@ -85,7 +91,7 @@ object AvroScroogeRule extends AvroRule with Slf4jLogging.Default {
 
 }
 
-case class Test(v3: Int, v4: Option[Option[Option[Double]]] = None)
+case class Test(v3: Int, v4: Option[Option[Option[Double]]] = Some(Some(Some(0.1))))
 case class Test2(v1: Double, v2: Test,
   v3: TestUnion = AU(1),
   v4: TestEnum = BE,
@@ -99,7 +105,7 @@ case class Test2(v1: Double, v2: Test,
 
 sealed trait TestUnion
 case class AU(v1: Int) extends TestUnion
-case class BU(v1: String) extends TestUnion
+case class BU(v2: String) extends TestUnion
 
 sealed trait TestEnum
 case object AE extends TestEnum

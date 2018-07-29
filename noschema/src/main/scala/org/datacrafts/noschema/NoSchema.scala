@@ -76,6 +76,8 @@ object NoSchema extends Slf4jLogging.Default {
 
   trait HasLazySchema[T] {
     def lazySchema: NoSchema[T]
+
+    override def toString: String = s"${lazySchema}"
   }
 
   private val _instances = collection.mutable.Map.empty[TypeUniqueKey, NoSchema[_]]

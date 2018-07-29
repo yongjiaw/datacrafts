@@ -17,12 +17,12 @@ class ShapelessProductAvroOperator[T](
     input match {
       case record: GenericRecord =>
         new SymbolExtractor {
-          override def removeSymbol(symbol: MemberVariable[_]): SymbolExtractor = this
+          override def removeSymbol(member: MemberVariable[_]): SymbolExtractor = this
 
-          override def getSymbolValue(symbol: MemberVariable[_]): Any = {
-            val result = record.get(symbol.symbol.name)
-            if (Option(result).isEmpty) {
-              throw new Exception(s"avro record must contain all values")
+          override def getSymbolValue(member: MemberVariable[_]): Any = {
+            val result = record.get(member.symbol.name)
+            if (Option(result).isEmpty && !operation.dependencyOperation(member).isNullable) {
+              throw new Exception(s"${member.symbol.name} cannot be null: $input")
             }
             result
           }
@@ -35,7 +35,7 @@ class ShapelessProductAvroOperator[T](
 
           override def removeSymbol(symbol: MemberVariable[_]): SymbolExtractor = this
 
-          override def getSymbolValue(symbol: MemberVariable[_]): Any = null
+          override def getSymbolValue(symbol: MemberVariable[_]): Any = null // scalastyle:ignore
 
           override def allSymbolsExtracted(): Unit = {}
         }

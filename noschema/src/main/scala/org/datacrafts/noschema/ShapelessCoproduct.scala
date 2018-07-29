@@ -2,6 +2,7 @@ package org.datacrafts.noschema
 
 import scala.util.{Failure, Success, Try}
 
+import org.datacrafts.logging.Slf4jLogging
 import org.datacrafts.noschema.Context.CoproductElement
 import org.datacrafts.noschema.ShapelessCoproduct.{ShapelessCoproductAdapter, TypeValueExtractor, UnionTypeValueCollector}
 import shapeless.{:+:, CNil, Coproduct, Inl, Inr, LabelledGeneric, Lazy, Witness}
@@ -28,7 +29,7 @@ class ShapelessCoproduct[T, R <: Coproduct](
   }
 }
 
-object ShapelessCoproduct {
+object ShapelessCoproduct extends Slf4jLogging.Default {
 
   trait Instances {
     implicit def shapelessCoproductRecursiveBuilder
@@ -62,6 +63,10 @@ object ShapelessCoproduct {
               ) match {
                 case Success(result) => result
                 case Failure(f) =>
+                  logInfo(
+                    s"coproduct marshaling failure is expected: " +
+                      s"failed to marshal value $value for structured type " +
+                      s"${headValueContext}\nreason=${f.getMessage}")
                   Inr[FieldType[K, V], L](
                     tail.value.marshalCoproduct(typeValueExtractor, operation))
               }
