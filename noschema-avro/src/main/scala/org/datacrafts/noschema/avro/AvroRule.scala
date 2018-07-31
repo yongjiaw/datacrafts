@@ -202,6 +202,7 @@ trait AvroRule extends DefaultRule with NoSchemaDsl {
         new PrimitiveOperator[Array[Byte]](
           operation.asInstanceOf[Operation[Array[Byte]]]
         ) {
+          override def toString: String = s"AvroBytesOperator"
           override def marshalNoneNull(input: Any): Array[Byte] = {
             input match {
               case byteBuffer: java.nio.ByteBuffer => byteBuffer.array()
@@ -210,6 +211,20 @@ trait AvroRule extends DefaultRule with NoSchemaDsl {
           }
           override def unmarshalNoneNull(input: Array[Byte]): Any = {
             java.nio.ByteBuffer.wrap(input)
+          }
+        }.asInstanceOf[Operator[V]]
+
+      case short: Primitive[V] if short.refinedType == Primitive.Type.Short =>
+        new PrimitiveOperator[Short](
+          operation.asInstanceOf[Operation[Short]]
+        ) {
+          override def toString: String = s"AvroShortOperator"
+          override def marshalNoneNull(input: Any): Short = {
+            input.toString.toShort
+          }
+          // avro does not support short value, it's mapped to INT
+          override def unmarshalNoneNull(input: Short): Any = {
+            input.intValue()
           }
         }.asInstanceOf[Operator[V]]
 

@@ -30,6 +30,6 @@ enum TweetType {
 
 union NestedUnion {
   1: UnionExample a
-  2: i32 b
+  2: i16 b
   3: string c
 }
