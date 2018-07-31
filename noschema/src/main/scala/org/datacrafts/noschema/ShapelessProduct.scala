@@ -76,7 +76,7 @@ object ShapelessProduct {
         override def marshalHList(
           symbolExtractor: SymbolExtractor, operation: Operation[_]): FieldType[K, V] :: L = {
           field[K](
-            operation.dependencyOperation(headValueContext).operator
+            operation.dependencyOperation(headValueContext)
                           .marshal(symbolExtractor.getSymbolValue(headValueContext))
           ) :: tail.value.marshalHList(
             symbolExtractor.removeSymbol(headValueContext), operation)
@@ -89,7 +89,7 @@ object ShapelessProduct {
             .addSymbolValue(
               symbol = headValueContext,
               value = operation.dependencyOperation(headValueContext)
-                .operator.unmarshal(hList.head)
+                .unmarshal(hList.head)
             )
         }
       }

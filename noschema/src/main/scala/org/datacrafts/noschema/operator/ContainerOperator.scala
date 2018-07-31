@@ -26,13 +26,13 @@ object ContainerOperator {
         case _ => input
       }
       Option(
-        elementOperation.operator.marshal(unwrapped)
+        elementOperation.marshal(unwrapped)
       )
     }
 
     protected override def unmarshalNoneNull(input: Option[T]): Any = {
       // unwrap the option
-      input.map(elementOperation.operator.unmarshal)
+      input.map(elementOperation.unmarshal)
         .getOrElse(null) // scalastyle:ignore
     }
 
@@ -48,9 +48,9 @@ object ContainerOperator {
 
     protected override def marshalNoneNull(input: Any): Seq[T] = {
       input match {
-        case value: Iterable[_] => value.map(elementOperation.operator.marshal).toSeq
+        case value: Iterable[_] => value.map(elementOperation.marshal).toSeq
         case value: java.lang.Iterable[_] =>
-          value.asScala.map(elementOperation.operator.marshal).toSeq
+          value.asScala.map(elementOperation.marshal).toSeq
         case _ => throw new Exception(
           s"marshalling ${operation.context.noSchema.scalaType.uniqueKey} " +
             s"but input type is not covered ${input.getClass}, ${input}")
@@ -58,7 +58,7 @@ object ContainerOperator {
     }
 
     protected override def unmarshalNoneNull(input: Seq[T]): Any = {
-      input.map(elementOperation.operator.unmarshal)
+      input.map(elementOperation.unmarshal)
     }
   }
 
@@ -69,9 +69,9 @@ object ContainerOperator {
 
     protected override def marshalNoneNull(input: Any): Iterable[T] = {
       input match {
-        case value: Iterable[_] => value.map(elementOperation.operator.marshal).toSeq
+        case value: Iterable[_] => value.map(elementOperation.marshal).toSeq
         case value: java.lang.Iterable[_] =>
-          value.asScala.map(elementOperation.operator.marshal).toSeq
+          value.asScala.map(elementOperation.marshal).toSeq
         case _ => throw new Exception(
           s"marshalling ${operation.context.noSchema.scalaType.uniqueKey} " +
             s"but input type is not covered ${input.getClass}, ${input}")
@@ -79,7 +79,7 @@ object ContainerOperator {
     }
 
     protected override def unmarshalNoneNull(input: Iterable[T]): Any = {
-      input.map(elementOperation.operator.unmarshal)
+      input.map(elementOperation.unmarshal)
     }
   }
 
@@ -91,10 +91,10 @@ object ContainerOperator {
     protected override def marshalNoneNull(input: Any): Map[String, T] = {
       input match {
         case value: Iterable[_] => value.map {
-          case (k, v) => s"$k" -> elementOperation.operator.marshal(v)
+          case (k, v) => s"$k" -> elementOperation.marshal(v)
         }.toMap
         case value: java.util.Map[_, _] => value.asScala.map {
-          case (k, v) => s"$k" -> elementOperation.operator.marshal(v)
+          case (k, v) => s"$k" -> elementOperation.marshal(v)
         }.toMap
         case _ => throw new Exception(
           s"marshalling ${operation.context.noSchema.scalaType.uniqueKey} " +
@@ -104,7 +104,7 @@ object ContainerOperator {
 
     protected override def unmarshalNoneNull(input: Map[String, T]): Any = {
       input.map {
-        case (k, v) => k -> elementOperation.operator.unmarshal(v)
+        case (k, v) => k -> elementOperation.unmarshal(v)
       }
     }
   }
@@ -117,10 +117,10 @@ object ContainerOperator {
     protected override def marshalNoneNull(input: Any): Map[String, T] = {
       input match {
         case value: Iterable[_] => value.map {
-          case (k, v) => s"$k" -> elementOperation.operator.marshal(v)
+          case (k, v) => s"$k" -> elementOperation.marshal(v)
         }.toMap
         case value: java.util.Map[_, _] => value.asScala.map {
-          case (k, v) => s"$k" -> elementOperation.operator.marshal(v)
+          case (k, v) => s"$k" -> elementOperation.marshal(v)
         }.toMap
         case _ => throw new Exception(
           s"marshalling ${operation.context.noSchema.scalaType.uniqueKey} " +
@@ -130,7 +130,7 @@ object ContainerOperator {
 
     protected override def unmarshalNoneNull(input: scala.collection.Map[String, T]): Any = {
       input.map {
-        case (k, v) => k -> elementOperation.operator.unmarshal(v)
+        case (k, v) => k -> elementOperation.unmarshal(v)
       }
     }
   }

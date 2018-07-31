@@ -18,6 +18,10 @@ class Operation[T](
   val rule: Operation.Rule
 ) {
 
+  def marshal(input: Any): T = operator.marshal(input)
+
+  def unmarshal(input: T): Any = operator.unmarshal(input)
+
   lazy val operator: Operation.Operator[T] = rule.getOperator(this)
 
   lazy val dependencyOperationMap: Map[Context.LocalContext[_], Operation[_]] =

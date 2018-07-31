@@ -17,7 +17,7 @@ class ShapelessCoproductAvroOperator[T] (
 
   override protected def parse(input: Any): TypeValueExtractor = {
     new TypeValueExtractor {
-      override def toString: String = s"input=${input}"
+      override def toString: String = s"Extractor(${input})"
       override def getTypeValue(coproductElement: CoproductElement[_]): Option[Any] = {
         // only based on avro instance, there is no way to determine the type
         // enum and union of primitives can infer from value
@@ -37,17 +37,7 @@ class ShapelessCoproductAvroOperator[T] (
           }
         }
         else if (operation.isUnion) {
-          // account for wrapping
-          operation.schemaWrapper match {
-            case Some(SchemaWrapper(_, _, wrapperField)) =>
-              input match {
-                // if some other union member happen to have the same field as the wrap
-                // there's no way to tell
-                case record: GenericRecord => Option(record.get(wrapperField))
-                case _ => None
-              }
-            case None => Some(input)
-          }
+          Some(input)
         }
         else {
           throw new Exception(s"neither enum nor union\n${shapeless.format()}")
@@ -65,18 +55,10 @@ class ShapelessCoproductAvroOperator[T] (
         case Some((coproductElement, value)) =>
           if (operation.isEnum) {
             new GenericData.EnumSymbol(
-              operation.avroSchema, avroRule.getEnumValue(coproductElement))
+              operation.originalSchema, avroRule.getEnumValue(coproductElement))
           }
           else if (operation.isUnion) {
-            if (operation.schemaWrapper.isDefined) {
-              // wrap the value inside a record
-              val record = new GenericData.Record(operation.avroSchema)
-              record.put(operation.avroSchema.getFields.get(0).name(), value)
-              record
-            }
-            else {
-              value
-            }
+            value
           }
           else {
             throw new Exception(s"neither enum nor union\n${shapeless.format()}")

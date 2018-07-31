@@ -22,7 +22,8 @@ class ShapelessProductAvroOperator[T](
           override def getSymbolValue(member: MemberVariable[_]): Any = {
             val result = record.get(member.symbol.name)
             if (Option(result).isEmpty && !operation.dependencyOperation(member).isNullable) {
-              throw new Exception(s"${member.symbol.name} cannot be null: $input")
+              throw new Exception(s"failed to marshal ${shapeless.scalaType.fullName} " +
+                s"${member.symbol.name} cannot be null: $input")
             }
             result
           }
@@ -48,7 +49,7 @@ class ShapelessProductAvroOperator[T](
 
       // it's faster to direct build Record than using the RecordBuilder
       // RecordBuilder does some extra validation
-      val record = new GenericData.Record(operation.avroSchema)
+      val record = new GenericData.Record(operation.originalSchema)
 
       override def build(): GenericRecord = record
 

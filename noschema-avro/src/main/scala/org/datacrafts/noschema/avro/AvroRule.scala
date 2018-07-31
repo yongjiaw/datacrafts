@@ -6,9 +6,10 @@ import org.apache.avro.Schema
 import org.apache.avro.Schema.Field
 import org.datacrafts.logging.Slf4jLogging
 import org.datacrafts.noschema.{Container, NoSchema, NoSchemaDsl, Operation, Primitive, ShapelessCoproduct, ShapelessProduct}
-import org.datacrafts.noschema.Container.{IterableContainer, MapContainer, MapContainer2, SeqContainer}
+import org.datacrafts.noschema.Container._
 import org.datacrafts.noschema.Context.{CoproductElement, LocalContext}
 import org.datacrafts.noschema.Operation.Operator
+import org.datacrafts.noschema.avro.AvroContainerOperator._
 import org.datacrafts.noschema.avro.AvroRule.SchemaWrapper
 import org.datacrafts.noschema.operator.ContainerOperator.{IterableOperator, MapOperator, MapOperator2, SeqOperator}
 import org.datacrafts.noschema.operator.PrimitiveOperator
@@ -235,48 +236,36 @@ trait AvroRule extends DefaultRule with NoSchemaDsl {
         new ShapelessCoproductAvroOperator[V](shapeless, operation, this)
 
       case map: MapContainer[_] =>
-        new MapOperator(
+        new AvroMapOperator(
           map.element,
-          operation.asInstanceOf[Operation[Map[String, map.Elem]]]
-        ) {
-
-          protected override def unmarshalNoneNull(input: Map[String, Elem]): Any =
-            input.map {
-              case (k, v) => k -> elementOperation.operator.unmarshal(v)
-            }.asJava
-        }.asInstanceOf[Operator[V]]
+          operation.asInstanceOf[AvroOperation[Map[String, map.Elem]]]
+        )
 
       case map: MapContainer2[_] =>
-        new MapOperator2(
+        new AvroMapOperator2(
           map.element,
-          operation.asInstanceOf[Operation[scala.collection.Map[String, map.Elem]]]
-        ) {
-          protected override def unmarshalNoneNull(
-            input: scala.collection.Map[String, Elem]): Any =
-            input.map {
-              case (k, v) => k -> elementOperation.operator.unmarshal(v)
-            }.asJava
-        }.asInstanceOf[Operator[V]]
+          operation.asInstanceOf[AvroOperation[scala.collection.Map[String, map.Elem]]]
+        )
 
       case seq: SeqContainer[_] =>
-        new SeqOperator(
+        new AvroSeqOperator(
           seq.element,
-          operation.asInstanceOf[Operation[Seq[seq.Elem]]]
-        ) {
-          protected override def unmarshalNoneNull(input: Seq[Elem]): Any =
-            input.map(elementOperation.operator.unmarshal).asJava
-        }.asInstanceOf[Operator[V]]
+          operation.asInstanceOf[AvroOperation[Seq[seq.Elem]]]
+        )
 
       case iterable: IterableContainer[_] =>
-        new IterableOperator(
+        new AvroIterableOperator(
           iterable.element,
-          operation.asInstanceOf[Operation[Iterable[iterable.Elem]]]
-        ) {
-          protected override def unmarshalNoneNull(input: Iterable[Elem]): Any =
-            input.map(elementOperation.operator.unmarshal).asJava
-        }.asInstanceOf[Operator[V]]
+          operation.asInstanceOf[AvroOperation[Iterable[iterable.Elem]]]
+        )
+
+      case option: OptionContainer[_] =>
+        new AvroOptionOperator(
+          option.element,
+          operation.asInstanceOf[AvroOperation[Option[option.Elem]]]
+        )
 
       case _ => super.getOperator(operation)
     }
-  }
+  }.asInstanceOf[Operator[V]]
 }

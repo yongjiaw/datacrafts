@@ -59,7 +59,7 @@ object ShapelessCoproduct extends Slf4jLogging.Default {
             case Some(value) =>
               Try(
                 Inl[FieldType[K, V], L](
-                field[K](operation.dependencyOperation(headValueContext).operator.marshal(value)))
+                field[K](operation.dependencyOperation(headValueContext).marshal(value)))
               ) match {
                 case Success(result) => result
                 case Failure(f) =>
@@ -82,7 +82,7 @@ object ShapelessCoproduct extends Slf4jLogging.Default {
           coproduct match {
             case Inl(headValue) => emptyUnion.addTypeValue(
               headValueContext,
-              operation.dependencyOperation(headValueContext).operator.unmarshal(headValue)
+              operation.dependencyOperation(headValueContext).unmarshal(headValue)
             )
             case Inr(tailValue) => tail.value.unmarshalCoproduct(
               tailValue, emptyUnion, operation
@@ -117,7 +117,7 @@ object ShapelessCoproduct extends Slf4jLogging.Default {
           typeExtractor.getTypeValue(headValueContext) match {
             case Some(value) =>
               Inl[FieldType[K, V], CNil](
-                field[K](operation.dependencyOperation(headValueContext).operator.marshal(value)))
+                field[K](operation.dependencyOperation(headValueContext).marshal(value)))
             case None =>
               throw new Exception(s"no value found for any type from $typeExtractor\n" +
                 s"${operation.format()}")
@@ -131,7 +131,7 @@ object ShapelessCoproduct extends Slf4jLogging.Default {
           coproduct match {
             case Inl(value) => emptyUnion.addTypeValue(
               headValueContext,
-              operation.dependencyOperation(headValueContext).operator.unmarshal(value)
+              operation.dependencyOperation(headValueContext).unmarshal(value)
             )
             case _ => throw new Exception("impossible")
           }

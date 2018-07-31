@@ -7,7 +7,7 @@ import scala.collection.JavaConverters._
 import org.apache.avro.Schema
 import org.apache.avro.Schema.Field
 import org.apache.avro.file.DataFileWriter
-import org.apache.avro.generic.GenericDatumWriter
+import org.apache.avro.generic.{GenericData, GenericDatumWriter, GenericRecord}
 import org.datacrafts.logging.Slf4jLogging
 import org.datacrafts.noschema.{Context, Operation, ShapelessCoproduct}
 import org.datacrafts.noschema.Context.LocalContext
@@ -35,8 +35,9 @@ class AvroOperation[T](
   // use lazy val to cache all the results derived by rules for efficient re-access
   // the same check will be performed both for schema and for operating with the data
   // the rule must be consistent (immutable)
+
+  lazy val originalSchema: Schema = avroRule.getSchema(this)
   lazy val avroSchema: Schema = {
-    val schema = avroRule.getSchema(this)
     schemaWrapper match {
       case Some(SchemaWrapper(name, nameSpace, wrapperField)) =>
       Schema.createRecord(
@@ -47,13 +48,13 @@ class AvroOperation[T](
         Seq(
           new Field(
             wrapperField,
-            schema,
+            originalSchema,
             avroRule.getFieldDoc(this),
             null.asInstanceOf[Any] // scalastyle:ignore
           )
         ).asJava
       )
-      case None => schema
+      case None => originalSchema
     }
   }
 
@@ -76,15 +77,42 @@ class AvroOperation[T](
 
   lazy val schemaWrapper: Option[SchemaWrapper] = avroRule.getSchemaWrapper(this)
 
-  def toAvro(input: T): Any = {
-    val result = operator.unmarshal(input)
-    logDebug(s"converted $input to $result")
-    result
+  override def marshal(input: Any): T = {
+    operator.marshal(
+      schemaWrapper match {
+        case Some(SchemaWrapper(_, _, wrapperField)) =>
+          input match {
+            case record: GenericRecord =>
+              val result = record.get(wrapperField)
+              if (Option(result).isEmpty) {
+                throw new Exception(
+                  s"wrapper schema field ${wrapperField} must exist for marshaling." +
+                    s"wrapper=${schemaWrapper.get} input=${input}")
+              }
+              result
+            case other => throw new Exception(
+              s"schema wrapper with field=$wrapperField must take record input")
+          }
+        case None => input
+      }
+    )
   }
 
-  def fromAvro(input: Any): T = {
-    operator.marshal(input)
+  override def unmarshal(input: T): Any = {
+    val result = operator.unmarshal(input)
+    logDebug(s"converted $input to $result")
+    schemaWrapper match {
+      case Some(SchemaWrapper(_, _, wrapperField)) =>
+        val record = new GenericData.Record(avroSchema)
+        record.put(wrapperField, result)
+        record
+      case None => result
+    }
   }
+
+  def toAvro(input: T): Any = unmarshal(input)
+
+  def fromAvro(input: Any): T = marshal(input)
 
   def scalaType: ScalaType[T] = context.noSchema.scalaType
 

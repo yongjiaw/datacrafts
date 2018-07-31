@@ -62,7 +62,7 @@ class AvroSchemaTest extends FlatSpec with AvroOperationDsl with ScroogeSupport 
     assertRoundTrip(avroOp, NestedUnion.A(UnionExample.B(2)))
     assertRoundTrip(avroOp, NestedUnion.A(UnionExample.C("c")))
     assertRoundTrip(avroOp, NestedUnion.B(1.toShort))
-    assertRoundTrip(avroOp, NestedUnion.C("1"))
+    assertRoundTrip(avroOp, NestedUnion.C("a"))
   }
 
   "case class and thrift marshal/unmarshal" should "be successful" in {
@@ -72,6 +72,7 @@ class AvroSchemaTest extends FlatSpec with AvroOperationDsl with ScroogeSupport 
 
     val avroOp = avroOperationOf[Test2]()
     println(avroOp.format())
+    println(avroOp.avroSchema)
 
     val value = Test2(1.1, Test(12))
     val avro = avroOp.toAvro(value)
