@@ -11,3 +11,4 @@ trait AvroOperationDsl extends NoSchemaDsl {
 
 }
 
+object AvroOperationDsl extends AvroOperationDsl

@@ -9,7 +9,8 @@ class ShapelessProductMapper[T](
   override val operation: Operation[T],
   override val shapeless: ShapelessProduct[T, _],
   allowUnknownField: Boolean = false,
-  allowAbsence: Boolean = true
+  allowAbsence: Boolean = true,
+  includeNull: Boolean = true
 ) extends ShapelessProductOperator[T, Map[String, Any]] {
 
   override protected def parse(input: Any): SymbolExtractor = input match {
@@ -23,18 +24,19 @@ class ShapelessProductMapper[T](
             }
           }
 
-        override def removeSymbol(symbol: MemberVariable[_]): SymbolExtractor = {
-          map -= symbol.symbol.name
+        override def removeSymbol(member: MemberVariable[_]): SymbolExtractor = {
+          map -= member.symbol.name
           this
         }
 
-        override def getSymbolValue(symbol: MemberVariable[_]): Any = {
+        override def getSymbolValue(member: MemberVariable[_]): Any = {
           map.getOrElse(
-            symbol.symbol.name,
+            member.symbol.name,
             if (allowAbsence) {
               null //scalastyle:ignore
             } else {
-              throw new Exception(s"${symbol.symbol.name} is absent for ${shapeless.scalaType}")
+              throw new Exception(
+                s"${member.symbol.name} is absent for ${shapeless.scalaType}: input=$input")
             }
           )
         }
@@ -42,8 +44,8 @@ class ShapelessProductMapper[T](
         override def allSymbolsExtracted(): Unit = {
           if (!allowUnknownField && map.nonEmpty) {
             throw new Exception(
-              s"there are unknown fields [${map.keySet.mkString(",")}], " +
-                s"context=${operation.context}")
+              s"there are unknown fields [${map.keySet.mkString(",")}] from input=$input" +
+                s" for schema=${operation.context.noSchema.scalaType.fullName}")
           }
         }
       }
@@ -56,12 +58,14 @@ class ShapelessProductMapper[T](
 
       override def build(): Map[String, Any] = symbolMap.map {
         case (k, v) => k.name -> v
-      }.toMap
+      }.toSeq.sortBy(_._1).toMap
 
-      override def addSymbolValue(symbol: MemberVariable[_],
+      override def addSymbolValue(member: MemberVariable[_],
         value: Any
       ): SymbolCollector = {
-        symbolMap += symbol.symbol -> value
+        if (includeNull || Option(value).isDefined) {
+          symbolMap += member.symbol -> value
+        }
         this
       }
     }

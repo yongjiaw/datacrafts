@@ -83,13 +83,23 @@ lazy val `noschema-avro` = project.settings(
   `noschema-thrift` % "test->test"
 )
 
+lazy val `noschema-json` = project.settings(
+  commenSettings,
+  libraryDependencies ++= Seq(
+    "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.9.6",
+    "org.slf4j" % "slf4j-log4j12" % "1.7.25" % Test
+  )
+).dependsOn(
+  noschema
+)
+
 lazy val `noschema-catalog` = project.settings(
   commenSettings,
   libraryDependencies ++= Seq(
     "org.slf4j" % "slf4j-log4j12" % "1.7.25" % Test
   )
 ).dependsOn(
-  noschema,
+  `noschema-json`,
   `noschema-avro` % "test->test",
   `noschema-thrift` % "test->test"
 )
@@ -104,6 +114,7 @@ lazy val datacrafts = (project in file("."))
   .aggregate(
     logging,
     noschema,
-    `noschema-thrift`,
-    `noschema-avro`
+    `noschema-avro`,
+    `noschema-json`,
+    `noschema-thrift`
   )

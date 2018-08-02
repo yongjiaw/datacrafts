@@ -2,7 +2,6 @@ package org.datacrafts.noschema.avro
 
 import scala.collection.JavaConverters._
 
-import org.datacrafts.noschema.Operation
 import org.datacrafts.noschema.Context.ContainerElement
 import org.datacrafts.noschema.operator.ContainerOperator._
 

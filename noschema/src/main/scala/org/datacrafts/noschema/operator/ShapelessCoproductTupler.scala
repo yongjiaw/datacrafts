@@ -19,7 +19,7 @@ class ShapelessCoproductTupler[T](
 
         override def toString: String = s"UnionTypeExtractor: input=${input}"
       }
-    case _ => throw new Exception(s"input ${input.getClass} does not match key value pair")
+    case _ => throw new Exception(s"input ${input} ${input.getClass} does not match key value pair")
   }
 
   override protected def newCoproductBuilder(): CoproductBuilder[(String, Any)] =
