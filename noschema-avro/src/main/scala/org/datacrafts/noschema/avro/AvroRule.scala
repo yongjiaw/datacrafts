@@ -151,6 +151,7 @@ trait AvroRule extends DefaultRule with NoSchemaDsl {
                   )
               }.toSeq.sortBy(_.name()).asJava
             )
+
           case _ =>
             throw new Exception(
               s"${shapeless.scalaType.fullName} cannot extract namespace.name")

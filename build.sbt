@@ -79,7 +79,7 @@ lazy val `noschema-avro` = project.settings(
     "org.slf4j" % "slf4j-log4j12" % "1.7.25" % Test
   )
 ).dependsOn(
-  noschema,
+  noschema % "test->test;compile->compile",
   `noschema-thrift` % "test->test"
 )
 

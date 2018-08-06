@@ -4,15 +4,17 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import com.fasterxml.jackson.module.scala.experimental.ScalaObjectMapper
 import org.datacrafts.logging.Slf4jLogging
-import org.datacrafts.noschema.{Context, NoSchema, NoSchemaDsl, Operation, Primitive, ShapelessProduct}
-import org.datacrafts.noschema.json.JsonOperation.JsonConfig
-import org.datacrafts.noschema.operator.{PrimitiveOperator, ShapelessProductMapper}
+import org.datacrafts.noschema.{Context, Operation, ShapelessCoproduct, ShapelessProduct}
+import org.datacrafts.noschema.json.JsonOperation.{JsonConfig, JsonCoproductOperator}
+import org.datacrafts.noschema.operator.{ShapelessCoproductOperator, ShapelessProductMapper}
 import org.datacrafts.noschema.rule.DefaultRule
+import org.datacrafts.noschema.Context.CoproductElement
 
 class JsonOperation[T](
   context: Context[T],
-  jsonConfig: JsonConfig
-) extends Operation[T] (
+  jsonConfig: JsonConfig,
+  coproductOperatorGetter: JsonOperation.CoproductOperatorGetter
+) extends Operation[T](
   context = context,
   rule = new DefaultRule with Slf4jLogging.Default {
     override def getOperator[V](operation: Operation[V]): Operation.Operator[V] = {
@@ -25,6 +27,10 @@ class JsonOperation[T](
             allowAbsence = jsonConfig.allowAbsence,
             includeNull = jsonConfig.includeNull
           )
+
+        case shapeless: ShapelessCoproduct[V, _] =>
+          coproductOperatorGetter.getOperator(shapeless, operation)
+
         case _ => super.getOperator(operation)
       }
 
@@ -32,7 +38,9 @@ class JsonOperation[T](
   }
 ) {
 
-  def toJson(input: T, pretty: Boolean = false): String = {
+  def toJson(input: T,
+    pretty: Boolean = false
+  ): String = {
     if (pretty) {
       JsonOperation.objectMapper.writerWithDefaultPrettyPrinter()
         .writeValueAsString(unmarshal(input))
@@ -54,9 +62,52 @@ object JsonOperation {
   case class JsonConfig(
     allowUnknownField: Boolean = false,
     allowAbsence: Boolean = true,
-    includeNull: Boolean = true
+    includeNull: Boolean = false
   )
 
   val objectMapper = new ObjectMapper() with ScalaObjectMapper
   objectMapper.registerModule(DefaultScalaModule)
+
+  // there are many different ways to handle coproduct serialization
+  // using a format that makes the JSON output more self-explained
+  // make the properties configurable
+  trait CoproductOperatorGetter {
+    def getOperator[T](
+      shapelessCoproduct: ShapelessCoproduct[T, _],
+      operation: Operation[T]
+    ): JsonCoproductOperator[T] = {
+      new JsonCoproductOperator[T](shapelessCoproduct, operation)
+    }
+  }
+  class JsonCoproductOperator[T](
+    override val shapeless: ShapelessCoproduct[T, _],
+    override val operation: Operation[T]
+  ) extends ShapelessCoproductOperator[T, Map[String, Any]] {
+
+    // this determines the value of the coproduct key
+    // must be consistent during seriaization and deserialization
+    protected def getCoproductType(coproductElement: CoproductElement[_]): String = {
+      coproductElement.noSchema.scalaType.fullName
+    }
+
+    final override def matchInputWithCoproductElement(
+      input: Any,
+      coproductElement: CoproductElement[_]
+    ): Option[Any] = input match {
+
+      case map: Map[String, _] => map.get(getCoproductType(coproductElement))
+
+      case _ => throw new Exception(
+        s"input type ${input.getClass} is not Map: $input")
+    }
+
+    final override protected def coproductInfoToOutput(
+      coproductInfo: ShapelessCoproductOperator.CoproductInfo
+    ): Map[String, Any] = {
+      Map(
+        getCoproductType(coproductInfo.coproductElement) -> coproductInfo.value
+      )
+    }
+  }
+
 }

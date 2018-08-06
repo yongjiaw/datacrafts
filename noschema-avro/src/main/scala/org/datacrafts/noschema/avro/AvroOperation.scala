@@ -37,6 +37,7 @@ class AvroOperation[T](
   // the rule must be consistent (immutable)
 
   lazy val originalSchema: Schema = avroRule.getSchema(this)
+
   lazy val avroSchema: Schema = {
     schemaWrapper match {
       case Some(SchemaWrapper(name, nameSpace, wrapperField)) =>
