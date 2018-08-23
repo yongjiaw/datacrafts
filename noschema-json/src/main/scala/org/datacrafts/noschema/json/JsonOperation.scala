@@ -95,7 +95,8 @@ object JsonOperation {
       coproductElement: CoproductElement[_]
     ): Option[Any] = input match {
 
-      case map: Map[String, _] => map.get(getCoproductType(coproductElement))
+      case map: Map[_, _] =>
+        map.asInstanceOf[Map[String, _]].get(getCoproductType(coproductElement))
 
       case _ => throw new Exception(
         s"input type ${input.getClass} is not Map: $input")

@@ -175,7 +175,8 @@ object Operation {
           } else {
             throw new Exception(
               s"input is null, but nullable=${operation.context.noSchema.nullable} " +
-                s"and operator ${this} has no default")
+                s"and operator $this of ${this.operation.context.noSchema.scalaType} " +
+                s"has no default")
           }
         )
       }

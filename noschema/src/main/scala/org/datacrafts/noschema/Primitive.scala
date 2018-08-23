@@ -12,11 +12,12 @@ class Primitive[T: NoSchema.ScalaType](
 object Primitive {
 
   object Type extends Enumeration {
-    val Int, Short, Long, Boolean, Bytes, String, Double, Float = Value
+    val Int, Short, Long, Boolean, Bytes, String, Double, Float, Any = Value
   }
 
   trait Instances {
 
+    implicit val anyPrimitiveType = new Primitive[Any](Type.Any, true)
     implicit val intPrimitiveType = new Primitive[Int](Type.Int)
     implicit val shortPrimitiveType = new Primitive[Short](Type.Short)
     implicit val longPrimitiveType = new Primitive[Long](Type.Long)
