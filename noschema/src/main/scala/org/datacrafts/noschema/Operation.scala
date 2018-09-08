@@ -48,6 +48,10 @@ class Operation[T](
   ): String = {
     formatter.formatRecursive(this, Set.empty, Seq.empty)
   }
+
+  override def toString: String = {
+    s"${context}\n${format()}"
+  }
 }
 
 /**

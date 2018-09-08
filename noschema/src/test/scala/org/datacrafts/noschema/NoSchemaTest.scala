@@ -29,7 +29,8 @@ class NoSchemaTest extends FlatSpec with NoSchemaDsl {
           "v6" -> TestClass3(v31 = 5),
           "v7" -> ("org.datacrafts.noschema.Fruit1.Apple", Map("name" -> "bigApple")),
           "v8" -> Map("v" -> Seq(Map("v" -> Seq.empty, "v2" -> 2)), "v2" -> 1),
-          "v10" -> "abc"
+          "v10" -> "abc",
+          "v11" -> Seq(1, 3, 2)
         )) == TestClass(
         v1 = 10,
         v5 = (null, 12),
@@ -57,6 +58,7 @@ class NoSchemaTest extends FlatSpec with NoSchemaDsl {
         "v2" -> null,
         // the rest are default values
         "v10" -> "abc",
+        "v11" -> Set(1, 2, 3),
         "v6" -> null,
         "v7" -> ("org.datacrafts.noschema.Apple", Map("size" -> 1)),
         "v8" -> Map("v2" -> 1, "v" -> Seq.empty),
@@ -87,7 +89,8 @@ object NoSchemaTest {
     v7: Fruit = Apple(),
     v8: Recursive = Recursive(),
     v9: GenericType[Int] = null,
-    v10: Any = "abc"
+    v10: Any = "abc",
+    v11: Set[Any] = Set(1, 2, 3)
   )
 
   case class TestClass2(v21: Int = 3,

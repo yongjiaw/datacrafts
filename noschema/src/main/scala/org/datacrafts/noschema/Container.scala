@@ -40,6 +40,11 @@ object Container {
       st: NoSchema.ScalaType[T])
     extends Container[T, scala.collection.Map[String, T]](NoSchema.Category.Map, element)
 
+  case class SetContainer[T](override val element: Context.ContainerElement[T])
+    (implicit ot: NoSchema.ScalaType[Set[T]],
+      st: NoSchema.ScalaType[T])
+    extends Container[T, Set[T]](NoSchema.Category.Set, element)
+
   trait Instances {
     implicit def getOptionSchemaFromElementSchema[T](implicit
       node: Lazy[NoSchema[T]],
@@ -55,6 +60,14 @@ object Container {
       st: Lazy[NoSchema.ScalaType[T]]
     ): SeqContainer[T] =
       new SeqContainer[T](Context.ContainerElement(NoSchema.getLazySchema(node)(st.value))
+      )(ot.value, st.value)
+
+    implicit def getSetSchemaFromElementSchema[T](implicit
+      node: Lazy[NoSchema[T]],
+      ot: Lazy[NoSchema.ScalaType[Set[T]]],
+      st: Lazy[NoSchema.ScalaType[T]]
+    ): SetContainer[T] =
+      new SetContainer[T](Context.ContainerElement(NoSchema.getLazySchema(node)(st.value))
       )(ot.value, st.value)
 
     implicit def getIterableSchemaFromElementSchema[T](implicit

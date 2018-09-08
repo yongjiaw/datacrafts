@@ -62,6 +62,43 @@ object ContainerOperator {
     }
   }
 
+  class SetOperator[T](
+    override val element: ContainerElement[T],
+    override val operation: Operation[Set[T]]
+  ) extends ContainerOperator[T, Set[T]] {
+
+    protected override def marshalNoneNull(input: Any): Set[T] = {
+      val elements =
+      input match {
+        case value: Iterable[_] => value.map(elementOperation.marshal)
+        case value: java.lang.Iterable[_] =>
+          value.asScala.map(elementOperation.marshal)
+        case _ => throw new Exception(
+          s"marshalling ${operation.context.noSchema.scalaType.uniqueKey} " +
+            s"but input type is not covered ${input.getClass}, ${input}")
+      }
+
+      val set = elements.toSet
+      val size = elements.size
+      if (size != set.size) {
+        val duplicatedElements =
+          for ((x, xs) <- elements.groupBy(x => x) if xs.size > 1) yield {x -> xs.size}
+
+        throw new Exception(
+          s"input size is ${size} but unique element size is ${set.size}, " +
+            s"duplicates with count: ${duplicatedElements}. " +
+            s"not safe to marshal input as set, marshal as Seq or convert input to Set first." +
+            s"\ninput=${input}\noperation=${operation}"
+        )
+      }
+      set
+    }
+
+    protected override def unmarshalNoneNull(input: Set[T]): Any = {
+      input.map(elementOperation.unmarshal)
+    }
+  }
+
   class IterableOperator[T](
     override val element: ContainerElement[T],
     override val operation: Operation[Iterable[T]]

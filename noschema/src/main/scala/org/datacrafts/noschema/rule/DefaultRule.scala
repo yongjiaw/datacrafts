@@ -3,7 +3,7 @@ package org.datacrafts.noschema.rule
 import org.datacrafts.logging.Slf4jLogging
 import org.datacrafts.noschema._
 import org.datacrafts.noschema.Container._
-import org.datacrafts.noschema.operator.{PrimitiveOperator, ShapelessCoproductTupler, ShapelessProductMapper}
+import org.datacrafts.noschema.operator.{AnyOperator, PrimitiveOperator, ShapelessCoproductTupler, ShapelessProductMapper}
 import org.datacrafts.noschema.operator.ContainerOperator._
 
 trait DefaultRule extends Operation.Rule {
@@ -13,6 +13,8 @@ trait DefaultRule extends Operation.Rule {
   override def getOperator[V](operation: Operation[V]): Operation.Operator[V] = {
     logDebug(s"getting operator for ${operation.context.noSchema.scalaType.fullName}")
     operation.context.noSchema match {
+
+      case AnyType => new AnyOperator(operation.asInstanceOf[Operation[Any]])
 
       case _: Primitive[V] => new PrimitiveOperator(operation)
 
@@ -44,6 +46,12 @@ trait DefaultRule extends Operation.Rule {
         new SeqOperator(
           seq.element,
           operation.asInstanceOf[Operation[Seq[seq.Elem]]]
+        )
+
+      case set: SetContainer[_] =>
+        new SetOperator(
+          set.element,
+          operation.asInstanceOf[Operation[Set[set.Elem]]]
         )
 
       case iterable: IterableContainer[_] =>

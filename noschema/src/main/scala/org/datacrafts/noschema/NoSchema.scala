@@ -71,7 +71,7 @@ object NoSchema extends Slf4jLogging.Default {
   }
 
   object Category extends Enumeration {
-    val Primitive, Product, CoProduct, Option, Seq, Map = Value
+    val Primitive, Product, CoProduct, Option, Seq, Map, Set, Any = Value
   }
 
   trait HasLazySchema[T] {
