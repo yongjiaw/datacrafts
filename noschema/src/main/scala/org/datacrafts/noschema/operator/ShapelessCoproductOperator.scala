@@ -3,12 +3,11 @@ package org.datacrafts.noschema.operator
 import scala.util.{Failure, Success, Try}
 
 import org.datacrafts.logging.Slf4jLogging
+import org.datacrafts.noschema.Context.CoproductElement
 import org.datacrafts.noschema.Operation.Operator
 import org.datacrafts.noschema.ShapelessCoproduct
 import org.datacrafts.noschema.ShapelessCoproduct.{TypeValueExtractor, UnionTypeValueCollector}
 import org.datacrafts.noschema.operator.ShapelessCoproductOperator.{CoproductBuilder, CoproductInfo}
-import org.datacrafts.noschema.Context.CoproductElement
-import org.datacrafts.noschema.NoSchema.ScalaType
 
 abstract class ShapelessCoproductOperator[T, O] extends Operator[T] with Slf4jLogging.Default {
 

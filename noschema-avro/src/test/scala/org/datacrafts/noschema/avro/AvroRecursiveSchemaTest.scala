@@ -7,6 +7,7 @@ import org.apache.avro.SchemaBuilder.FieldBuilder
 import org.apache.avro.generic.GenericData
 import org.datacrafts.noschema.NoSchemaTest.{GenericType, Recursive, TestClass, TestClass3}
 
+// scalastyle:off
 object AvroRecursiveSchemaTest extends AvroOperationDsl {
   def main(args: Array[String]): Unit = {
     println(schemaOf[TestClass].format())
