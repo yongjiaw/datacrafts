@@ -67,8 +67,19 @@ object ShapelessProduct {
       st: Lazy[NoSchema.ScalaType[V]]
     ): ShapelessProductAdapter[FieldType[K, V] :: L] = {
 
+      // product type can have cyclic structure, while going down the stack to create the types
+      // to prevent infinite loop, the creation method needs to look at marks along the stack
+      // and only invoke the creation method only once.
+      // Since the creation is going down a stack,
+      // the "later" references to the same type cannot be accessed until
+      // the "first" creation returns from the stack and have a global map updated
+      // (this is due to no control over the shapeless internals)
+      // therefore, an object with lazy creation method is returned.
       val headValueContext =
-        Context.MemberVariable(headSymbol.value.value, NoSchema.getLazySchema(headValue)(st.value))
+        Context.MemberVariable(
+          headSymbol.value.value,
+          NoSchema.getLazySchema(headValue)(st.value)
+        )
 
       new ShapelessProductAdapter[FieldType[K, V] :: L](
         members = tail.value.members :+ headValueContext) {

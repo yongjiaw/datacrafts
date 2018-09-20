@@ -4,6 +4,7 @@ import scala.util.{Failure, Success, Try}
 
 import org.datacrafts.logging.Slf4jLogging
 import org.datacrafts.noschema.Context.CoproductElement
+import org.datacrafts.noschema.NoSchema.HasLazySchema
 import org.datacrafts.noschema.ShapelessCoproduct.{ShapelessCoproductAdapter, TypeValueExtractor, UnionTypeValueCollector}
 import shapeless.{:+:, CNil, Coproduct, Inl, Inr, LabelledGeneric, Lazy, Witness}
 import shapeless.labelled.{field, FieldType}
@@ -36,12 +37,18 @@ object ShapelessCoproduct extends Slf4jLogging.Default {
     [K <: Symbol, V, L <: Coproduct](implicit
       headSymbol: Lazy[Witness.Aux[K]],
       head: Lazy[NoSchema[V]],
-      tail: Lazy[ShapelessCoproductAdapter[L]],
-      st: Lazy[NoSchema.ScalaType[V]]
+      tail: Lazy[ShapelessCoproductAdapter[L]]
     ): ShapelessCoproductAdapter[FieldType[K, V] :+: L] = {
 
+      // coproduct type won't trigger infinite recursion like product,
+      // since inheritence cannot go backwards
       val headValueContext =
-        Context.CoproductElement(headSymbol.value.value, NoSchema.getLazySchema(head)(st.value))
+        Context.CoproductElement(
+          headSymbol.value.value,
+          new HasLazySchema[V] {
+            override def lazySchema: NoSchema[V] = head.value
+          }
+        )
 
       new ShapelessCoproductAdapter[FieldType[K, V] :+: L](
         members = tail.value.members :+ headValueContext) {
@@ -95,13 +102,16 @@ object ShapelessCoproduct extends Slf4jLogging.Default {
     implicit def shapelessCoproductRecursiveBuilderTerminator[K <: Symbol, V](
       implicit
       headSymbol: Lazy[Witness.Aux[K]],
-      headValue: Lazy[NoSchema[V]],
-      st: Lazy[NoSchema.ScalaType[V]]
+      headValue: Lazy[NoSchema[V]]
     ): ShapelessCoproductAdapter[FieldType[K, V] :+: CNil] = {
 
       val headValueContext =
         Context.CoproductElement(
-          headSymbol.value.value, NoSchema.getLazySchema(headValue)(st.value))
+          headSymbol.value.value,
+          new HasLazySchema[V] {
+            override def lazySchema: NoSchema[V] = headValue.value
+          }
+        )
 
       new ShapelessCoproductAdapter[FieldType[K, V] :+: CNil](
         members = Seq(headValueContext)) {

@@ -158,7 +158,10 @@ object NoSchema extends Slf4jLogging.Default {
         override def lazySchema: NoSchema[T] = {
           _instances.get(reference).getOrElse(
             throw new Exception(
-              s"${reference} cannot be resolved, this is not possible")
+              s"${reference} cannot be resolved from ${_instances.size} registered, " +
+                s"this is not possible\n${
+                _instances.keys.toSeq.map(_.toString).sorted.mkString("\n")
+              }")
           )
         }.asInstanceOf[NoSchema[T]]
       }
