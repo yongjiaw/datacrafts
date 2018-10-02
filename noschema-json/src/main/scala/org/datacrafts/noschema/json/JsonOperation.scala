@@ -75,7 +75,7 @@ object JsonOperation {
     def getOperator[T](
       shapelessCoproduct: ShapelessCoproduct[T, _],
       operation: Operation[T]
-    ): JsonCoproductOperator[T] = {
+    ): Operation.Operator[T] = {
       new JsonCoproductOperator[T](shapelessCoproduct, operation)
     }
   }
