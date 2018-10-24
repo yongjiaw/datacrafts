@@ -196,11 +196,9 @@ trait AvroRule extends DefaultRule with NoSchemaDsl {
   // for unmarshal, need to produce avro accepted data structures
   def getAvroOperator[V](operation: AvroOperation[V]): Operator[V] = {
 
-    import scala.collection.JavaConverters._
-    import scala.reflect.runtime.universe.typeOf
     operation.context.noSchema match {
 
-      case bytes: Primitive[V] if bytes.refinedType == Primitive.Type.Bytes =>
+      case bytes: Primitive[_] if bytes.refinedType == Primitive.Type.Bytes =>
         new PrimitiveOperator[Array[Byte]](
           operation.asInstanceOf[Operation[Array[Byte]]]
         ) {
@@ -216,7 +214,7 @@ trait AvroRule extends DefaultRule with NoSchemaDsl {
           }
         }.asInstanceOf[Operator[V]]
 
-      case short: Primitive[V] if short.refinedType == Primitive.Type.Short =>
+      case short: Primitive[_] if short.refinedType == Primitive.Type.Short =>
         new PrimitiveOperator[Short](
           operation.asInstanceOf[Operation[Short]]
         ) {
@@ -230,11 +228,11 @@ trait AvroRule extends DefaultRule with NoSchemaDsl {
           }
         }.asInstanceOf[Operator[V]]
 
-      case product: NoSchemaProduct[V] =>
-        new ProductAvroOperator[V](product, operation, this)
+      case product: NoSchemaProduct[_] =>
+        new ProductAvroOperator(product, operation, this)
 
-      case coproduct: NoSchemaCoproduct[V] =>
-        new CoproductAvroOperator[V](coproduct, operation, this)
+      case coproduct: NoSchemaCoproduct[_] =>
+        new CoproductAvroOperator(coproduct, operation, this)
 
       case map: MapContainer[_] =>
         new AvroMapOperator(

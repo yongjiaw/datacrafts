@@ -1,6 +1,6 @@
 package org.datacrafts.noschema
 
-import org.datacrafts.noschema.Operation.{DefaultFormatter, SchemaFormatter}
+import org.datacrafts.noschema.Operation.SchemaFormatter
 import org.datacrafts.noschema.rule.DefaultRule
 
 trait NoSchemaDsl {

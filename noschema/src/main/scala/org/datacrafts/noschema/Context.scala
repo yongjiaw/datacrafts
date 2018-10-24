@@ -1,7 +1,7 @@
 package org.datacrafts.noschema
 
 import org.datacrafts.noschema.Context.LocalContext
-import org.datacrafts.noschema.NoSchema.{HasLazySchema, ScalaType}
+import org.datacrafts.noschema.NoSchema.HasLazySchema
 
 object Context {
 

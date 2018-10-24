@@ -42,7 +42,6 @@ object ShapelessProduct {
     implicit def lowPriorityFallBackImplicit[K <: Symbol, V, L <: HList]
     (implicit
       w: Lazy[Witness.Aux[K]],
-      l: Lazy[ShapelessProductAdapter[L]],
       st: Lazy[NoSchema.ScalaType[V]]
     ): ShapelessProductAdapter[FieldType[K, V] :: L] = {
       throw new Exception(s"field ${w.value.value.name} of ${st.value} " +

@@ -42,7 +42,15 @@ val commenSettings = Seq(
 
   licenses := Seq("APL2" -> url("http://www.apache.org/licenses/LICENSE-2.0.txt")),
 
-  sonatypeProjectHosting := Some(GitHubHosting("Yongjia Wang", "datacrafts", ""))
+  sonatypeProjectHosting := Some(GitHubHosting("Yongjia Wang", "datacrafts", "")),
+
+  scalacOptions ++= Seq(
+    "-deprecation",
+    "-feature",
+    "-Ywarn-dead-code",
+    "-Ywarn-inaccessible",
+    "-Ywarn-unused"
+  )
 
 )
 

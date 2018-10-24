@@ -3,7 +3,7 @@ package org.datacrafts.noschema
 import scala.util.{Failure, Success, Try}
 
 import org.datacrafts.noschema.Context.LocalContext
-import org.datacrafts.noschema.Operation.{DefaultFormatter, Formatter, Operator}
+import org.datacrafts.noschema.Operation.{DefaultFormatter, Formatter}
 
 /**
   * For a specific schema context, construct the immutable operators from top down

@@ -16,13 +16,13 @@ trait DefaultRule extends Operation.Rule {
 
       case AnyType => new AnyOperator(operation.asInstanceOf[Operation[Any]])
 
-      case _: Primitive[V] => new PrimitiveOperator(operation)
+      case _: Primitive[_] => new PrimitiveOperator(operation)
 
-      case product: NoSchemaProduct[V] =>
+      case product: NoSchemaProduct[_] =>
         new ProductMapper(operation, product)
 
       case coproduct: NoSchemaCoproduct[V] =>
-        new CoproductTupler[V](operation, coproduct)
+        new CoproductTupler(operation, coproduct)
 
       case option: OptionContainer[_] =>
         new OptionOperator(
