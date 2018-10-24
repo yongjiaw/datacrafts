@@ -73,7 +73,10 @@ class NoSchemaTest extends FlatSpec with NoSchemaDsl {
         )
       )
     )
+  }
 
+  "AST recursive parsing" should "be successful" in {
+    println(schemaOf[DummyJsonAst].format())
   }
 }
 
@@ -123,3 +126,8 @@ case class Pear(size: Double = 1.5) extends Fruit
 object Fruit1 {
   case class Apple(name: String = "red") extends Fruit
 }
+
+sealed trait DummyJsonAst
+case class PrimitiveType(`type`: String) extends DummyJsonAst
+case class Object(fields: Map[String, DummyJsonAst]) extends DummyJsonAst
+case class Array(element: DummyJsonAst) extends DummyJsonAst
