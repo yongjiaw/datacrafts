@@ -23,7 +23,7 @@ class AvroOperation[T](
   override lazy val operator: Operation.Operator[T] = avroRule.getAvroOperator(this)
 
   override lazy val dependencyOperationMap: Map[Context.LocalContext[_], AvroOperation[_]] =
-    context.noSchema.dependencies.map {
+    dependencies.map {
       dependency =>
         dependency -> new AvroOperation(context.dependencyContext(dependency), avroRule, Some(this))
     }.toMap

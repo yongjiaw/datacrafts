@@ -1,17 +1,17 @@
 package org.datacrafts.noschema.operator
 
-import org.datacrafts.noschema.{Operation, ShapelessProduct}
+import org.datacrafts.noschema.{NoSchemaProduct, Operation, ShapelessProduct}
 import org.datacrafts.noschema.Context.MemberVariable
 import org.datacrafts.noschema.ShapelessProduct.{SymbolCollector, SymbolExtractor}
-import org.datacrafts.noschema.operator.ShapelessProductOperator.ProductBuilder
+import org.datacrafts.noschema.operator.ProductOperator.ProductBuilder
 
-class ShapelessProductMapper[T](
+class ProductMapper[T](
   override val operation: Operation[T],
-  override val shapeless: ShapelessProduct[T, _],
+  override val product: NoSchemaProduct[T],
   allowUnknownField: Boolean = false,
   allowAbsence: Boolean = true,
   includeNull: Boolean = true
-) extends ShapelessProductOperator[T, Map[String, Any]] {
+) extends ProductOperator[T, Map[String, Any]] {
 
   override protected def parse(input: Any): SymbolExtractor = input match {
     case iterable: Iterable[_] =>
@@ -36,7 +36,7 @@ class ShapelessProductMapper[T](
               null //scalastyle:ignore
             } else {
               throw new Exception(
-                s"${member.symbol.name} is absent for ${shapeless.scalaType}: input=$input")
+                s"${member.symbol.name} is absent for ${product.scalaType}: input=$input")
             }
           )
         }

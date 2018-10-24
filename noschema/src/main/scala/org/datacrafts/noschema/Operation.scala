@@ -26,11 +26,21 @@ class Operation[T](
 
   lazy val operator: Operation.Operator[T] = rule.getOperator(this)
 
-  lazy val dependencyOperationMap: Map[Context.LocalContext[_], Operation[_]] =
-    context.noSchema.dependencies.map {
+  import NoSchema.Category
+  def dependencies: Seq[Context.LocalContext[_]] = context.noSchema match {
+    case c: Container[_, _] => Seq(c.element)
+    case p: NoSchemaProduct[_] => p.fields
+    case cp: NoSchemaCoproduct[_] => cp.members
+    case s if Set(Category.Any, Category.Primitive).contains(s.category) => Seq.empty
+    case other => throw new Exception(s"unrecognized schema ${other}")
+  }
+
+  lazy val dependencyOperationMap: Map[Context.LocalContext[_], Operation[_]] = {
+    dependencies.map {
       dependency =>
         dependency -> new Operation(context.dependencyContext(dependency), rule)
     }.toMap
+  }
 
   // this is invoked through implicit resolution at compile time based on structure of the type
   // user code can control the actual operations through the rule

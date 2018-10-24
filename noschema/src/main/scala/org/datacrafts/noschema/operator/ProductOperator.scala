@@ -3,14 +3,14 @@ package org.datacrafts.noschema.operator
 import scala.util.{Failure, Success, Try}
 
 import org.datacrafts.logging.Slf4jLogging
+import org.datacrafts.noschema.NoSchemaProduct
 import org.datacrafts.noschema.Operation.Operator
-import org.datacrafts.noschema.ShapelessProduct
 import org.datacrafts.noschema.ShapelessProduct.{SymbolCollector, SymbolExtractor}
-import org.datacrafts.noschema.operator.ShapelessProductOperator.ProductBuilder
+import org.datacrafts.noschema.operator.ProductOperator.ProductBuilder
 
-abstract class ShapelessProductOperator[T, O] extends Operator[T] with Slf4jLogging.Default {
+abstract class ProductOperator[T, O] extends Operator[T] with Slf4jLogging.Default {
 
-  protected def shapeless: ShapelessProduct[T, _]
+  protected def product: NoSchemaProduct[T]
 
   protected def parse(input: Any): SymbolExtractor
 
@@ -29,7 +29,7 @@ abstract class ShapelessProductOperator[T, O] extends Operator[T] with Slf4jLogg
           s"${operation.context.noSchema.scalaType}, " +
           s"parse and perform shapeless transform")
         Try(parse(input)) match {
-          case Success(parsed) => shapeless.marshal(parsed, operation)
+          case Success(parsed) => product.marshal(parsed, operation)
           case Failure(f) => throw new Exception(
             s"failed to parse input $input for\n${operation.format()}", f)
         }
@@ -37,12 +37,12 @@ abstract class ShapelessProductOperator[T, O] extends Operator[T] with Slf4jLogg
   }
 
   protected final override def unmarshalNoneNull(input: T): O = {
-    shapeless.unmarshal(input, newProductBuilder(), operation)
+    product.unmarshal(input, newProductBuilder(), operation)
       .asInstanceOf[ProductBuilder[O]].build()
   }
 }
 
-object ShapelessProductOperator {
+object ProductOperator {
 
   trait ProductBuilder[O] extends SymbolCollector {
     def build(): O

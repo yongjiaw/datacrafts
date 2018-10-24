@@ -1,17 +1,17 @@
 package org.datacrafts.noschema.avro
 
 import org.apache.avro.generic.{GenericData, GenericRecord}
+import org.datacrafts.noschema.{NoSchemaProduct, ShapelessProduct}
 import org.datacrafts.noschema.Context.MemberVariable
-import org.datacrafts.noschema.ShapelessProduct
 import org.datacrafts.noschema.ShapelessProduct.SymbolExtractor
-import org.datacrafts.noschema.operator.ShapelessProductOperator
-import org.datacrafts.noschema.operator.ShapelessProductOperator.ProductBuilder
+import org.datacrafts.noschema.operator.ProductOperator
+import org.datacrafts.noschema.operator.ProductOperator.ProductBuilder
 
-class ShapelessProductAvroOperator[T](
-  override val shapeless: ShapelessProduct[T, _],
+class ProductAvroOperator[T](
+  override val product: NoSchemaProduct[T],
   override val operation: AvroOperation[T],
   val avroRule: AvroRule
-) extends ShapelessProductOperator[T, GenericRecord] {
+) extends ProductOperator[T, GenericRecord] {
 
   override protected def parse(input: Any): ShapelessProduct.SymbolExtractor = {
     input match {
@@ -22,7 +22,7 @@ class ShapelessProductAvroOperator[T](
           override def getSymbolValue(member: MemberVariable[_]): Any = {
             val result = record.get(member.symbol.name)
             if (Option(result).isEmpty && !operation.dependencyOperation(member).isNullable) {
-              throw new Exception(s"failed to marshal ${shapeless.scalaType.fullName} " +
+              throw new Exception(s"failed to marshal ${product.scalaType.fullName} " +
                 s"${member.symbol.name} cannot be null: $input")
             }
             result
@@ -62,7 +62,7 @@ class ShapelessProductAvroOperator[T](
           record.put(member.symbol.name, value)
         }
         else {
-          throw new Exception(s"${shapeless.scalaType.fullName}: " +
+          throw new Exception(s"${product.scalaType.fullName}: " +
             s"${member.symbol}=${depOp.context.noSchema.scalaType.uniqueKey} " +
             s"encountered undefined value ${value}, " +
             s"use Option[] or change schema rule to accept null")

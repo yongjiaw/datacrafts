@@ -7,7 +7,7 @@ import org.datacrafts.logging.Slf4jLogging
 import org.datacrafts.noschema.{Context, Operation, ShapelessCoproduct, ShapelessProduct}
 import org.datacrafts.noschema.Context.CoproductElement
 import org.datacrafts.noschema.json.JsonOperation.JsonConfig
-import org.datacrafts.noschema.operator.{ShapelessCoproductOperator, ShapelessProductMapper}
+import org.datacrafts.noschema.operator.{CoproductOperator, ProductMapper}
 import org.datacrafts.noschema.rule.DefaultRule
 
 class JsonOperation[T](
@@ -21,7 +21,7 @@ class JsonOperation[T](
       operation.context.noSchema match {
 
         case shapeless: ShapelessProduct[V, _] =>
-          new ShapelessProductMapper(
+          new ProductMapper(
             operation, shapeless,
             allowUnknownField = jsonConfig.allowUnknownField,
             allowAbsence = jsonConfig.allowAbsence,
@@ -80,9 +80,9 @@ object JsonOperation {
     }
   }
   class JsonCoproductOperator[T](
-    override val shapeless: ShapelessCoproduct[T, _],
+    override val coproduct: ShapelessCoproduct[T, _],
     override val operation: Operation[T]
-  ) extends ShapelessCoproductOperator[T, Map[String, Any]] {
+  ) extends CoproductOperator[T, Map[String, Any]] {
 
     // this determines the value of the coproduct key
     // must be consistent during seriaization and deserialization
@@ -103,7 +103,7 @@ object JsonOperation {
     }
 
     final override protected def coproductInfoToOutput(
-      coproductInfo: ShapelessCoproductOperator.CoproductInfo
+      coproductInfo: CoproductOperator.CoproductInfo
     ): Map[String, Any] = {
       Map(
         getCoproductType(coproductInfo.coproductElement) -> coproductInfo.value

@@ -3,15 +3,15 @@ package org.datacrafts.noschema.operator
 import scala.util.{Failure, Success, Try}
 
 import org.datacrafts.logging.Slf4jLogging
+import org.datacrafts.noschema.{NoSchemaCoproduct, ShapelessCoproduct}
 import org.datacrafts.noschema.Context.CoproductElement
 import org.datacrafts.noschema.Operation.Operator
-import org.datacrafts.noschema.ShapelessCoproduct
 import org.datacrafts.noschema.ShapelessCoproduct.{TypeValueExtractor, UnionTypeValueCollector}
-import org.datacrafts.noschema.operator.ShapelessCoproductOperator.{CoproductBuilder, CoproductInfo}
+import org.datacrafts.noschema.operator.CoproductOperator.{CoproductBuilder, CoproductInfo}
 
-abstract class ShapelessCoproductOperator[T, O] extends Operator[T] with Slf4jLogging.Default {
+abstract class CoproductOperator[T, O] extends Operator[T] with Slf4jLogging.Default {
 
-  protected def shapeless: ShapelessCoproduct[T, _]
+  protected def coproduct: NoSchemaCoproduct[T]
 
   final protected def parse(input: Any): TypeValueExtractor = {
     new TypeValueExtractor {
@@ -57,7 +57,7 @@ abstract class ShapelessCoproductOperator[T, O] extends Operator[T] with Slf4jLo
           s"${operation.context.noSchema.scalaType}, " +
           s"parse and perform shapeless transform")
         Try(parse(input)) match {
-          case Success(parsed) => shapeless.marshal(parsed, operation)
+          case Success(parsed) => coproduct.marshal(parsed, operation)
           case Failure(f) => throw new Exception(
             s"failed to parse input $input for\n${operation.format()}", f)
         }
@@ -65,12 +65,12 @@ abstract class ShapelessCoproductOperator[T, O] extends Operator[T] with Slf4jLo
   }
 
   protected final override def unmarshalNoneNull(input: T): O = {
-    shapeless.unmarshal(input, newCoproductBuilder(), operation)
+    coproduct.unmarshal(input, newCoproductBuilder(), operation)
       .asInstanceOf[CoproductBuilder[O]].build()
   }
 }
 
-object ShapelessCoproductOperator {
+object CoproductOperator {
 
   case class CoproductInfo(
     coproductElement: CoproductElement[_],

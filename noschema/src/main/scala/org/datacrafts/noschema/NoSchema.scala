@@ -4,7 +4,6 @@ import scala.reflect.ClassTag
 import scala.reflect.runtime.universe.TypeTag
 
 import org.datacrafts.logging.Slf4jLogging
-import org.datacrafts.noschema.Context.LocalContext
 import shapeless.Lazy
 
 /**
@@ -12,8 +11,7 @@ import shapeless.Lazy
   */
 abstract class NoSchema[T: NoSchema.ScalaType](
   val category: NoSchema.Category.Value,
-  val nullable: Boolean,
-  val dependencies: Seq[LocalContext[_]] = Seq.empty
+  val nullable: Boolean
 ) extends Slf4jLogging.Default {
 
   logDebug(s"constructing ${this}")

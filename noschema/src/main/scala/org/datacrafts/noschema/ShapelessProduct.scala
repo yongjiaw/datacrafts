@@ -5,22 +5,29 @@ import org.datacrafts.noschema.ShapelessProduct.{ShapelessProductAdapter, Symbol
 import shapeless.{::, HList, HNil, LabelledGeneric, Lazy, Witness}
 import shapeless.labelled.{field, FieldType}
 
+abstract class NoSchemaProduct[T: NoSchema.ScalaType](
+  val fields: Seq[Context.MemberVariable[_]]
+) extends NoSchema[T] (
+  category = NoSchema.Category.Product,
+  nullable = true) {
+
+  def marshal(symbolExtractor: SymbolExtractor, operation: Operation[T]): T
+
+  def unmarshal(input: T, emptyCollector: SymbolCollector, operation: Operation[T]): SymbolCollector
+}
+
 class ShapelessProduct[T, R <: HList](
-  override val dependencies: Seq[Context.MemberVariable[_]],
+  fields: Seq[Context.MemberVariable[_]],
   generic: LabelledGeneric.Aux[T, R],
   shapeless: ShapelessProductAdapter[R],
   st: NoSchema.ScalaType[T]
-) extends NoSchema[T](
-  category = NoSchema.Category.Product,
-  nullable = true,
-  dependencies = dependencies
-)(st)
+) extends NoSchemaProduct[T](fields)(st)
 {
-  def marshal(symbolExtractor: SymbolExtractor, operation: Operation[T]): T = {
+  override def marshal(symbolExtractor: SymbolExtractor, operation: Operation[T]): T = {
     generic.from(shapeless.marshalHList(symbolExtractor, operation))
   }
 
-  def unmarshal(input: T, emptyCollector: SymbolCollector, operation: Operation[T]
+  override def unmarshal(input: T, emptyCollector: SymbolCollector, operation: Operation[T]
   ): SymbolCollector = {
     shapeless.unmarshalHList(generic.to(input), emptyCollector, operation)
   }

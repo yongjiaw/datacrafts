@@ -52,7 +52,7 @@ object Schema extends NoSchemaDsl {
                 Map.empty
               } else {
 
-                product.dependencies.map {
+                product.fields.map {
                   member =>
                     member.symbol.toString() -> member.noSchema.getSchema(
                       visitedSchema + product.scalaType.uniqueKey.toString
@@ -67,7 +67,7 @@ object Schema extends NoSchemaDsl {
           )
         case coproduct: ShapelessCoproduct[_, _] =>
           CoProduct(
-            members = coproduct.dependencies.map {
+            members = coproduct.members.map {
               member => member.noSchema.getSchema(visitedSchema)
             },
             schemaType =

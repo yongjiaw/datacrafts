@@ -1,14 +1,14 @@
 package org.datacrafts.noschema.operator
 
-import org.datacrafts.noschema.{Operation, ShapelessCoproduct}
+import org.datacrafts.noschema.{NoSchemaCoproduct, Operation, ShapelessCoproduct}
 import org.datacrafts.noschema.Context.CoproductElement
 import org.datacrafts.noschema.ShapelessCoproduct.TypeValueExtractor
-import org.datacrafts.noschema.operator.ShapelessCoproductOperator.{CoproductBuilder, CoproductInfo}
+import org.datacrafts.noschema.operator.CoproductOperator.{CoproductBuilder, CoproductInfo}
 
-class ShapelessCoproductTupler[T](
+class CoproductTupler[T](
   override val operation: Operation[T],
-  override val shapeless: ShapelessCoproduct[T, _]
-) extends ShapelessCoproductOperator [T, (String, Any)]{
+  override val coproduct: NoSchemaCoproduct[T]
+) extends CoproductOperator [T, (String, Any)]{
 
   override def matchInputWithCoproductElement(input: Any,
     coproductElement: CoproductElement[_]

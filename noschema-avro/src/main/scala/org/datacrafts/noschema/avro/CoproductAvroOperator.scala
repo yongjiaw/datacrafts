@@ -2,18 +2,18 @@ package org.datacrafts.noschema.avro
 
 import org.apache.avro.generic.{GenericData, GenericRecord}
 import org.apache.avro.generic.GenericData.EnumSymbol
-import org.datacrafts.noschema.{NoSchema, NoSchemaDsl, Primitive, ShapelessCoproduct}
+import org.datacrafts.noschema.{NoSchema, NoSchemaCoproduct, NoSchemaDsl, Primitive, ShapelessCoproduct}
 import org.datacrafts.noschema.Context.CoproductElement
 import org.datacrafts.noschema.ShapelessCoproduct.TypeValueExtractor
 import org.datacrafts.noschema.avro.AvroRule.SchemaWrapper
-import org.datacrafts.noschema.operator.{PrimitiveOperator, ShapelessCoproductOperator}
-import org.datacrafts.noschema.operator.ShapelessCoproductOperator.{CoproductBuilder, CoproductInfo}
+import org.datacrafts.noschema.operator.{CoproductOperator, PrimitiveOperator}
+import org.datacrafts.noschema.operator.CoproductOperator.{CoproductBuilder, CoproductInfo}
 
-class ShapelessCoproductAvroOperator[T] (
-  override val shapeless: ShapelessCoproduct[T, _],
+class CoproductAvroOperator[T] (
+  override val coproduct: NoSchemaCoproduct[T],
   override val operation: AvroOperation[T],
   val avroRule: AvroRule
-) extends ShapelessCoproductOperator[T, Any] with NoSchemaDsl {
+) extends CoproductOperator[T, Any] with NoSchemaDsl {
 
   override def matchInputWithCoproductElement(
     input: Any,
@@ -36,7 +36,7 @@ class ShapelessCoproductAvroOperator[T] (
       Some(input)
     }
     else {
-      throw new Exception(s"neither enum nor union\n${shapeless.format()}")
+      throw new Exception(s"neither enum nor union\n${coproduct.format()}")
     }
   }
 
@@ -49,7 +49,7 @@ class ShapelessCoproductAvroOperator[T] (
       coproductInfo.value
     }
     else {
-      throw new Exception(s"neither enum nor union\n${shapeless.format()}")
+      throw new Exception(s"neither enum nor union\n${coproduct.format()}")
     }
   }
 }

@@ -9,22 +9,30 @@ import org.datacrafts.noschema.ShapelessCoproduct.{ShapelessCoproductAdapter, Ty
 import shapeless.{:+:, CNil, Coproduct, Inl, Inr, LabelledGeneric, Lazy, Witness}
 import shapeless.labelled.{field, FieldType}
 
+abstract class NoSchemaCoproduct[T: NoSchema.ScalaType](
+  val members: Seq[Context.CoproductElement[_]]
+) extends NoSchema[T] (
+  category = NoSchema.Category.CoProduct,
+  nullable = true) {
+
+  def marshal(typeExtractor: TypeValueExtractor, operation: Operation[T]): T
+
+  def unmarshal(input: T, emptyUnion: UnionTypeValueCollector, operation: Operation[T]
+  ): UnionTypeValueCollector
+}
+
 class ShapelessCoproduct[T, R <: Coproduct](
-  override val dependencies: Seq[Context.CoproductElement[_]],
+  members: Seq[Context.CoproductElement[_]],
   generic: LabelledGeneric.Aux[T, R],
   shapeless: ShapelessCoproductAdapter[R],
   st: NoSchema.ScalaType[T]
-) extends NoSchema[T](
-  category = NoSchema.Category.CoProduct,
-  nullable = true,
-  dependencies = dependencies
-)(st)
+) extends NoSchemaCoproduct[T](members)(st)
 {
-  def marshal(typeExtractor: TypeValueExtractor, operation: Operation[T]): T = {
+  override def marshal(typeExtractor: TypeValueExtractor, operation: Operation[T]): T = {
     generic.from(shapeless.marshalCoproduct(typeExtractor, operation))
   }
 
-  def unmarshal(input: T, emptyUnion: UnionTypeValueCollector, operation: Operation[T]
+  override def unmarshal(input: T, emptyUnion: UnionTypeValueCollector, operation: Operation[T]
   ): UnionTypeValueCollector = {
     shapeless.unmarshalCoproduct(generic.to(input), emptyUnion, operation)
   }

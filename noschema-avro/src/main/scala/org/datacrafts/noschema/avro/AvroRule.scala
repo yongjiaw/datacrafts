@@ -5,7 +5,7 @@ import scala.collection.JavaConverters._
 import org.apache.avro.Schema
 import org.apache.avro.Schema.Field
 import org.datacrafts.logging.Slf4jLogging
-import org.datacrafts.noschema.{Container, NoSchema, NoSchemaDsl, Operation, Primitive, ShapelessCoproduct, ShapelessProduct}
+import org.datacrafts.noschema.{Container, NoSchema, NoSchemaCoproduct, NoSchemaDsl, NoSchemaProduct, Operation, Primitive, ShapelessCoproduct, ShapelessProduct}
 import org.datacrafts.noschema.Container._
 import org.datacrafts.noschema.Context.{CoproductElement, LocalContext}
 import org.datacrafts.noschema.Operation.Operator
@@ -135,7 +135,7 @@ trait AvroRule extends DefaultRule with NoSchemaDsl {
               getSchemaDoc(operation),
               namespace,
               false,
-              shapeless.dependencies.map {
+              shapeless.fields.map {
                 case dep =>
                   val depOp = operation.dependencyOperation(dep)
                   new Field(
@@ -160,7 +160,7 @@ trait AvroRule extends DefaultRule with NoSchemaDsl {
       // union
       case shapeless: ShapelessCoproduct[_, _] if operation.isUnion =>
         Schema.createUnion(
-          shapeless.dependencies.map {
+          shapeless.members.map {
             dep =>
               operation.dependencyOperation(dep).avroSchema
           }.sortBy(_.getName).asJava
@@ -174,7 +174,7 @@ trait AvroRule extends DefaultRule with NoSchemaDsl {
               name,
               getSchemaDoc(operation),
               namespace,
-              shapeless.dependencies.map {
+              shapeless.members.map {
                 dep => getEnumValue(dep)
               }.asJava
             )
@@ -230,11 +230,11 @@ trait AvroRule extends DefaultRule with NoSchemaDsl {
           }
         }.asInstanceOf[Operator[V]]
 
-      case shapeless: ShapelessProduct[V, _] =>
-        new ShapelessProductAvroOperator[V](shapeless, operation, this)
+      case product: NoSchemaProduct[V] =>
+        new ProductAvroOperator[V](product, operation, this)
 
-      case shapeless: ShapelessCoproduct[V, _] =>
-        new ShapelessCoproductAvroOperator[V](shapeless, operation, this)
+      case coproduct: NoSchemaCoproduct[V] =>
+        new CoproductAvroOperator[V](coproduct, operation, this)
 
       case map: MapContainer[_] =>
         new AvroMapOperator(

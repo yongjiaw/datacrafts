@@ -3,7 +3,7 @@ package org.datacrafts.noschema.rule
 import org.datacrafts.logging.Slf4jLogging
 import org.datacrafts.noschema._
 import org.datacrafts.noschema.Container._
-import org.datacrafts.noschema.operator.{AnyOperator, PrimitiveOperator, ShapelessCoproductTupler, ShapelessProductMapper}
+import org.datacrafts.noschema.operator.{AnyOperator, CoproductTupler, PrimitiveOperator, ProductMapper}
 import org.datacrafts.noschema.operator.ContainerOperator._
 
 trait DefaultRule extends Operation.Rule {
@@ -18,11 +18,11 @@ trait DefaultRule extends Operation.Rule {
 
       case _: Primitive[V] => new PrimitiveOperator(operation)
 
-      case shapeless: ShapelessProduct[V, _] =>
-        new ShapelessProductMapper(operation, shapeless)
+      case product: NoSchemaProduct[V] =>
+        new ProductMapper(operation, product)
 
-      case shapeless: ShapelessCoproduct[V, _] =>
-        new ShapelessCoproductTupler[V](operation, shapeless)
+      case coproduct: NoSchemaCoproduct[V] =>
+        new CoproductTupler[V](operation, coproduct)
 
       case option: OptionContainer[_] =>
         new OptionOperator(

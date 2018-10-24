@@ -3,7 +3,7 @@ package org.datacrafts.noschema
 trait ScroogeSupport extends com.stripe.scrooge.shapes.GenericInstances {
 
   class DummyNoSchema[T: NoSchema.ScalaType]
-    extends NoSchema[T](NoSchema.Category.Primitive, true, Seq.empty)
+    extends NoSchema[T](NoSchema.Category.Primitive, true)
 
   // these 2 types are under the UnkownUnionField of scrooge Union type,
   // and is an auto generated private class.

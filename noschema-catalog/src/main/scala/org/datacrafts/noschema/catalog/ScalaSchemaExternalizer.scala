@@ -144,7 +144,7 @@ class ScalaSchemaExternalizer(
               else { // first time see the schema
                 Some(NoSchemaExternalizable.Product(
                   schemaInfo,
-                  product.dependencies.map {
+                  product.fields.map {
                     dep =>
                       dependencySerializer(dep).path ->
                         dependencySerializer(dep).getExternalizedSchema()
@@ -173,7 +173,7 @@ class ScalaSchemaExternalizer(
               else {
                 Some(NoSchemaExternalizable.Coproduct(
                   schemaInfo,
-                  coproduct.dependencies.map {
+                  coproduct.members.map {
                     dep =>
                       dependencySerializer(dep).path ->
                         dependencySerializer(dep).getExternalizedSchema()
