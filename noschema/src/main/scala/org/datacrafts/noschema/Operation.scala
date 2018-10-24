@@ -1,5 +1,7 @@
 package org.datacrafts.noschema
 
+import scala.util.{Failure, Success, Try}
+
 import org.datacrafts.noschema.Context.LocalContext
 import org.datacrafts.noschema.Operation.{DefaultFormatter, Formatter, Operator}
 
@@ -171,7 +173,11 @@ object Operation {
 
     final def marshal(input: Any): T = {
       if (Option(input).isDefined) {
-        marshalNoneNull(input)
+        Try(marshalNoneNull(input)) match {
+          case Success(output) => output
+          case Failure(f) =>
+            throw new Exception(s"failed to marshal context=${operation.context}", f)
+        }
       } else {
         default.getOrElse(
           if (operation.context.noSchema.nullable) {
@@ -180,7 +186,7 @@ object Operation {
             throw new Exception(
               s"input is null, but nullable=${operation.context.noSchema.nullable} " +
                 s"and operator $this of ${this.operation.context.noSchema.scalaType} " +
-                s"has no default")
+                s"has no default. context=${operation.context}")
           }
         )
       }
