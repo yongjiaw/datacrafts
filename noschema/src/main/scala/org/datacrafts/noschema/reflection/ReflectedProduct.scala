@@ -37,7 +37,7 @@ class ReflectedProduct(
             .dependencyOperation(fieldContext)
             .marshal(symbolExtractor.getSymbolValue(fieldContext))
       }
-    reflector.companionApply(args)
+    reflector.companionApply(args: _*)
   }
 
   override def unmarshal(

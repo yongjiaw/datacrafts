@@ -21,13 +21,13 @@ abstract class ProductOperator[T, O] extends Operator[T] with Slf4jLogging.Defau
     operation.context.noSchema.scalaType.matchInput(input) match {
         // this match might be very expensive
       case Some(t) =>
-        logDebug(s"input[${className}] is already expected type: " +
+        logDebug(s"input[${className}]($input) is already expected type: " +
           s"${operation.context.noSchema.scalaType}")
         t
       case _ =>
         logDebug(s"input ${input}[${className}] is not expected type: " +
           s"${operation.context.noSchema.scalaType}, " +
-          s"parse and perform shapeless transform")
+          s"parse and marshal")
         Try(parse(input)) match {
           case Success(parsed) => product.marshal(parsed, operation)
           case Failure(f) => throw new Exception(
