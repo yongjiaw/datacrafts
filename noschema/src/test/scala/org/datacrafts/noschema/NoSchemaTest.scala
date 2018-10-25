@@ -11,68 +11,73 @@ class NoSchemaTest extends FlatSpec with NoSchemaDsl {
 
     println(schemaOf[Recursive].format())
 
+    println(reflectedSchemaOf[Recursive]().format())
+
     // can just print the schema itself
     println(schemaOf[TestClass].format())
 
-    val op = DefaultRule.withSchema[TestClass]
-    println(op.format())
+    val op1 = DefaultRule.withSchema[TestClass]
+    println(op1.format())
     // equivalent to the above, just DSL syntactic sugar
     val op2 = schemaOf[TestClass].operation()
     println(op2.format())
 
-    assert(
-      op.operator.marshal(
-        Map(
-          "v1" -> 10,
-          "v5" -> Map("_2" -> 12),
-          "v3" -> Iterable(Seq("v21" -> 3)),
-          "v6" -> TestClass3(v31 = 5),
-          "v7" -> ("org.datacrafts.noschema.Fruit1.Apple", Map("name" -> "bigApple")),
-          "v8" -> Map("v" -> Seq(Map("v" -> Seq.empty, "v2" -> 2)), "v2" -> 1),
-          "v10" -> "abc",
-          "v11" -> Seq(1, 3, 2)
-        )) == TestClass(
-        v1 = 10,
-        v5 = (null, 12),
-        v3 = Some(Seq(Some(
-          TestClass2(
-            v21 = 3,
-            v22 = null
-          )))),
-        v6 = Some(TestClass3(v31 = 5)),
-        v2 = None,
-        v4 = null,
-        v7 = Fruit1.Apple("bigApple"),
-        v8 = Recursive(Seq(Recursive(v2 = 2)), v2 = 1)
-      )
-    )
-
-    assert(
-      op.operator.unmarshal(
-        TestClass(
-          v1 = 1,
-          v2 = null
-        )
-      ) == Map(
-        "v1" -> 1,
-        "v2" -> null,
-        // the rest are default values
-        "v10" -> "abc",
-        "v11" -> Set(1, 2, 3),
-        "v6" -> null,
-        "v7" -> ("org.datacrafts.noschema.Apple", Map("size" -> 1)),
-        "v8" -> Map("v2" -> 1, "v" -> Seq.empty),
-        "v9" -> null,
-        "v5" -> Map("_2" -> 2, "_1" -> "a"),
-        "v4" -> null,
-        "v3" -> Seq(
+    for (op <- Seq(op1, op2)) {
+      assert(
+        op.operator.marshal(
           Map(
-            "v21" -> 3,
-            "v22" -> Map("v" -> Map(), "v32" -> Seq(12.0), "v31" -> 0)
+            "v1" -> 10,
+            "v5" -> Map("_2" -> 12),
+            "v3" -> Iterable(Seq("v21" -> 3)),
+            "v6" -> TestClass3(v31 = 5),
+            "v7" -> ("org.datacrafts.noschema.Fruit1.Apple", Map("name" -> "bigApple")),
+            "v8" -> Map("v" -> Seq(Map("v" -> Seq.empty, "v2" -> 2)), "v2" -> 1),
+            "v10" -> "abc",
+            "v11" -> Seq(1, 3, 2)
+          )) == TestClass(
+          v1 = 10,
+          v5 = (null, 12),
+          v3 = Some(Seq(Some(
+            TestClass2(
+              v21 = 3,
+              v22 = null
+            )))),
+          v6 = Some(TestClass3(v31 = 5)),
+          v2 = None,
+          v4 = null,
+          v7 = Fruit1.Apple("bigApple"),
+          v8 = Recursive(Seq(Recursive(v2 = 2)), v2 = 1)
+        )
+      )
+
+      assert(
+        op.operator.unmarshal(
+          TestClass(
+            v1 = 1,
+            v2 = null
+          )
+        ) == Map(
+          "v1" -> 1,
+          "v2" -> null,
+          // the rest are default values
+          "v10" -> "abc",
+          "v11" -> Set(1, 2, 3),
+          "v6" -> null,
+          "v7" -> ("org.datacrafts.noschema.Apple", Map("size" -> 1)),
+          "v8" -> Map("v2" -> 1, "v" -> Seq.empty),
+          "v9" -> null,
+          "v5" -> Map("_2" -> 2, "_1" -> "a"),
+          "v4" -> null,
+          "v3" -> Seq(
+            Map(
+              "v21" -> 3,
+              "v22" -> Map("v" -> Map(), "v32" -> Seq(12.0), "v31" -> 0)
+            )
           )
         )
       )
-    )
+    }
+
   }
 
   "AST recursive parsing" should "be successful" in {
@@ -129,5 +134,5 @@ object Fruit1 {
 
 sealed trait DummyJsonAst
 case class PrimitiveType(`type`: String) extends DummyJsonAst
-case class Object(fields: Map[String, DummyJsonAst]) extends DummyJsonAst
-case class Array(element: DummyJsonAst) extends DummyJsonAst
+case class ObjectType(fields: Map[String, DummyJsonAst]) extends DummyJsonAst
+case class ArrayType(element: DummyJsonAst) extends DummyJsonAst

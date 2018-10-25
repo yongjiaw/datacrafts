@@ -5,8 +5,8 @@ import scala.util.{Failure, Success, Try}
 import org.datacrafts.logging.Slf4jLogging
 import org.datacrafts.noschema.NoSchemaProduct
 import org.datacrafts.noschema.Operation.Operator
-import org.datacrafts.noschema.ShapelessProduct.{SymbolCollector, SymbolExtractor}
-import org.datacrafts.noschema.operator.ProductOperator.ProductBuilder
+import org.datacrafts.noschema.operator.ProductOperator.{ProductBuilder, SymbolExtractor}
+import org.datacrafts.noschema.Context.MemberVariable
 
 abstract class ProductOperator[T, O] extends Operator[T] with Slf4jLogging.Default {
 
@@ -46,6 +46,23 @@ object ProductOperator {
 
   trait ProductBuilder[O] extends SymbolCollector {
     def build(): O
+  }
+
+  trait SymbolExtractor {
+    def removeSymbol(symbol: MemberVariable[_]): SymbolExtractor
+
+    // can control the whether the symbol is allowed to be absent and treated as null
+    def getSymbolValue(symbol: MemberVariable[_]): Any
+
+    def allSymbolsExtracted(): Unit
+  }
+
+  trait SymbolCollector {
+
+    // add symbol value pairs disassembled from the structured class
+    // can control the behavior when the symbol has null or empty value
+    def addSymbolValue(symbol: MemberVariable[_], value: Any): SymbolCollector
+
   }
 
 }

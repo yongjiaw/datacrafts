@@ -1,13 +1,11 @@
 package org.datacrafts.noschema.avro
 
-import org.apache.avro.generic.{GenericData, GenericRecord}
+import org.apache.avro.generic.GenericData
 import org.apache.avro.generic.GenericData.EnumSymbol
-import org.datacrafts.noschema.{NoSchema, NoSchemaCoproduct, NoSchemaDsl, Primitive, ShapelessCoproduct}
+import org.datacrafts.noschema.{NoSchemaCoproduct, NoSchemaDsl}
 import org.datacrafts.noschema.Context.CoproductElement
-import org.datacrafts.noschema.ShapelessCoproduct.TypeValueExtractor
-import org.datacrafts.noschema.avro.AvroRule.SchemaWrapper
-import org.datacrafts.noschema.operator.{CoproductOperator, PrimitiveOperator}
-import org.datacrafts.noschema.operator.CoproductOperator.{CoproductBuilder, CoproductInfo}
+import org.datacrafts.noschema.operator.CoproductOperator
+import org.datacrafts.noschema.operator.CoproductOperator.CoproductInfo
 
 class CoproductAvroOperator[T] (
   override val coproduct: NoSchemaCoproduct[T],

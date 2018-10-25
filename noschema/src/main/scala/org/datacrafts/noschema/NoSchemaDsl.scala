@@ -2,11 +2,21 @@ package org.datacrafts.noschema
 
 import org.datacrafts.noschema.Operation.SchemaFormatter
 import org.datacrafts.noschema.rule.DefaultRule
+import org.datacrafts.noschema.reflection.NoSchemaReflector.ReflectionRule
 
 trait NoSchemaDsl {
 
+  // this method use compile time implicit resolution which was setup with shapeless
   def schemaOf[T: NoSchema]: NoSchema[T] = {
     implicitly[NoSchema[T]]
+  }
+
+  import scala.reflect.runtime.universe.TypeTag
+  // this method uses runtime reflection with TypeTag
+  def reflectedSchemaOf[T: TypeTag](
+    rule: ReflectionRule = new ReflectionRule {}
+  ): NoSchema[T] = {
+    rule.reflect(implicitly[TypeTag[T]].tpe).asInstanceOf[NoSchema[T]]
   }
 
   implicit class NoSchemaConverter[T](noschema: NoSchema[T]) {

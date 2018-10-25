@@ -1,11 +1,10 @@
 package org.datacrafts.noschema.avro
 
 import org.apache.avro.generic.{GenericData, GenericRecord}
-import org.datacrafts.noschema.{NoSchemaProduct, ShapelessProduct}
+import org.datacrafts.noschema.NoSchemaProduct
 import org.datacrafts.noschema.Context.MemberVariable
-import org.datacrafts.noschema.ShapelessProduct.SymbolExtractor
 import org.datacrafts.noschema.operator.ProductOperator
-import org.datacrafts.noschema.operator.ProductOperator.ProductBuilder
+import org.datacrafts.noschema.operator.ProductOperator.{ProductBuilder, SymbolCollector, SymbolExtractor}
 
 class ProductAvroOperator[T](
   override val product: NoSchemaProduct[T],
@@ -13,7 +12,7 @@ class ProductAvroOperator[T](
   val avroRule: AvroRule
 ) extends ProductOperator[T, GenericRecord] {
 
-  override protected def parse(input: Any): ShapelessProduct.SymbolExtractor = {
+  override protected def parse(input: Any): SymbolExtractor = {
     input match {
       case record: GenericRecord =>
         new SymbolExtractor {
@@ -55,7 +54,7 @@ class ProductAvroOperator[T](
 
       override def addSymbolValue(member: MemberVariable[_],
         value: Any
-      ): ShapelessProduct.SymbolCollector = {
+      ): SymbolCollector = {
 
         lazy val depOp = operation.dependencyOperation(member)
         if (Option(value).isDefined || depOp.isNullable) {

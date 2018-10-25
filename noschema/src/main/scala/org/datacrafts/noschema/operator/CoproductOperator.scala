@@ -3,11 +3,10 @@ package org.datacrafts.noschema.operator
 import scala.util.{Failure, Success, Try}
 
 import org.datacrafts.logging.Slf4jLogging
-import org.datacrafts.noschema.{NoSchemaCoproduct, ShapelessCoproduct}
+import org.datacrafts.noschema.NoSchemaCoproduct
 import org.datacrafts.noschema.Context.CoproductElement
 import org.datacrafts.noschema.Operation.Operator
-import org.datacrafts.noschema.ShapelessCoproduct.{TypeValueExtractor, UnionTypeValueCollector}
-import org.datacrafts.noschema.operator.CoproductOperator.{CoproductBuilder, CoproductInfo}
+import org.datacrafts.noschema.operator.CoproductOperator.{CoproductBuilder, CoproductInfo, TypeValueExtractor, UnionTypeValueCollector}
 
 abstract class CoproductOperator[T, O] extends Operator[T] with Slf4jLogging.Default {
 
@@ -35,7 +34,7 @@ abstract class CoproductOperator[T, O] extends Operator[T] with Slf4jLogging.Def
 
     override def addTypeValue(coproductElement: CoproductElement[_],
       value: Any
-    ): ShapelessCoproduct.UnionTypeValueCollector = {
+    ): UnionTypeValueCollector = {
       if (coproductInfo.isDefined) {
         throw new Exception(s"adding value for corpoduct should only be invoked once")
       }
@@ -81,4 +80,13 @@ object CoproductOperator {
     def build(): O
   }
 
+
+  trait TypeValueExtractor {
+    // can control the whether the symbol is allowed to be absent and treated as null
+    def getTypeValue(coproductElement: CoproductElement[_]): Option[Any]
+  }
+
+  trait UnionTypeValueCollector {
+    def addTypeValue(coproductElement: CoproductElement[_], value: Any): UnionTypeValueCollector
+  }
 }

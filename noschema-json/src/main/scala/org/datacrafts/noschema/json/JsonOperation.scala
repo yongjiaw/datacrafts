@@ -4,8 +4,9 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import com.fasterxml.jackson.module.scala.experimental.ScalaObjectMapper
 import org.datacrafts.logging.Slf4jLogging
-import org.datacrafts.noschema.{Context, Operation, ShapelessCoproduct, ShapelessProduct}
+import org.datacrafts.noschema.{Context, Operation, ShapelessProduct}
 import org.datacrafts.noschema.Context.CoproductElement
+import org.datacrafts.noschema.implicits.{ShapelessCoproduct, ShapelessProduct}
 import org.datacrafts.noschema.json.JsonOperation.JsonConfig
 import org.datacrafts.noschema.operator.{CoproductOperator, ProductMapper}
 import org.datacrafts.noschema.rule.DefaultRule

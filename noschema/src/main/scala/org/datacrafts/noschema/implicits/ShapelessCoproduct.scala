@@ -1,25 +1,14 @@
-package org.datacrafts.noschema
+package org.datacrafts.noschema.implicits
 
 import scala.util.{Failure, Success, Try}
 
 import org.datacrafts.logging.Slf4jLogging
-import org.datacrafts.noschema.Context.CoproductElement
+import org.datacrafts.noschema.{schemaClassFilter, Context, NoSchema, NoSchemaCoproduct, Operation}
 import org.datacrafts.noschema.NoSchema.HasLazySchema
-import org.datacrafts.noschema.ShapelessCoproduct.{ShapelessCoproductAdapter, TypeValueExtractor, UnionTypeValueCollector}
+import org.datacrafts.noschema.implicits.ShapelessCoproduct.ShapelessCoproductAdapter
+import org.datacrafts.noschema.operator.CoproductOperator.{TypeValueExtractor, UnionTypeValueCollector}
 import shapeless.{:+:, CNil, Coproduct, Inl, Inr, LabelledGeneric, Lazy, Witness}
 import shapeless.labelled.{field, FieldType}
-
-abstract class NoSchemaCoproduct[T: NoSchema.ScalaType](
-  val members: Seq[Context.CoproductElement[_]]
-) extends NoSchema[T] (
-  category = NoSchema.Category.CoProduct,
-  nullable = true) {
-
-  def marshal(typeExtractor: TypeValueExtractor, operation: Operation[T]): T
-
-  def unmarshal(input: T, emptyUnion: UnionTypeValueCollector, operation: Operation[T]
-  ): UnionTypeValueCollector
-}
 
 class ShapelessCoproduct[T, R <: Coproduct](
   members: Seq[Context.CoproductElement[_]],
@@ -184,14 +173,5 @@ object ShapelessCoproduct extends Slf4jLogging.Default {
         // since schema evolution should never leave out already known types to unknown
         members.filter(clazz => !schemaClassFilter.contains(clazz.noSchema.scalaType.fullName)),
         generic, this, st)
-  }
-
-  trait TypeValueExtractor {
-    // can control the whether the symbol is allowed to be absent and treated as null
-    def getTypeValue(coproductElement: CoproductElement[_]): Option[Any]
-  }
-
-  trait UnionTypeValueCollector {
-    def addTypeValue(coproductElement: CoproductElement[_], value: Any): UnionTypeValueCollector
   }
 }

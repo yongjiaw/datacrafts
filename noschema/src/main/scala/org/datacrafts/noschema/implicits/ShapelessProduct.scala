@@ -1,20 +1,10 @@
-package org.datacrafts.noschema
+package org.datacrafts.noschema.implicits
 
-import org.datacrafts.noschema.Context.MemberVariable
-import org.datacrafts.noschema.ShapelessProduct.{ShapelessProductAdapter, SymbolCollector, SymbolExtractor}
+import org.datacrafts.noschema.{Context, NoSchema, NoSchemaProduct, Operation}
+import org.datacrafts.noschema.implicits.ShapelessProduct.ShapelessProductAdapter
+import org.datacrafts.noschema.operator.ProductOperator.{SymbolCollector, SymbolExtractor}
 import shapeless.{::, HList, HNil, LabelledGeneric, Lazy, Witness}
 import shapeless.labelled.{field, FieldType}
-
-abstract class NoSchemaProduct[T: NoSchema.ScalaType](
-  val fields: Seq[Context.MemberVariable[_]]
-) extends NoSchema[T] (
-  category = NoSchema.Category.Product,
-  nullable = true) {
-
-  def marshal(symbolExtractor: SymbolExtractor, operation: Operation[T]): T
-
-  def unmarshal(input: T, emptyCollector: SymbolCollector, operation: Operation[T]): SymbolCollector
-}
 
 class ShapelessProduct[T, R <: HList](
   fields: Seq[Context.MemberVariable[_]],
@@ -118,23 +108,6 @@ object ShapelessProduct {
       st: Lazy[NoSchema.ScalaType[T]]
     ): NoSchema[T] = NoSchema.getOrElseCreateSchema(
       shapeless.value.composeWithGeneric(generic.value, st.value))(st.value)
-
-  }
-
-  trait SymbolExtractor {
-    def removeSymbol(symbol: MemberVariable[_]): SymbolExtractor
-
-    // can control the whether the symbol is allowed to be absent and treated as null
-    def getSymbolValue(symbol: MemberVariable[_]): Any
-
-    def allSymbolsExtracted(): Unit
-  }
-
-  trait SymbolCollector {
-
-    // add symbol value pairs disassembled from the structured class
-    // can control the behavior when the symbol has null or empty value
-    def addSymbolValue(symbol: MemberVariable[_], value: Any): SymbolCollector
 
   }
 

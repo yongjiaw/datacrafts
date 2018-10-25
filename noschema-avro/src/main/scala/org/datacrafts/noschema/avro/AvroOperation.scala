@@ -9,9 +9,10 @@ import org.apache.avro.Schema.Field
 import org.apache.avro.file.DataFileWriter
 import org.apache.avro.generic.{GenericData, GenericDatumWriter, GenericRecord}
 import org.datacrafts.logging.Slf4jLogging
-import org.datacrafts.noschema.{Context, Operation, ShapelessCoproduct}
+import org.datacrafts.noschema.{Context, Operation}
 import org.datacrafts.noschema.Context.LocalContext
 import org.datacrafts.noschema.NoSchema.ScalaType
+import org.datacrafts.noschema.implicits.ShapelessCoproduct
 import org.datacrafts.noschema.avro.AvroRule.SchemaWrapper
 
 class AvroOperation[T](

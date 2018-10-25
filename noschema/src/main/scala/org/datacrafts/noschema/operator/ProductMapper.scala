@@ -2,8 +2,7 @@ package org.datacrafts.noschema.operator
 
 import org.datacrafts.noschema.{NoSchemaProduct, Operation}
 import org.datacrafts.noschema.Context.MemberVariable
-import org.datacrafts.noschema.ShapelessProduct.{SymbolCollector, SymbolExtractor}
-import org.datacrafts.noschema.operator.ProductOperator.ProductBuilder
+import org.datacrafts.noschema.operator.ProductOperator.{ProductBuilder, SymbolCollector, SymbolExtractor}
 
 class ProductMapper[T](
   override val operation: Operation[T],
