@@ -101,17 +101,6 @@ lazy val `noschema-json` = project.settings(
   noschema
 )
 
-lazy val `noschema-catalog` = project.settings(
-  commenSettings,
-  libraryDependencies ++= Seq(
-    "org.slf4j" % "slf4j-log4j12" % "1.7.25" % Test
-  )
-).dependsOn(
-  `noschema-json`,
-  `noschema-avro` % "test->test",
-  `noschema-thrift` % "test->test"
-)
-
 lazy val datacrafts = (project in file("."))
   .settings(
     commenSettings,
