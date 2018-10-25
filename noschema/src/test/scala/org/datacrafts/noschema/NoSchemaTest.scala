@@ -11,7 +11,7 @@ class NoSchemaTest extends FlatSpec with NoSchemaDsl {
 
     println(schemaOf[Recursive].format())
 
-    println(reflectedSchemaOf[Recursive]().format())
+    // println(reflectedSchemaOf[Recursive]().format())
 
     // can just print the schema itself
     println(schemaOf[TestClass].format())

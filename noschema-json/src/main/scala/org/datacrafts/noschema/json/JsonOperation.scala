@@ -4,9 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import com.fasterxml.jackson.module.scala.experimental.ScalaObjectMapper
 import org.datacrafts.logging.Slf4jLogging
-import org.datacrafts.noschema.{Context, Operation, ShapelessProduct}
+import org.datacrafts.noschema.{Context, NoSchemaCoproduct, NoSchemaProduct, Operation}
 import org.datacrafts.noschema.Context.CoproductElement
-import org.datacrafts.noschema.implicits.{ShapelessCoproduct, ShapelessProduct}
 import org.datacrafts.noschema.json.JsonOperation.JsonConfig
 import org.datacrafts.noschema.operator.{CoproductOperator, ProductMapper}
 import org.datacrafts.noschema.rule.DefaultRule
@@ -21,16 +20,16 @@ class JsonOperation[T](
     override def getOperator[V](operation: Operation[V]): Operation.Operator[V] = {
       operation.context.noSchema match {
 
-        case shapeless: ShapelessProduct[V, _] =>
+        case product: NoSchemaProduct[V] =>
           new ProductMapper(
-            operation, shapeless,
+            operation, product,
             allowUnknownField = jsonConfig.allowUnknownField,
             allowAbsence = jsonConfig.allowAbsence,
             includeNull = jsonConfig.includeNull
           )
 
-        case shapeless: ShapelessCoproduct[V, _] =>
-          coproductOperatorGetter.getOperator(shapeless, operation)
+        case coproduct: NoSchemaCoproduct[V] =>
+          coproductOperatorGetter.getOperator(coproduct, operation)
 
         case _ => super.getOperator(operation)
       }
@@ -74,14 +73,14 @@ object JsonOperation {
   // make the properties configurable
   trait CoproductOperatorGetter {
     def getOperator[T](
-      shapelessCoproduct: ShapelessCoproduct[T, _],
+      coproduct: NoSchemaCoproduct[T],
       operation: Operation[T]
     ): Operation.Operator[T] = {
-      new JsonCoproductOperator[T](shapelessCoproduct, operation)
+      new JsonCoproductOperator[T](coproduct, operation)
     }
   }
   class JsonCoproductOperator[T](
-    override val coproduct: ShapelessCoproduct[T, _],
+    override val coproduct: NoSchemaCoproduct[T],
     override val operation: Operation[T]
   ) extends CoproductOperator[T, Map[String, Any]] {
 
