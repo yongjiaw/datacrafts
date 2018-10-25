@@ -5,13 +5,12 @@ import scala.collection.JavaConverters._
 import org.apache.avro.Schema
 import org.apache.avro.Schema.Field
 import org.datacrafts.logging.Slf4jLogging
-import org.datacrafts.noschema.{Container, NoSchema, NoSchemaCoproduct, NoSchemaDsl, NoSchemaProduct, Operation, Primitive, ShapelessCoproduct, ShapelessProduct}
+import org.datacrafts.noschema.{Container, NoSchema, NoSchemaCoproduct, NoSchemaDsl, NoSchemaProduct, Operation, Primitive}
 import org.datacrafts.noschema.Container._
 import org.datacrafts.noschema.Context.{CoproductElement, LocalContext}
 import org.datacrafts.noschema.Operation.Operator
 import org.datacrafts.noschema.avro.AvroContainerOperator._
 import org.datacrafts.noschema.avro.AvroRule.SchemaWrapper
-import org.datacrafts.noschema.operator.ContainerOperator.{IterableOperator, MapOperator, MapOperator2, SeqOperator}
 import org.datacrafts.noschema.operator.PrimitiveOperator
 import org.datacrafts.noschema.rule.DefaultRule
 
@@ -39,13 +38,13 @@ trait AvroRule extends DefaultRule with NoSchemaDsl {
   // generally, enum's subclasses are all modules(case objects),
   // except that scrooge add one unknown field
   // union's subclasses are all classes
-  def isUnion(shapeless: ShapelessCoproduct[_, _]): Boolean = {
-    shapeless.scalaType.typeTag.tpe.typeSymbol.asClass
+  def isUnion(coproduct: NoSchemaCoproduct[_]): Boolean = {
+    coproduct.scalaType.typeTag.tpe.typeSymbol.asClass
       .knownDirectSubclasses.forall(!_.isModuleClass)
   }
 
-  def isEnum(shapeless: ShapelessCoproduct[_, _]): Boolean = {
-    shapeless.scalaType.typeTag.tpe.typeSymbol.asClass
+  def isEnum(coproduct: NoSchemaCoproduct[_]): Boolean = {
+    coproduct.scalaType.typeTag.tpe.typeSymbol.asClass
       .knownDirectSubclasses.forall(_.isModuleClass)
   }
 
@@ -127,15 +126,15 @@ trait AvroRule extends DefaultRule with NoSchemaDsl {
         Schema.createArray(operation.dependencyOperation(seq.element).avroSchema)
 
       // record
-      case shapeless: ShapelessProduct[_, _] =>
-        shapeless.scalaType.fullName match {
+      case product: NoSchemaProduct[_] =>
+        product.scalaType.fullName match {
           case AvroRule.NameSpacePattern(namespace, name) =>
             Schema.createRecord(
               name,
               getSchemaDoc(operation),
               namespace,
               false,
-              shapeless.fields.map {
+              product.fields.map {
                 case dep =>
                   val depOp = operation.dependencyOperation(dep)
                   new Field(
@@ -154,40 +153,40 @@ trait AvroRule extends DefaultRule with NoSchemaDsl {
 
           case _ =>
             throw new Exception(
-              s"${shapeless.scalaType.fullName} cannot extract namespace.name")
+              s"${product.scalaType.fullName} cannot extract namespace.name")
         }
 
       // union
-      case shapeless: ShapelessCoproduct[_, _] if operation.isUnion =>
+      case coproduct: NoSchemaCoproduct[_] if operation.isUnion =>
         Schema.createUnion(
-          shapeless.members.map {
+          coproduct.members.map {
             dep =>
               operation.dependencyOperation(dep).avroSchema
           }.sortBy(_.getName).asJava
         )
 
       // enum
-      case shapeless: ShapelessCoproduct[_, _] if operation.isEnum =>
-        shapeless.scalaType.fullName match {
+      case coproduct: NoSchemaCoproduct[_] if operation.isEnum =>
+        coproduct.scalaType.fullName match {
           case AvroRule.NameSpacePattern(namespace, name) =>
             Schema.createEnum(
               name,
               getSchemaDoc(operation),
               namespace,
-              shapeless.members.map {
+              coproduct.members.map {
                 dep => getEnumValue(dep)
               }.asJava
             )
 
           case _ =>
             throw new Exception(
-              s"${shapeless.scalaType.fullName} cannot extract namespace.name")
+              s"${coproduct.scalaType.fullName} cannot extract namespace.name")
         }
 
-      case shapeless: ShapelessCoproduct[_, _] =>
+      case coproduct: NoSchemaCoproduct[_] =>
         throw new Exception(
           s"Coproduct is neither union nor enum, need to update avroRule to cover the case" +
-            s"\n${shapeless.format()}")
+            s"\n${coproduct.format()}")
 
       case other => throw new Exception(s"Missing avro schema rule for:\n${other.format()}")
     }
