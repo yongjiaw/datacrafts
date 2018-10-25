@@ -16,7 +16,7 @@ abstract class NoSchema[T: NoSchema.ScalaType](
 
   logDebug(s"constructing ${this}")
 
-  final lazy val scalaType = implicitly[NoSchema.ScalaType[T]]
+  lazy val scalaType = implicitly[NoSchema.ScalaType[T]]
 
   override def toString: String = s"NoSchema[${scalaType.uniqueKey}](" +
     s"nullable=${nullable}, ${category})"
@@ -59,11 +59,11 @@ object NoSchema extends Slf4jLogging.Default {
   }
 
   class ScalaType[T: TypeTag : ClassTag : Manifest](val uniqueKey: TypeUniqueKey) {
-    lazy val typeTag = implicitly[TypeTag[T]]
+    lazy val tpe = implicitly[TypeTag[T]].tpe
     lazy val classTag = implicitly[ClassTag[T]]
     lazy val manifest = implicitly[Manifest[T]]
-    lazy val fullName: String = typeTag.tpe.typeSymbol.fullName
-    lazy val shortName: String = typeTag.tpe.typeSymbol.name.toString
+    lazy val fullName: String = tpe.typeSymbol.fullName
+    lazy val shortName: String = tpe.typeSymbol.name.toString
     override def toString: String = s"ScalaType[${uniqueKey}]"
     def matchInput(input: Any): Option[T] = classTag.unapply(input)
   }

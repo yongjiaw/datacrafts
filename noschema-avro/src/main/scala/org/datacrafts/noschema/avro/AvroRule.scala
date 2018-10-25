@@ -39,12 +39,12 @@ trait AvroRule extends DefaultRule with NoSchemaDsl {
   // except that scrooge add one unknown field
   // union's subclasses are all classes
   def isUnion(coproduct: NoSchemaCoproduct[_]): Boolean = {
-    coproduct.scalaType.typeTag.tpe.typeSymbol.asClass
+    coproduct.scalaType.tpe.typeSymbol.asClass
       .knownDirectSubclasses.forall(!_.isModuleClass)
   }
 
   def isEnum(coproduct: NoSchemaCoproduct[_]): Boolean = {
-    coproduct.scalaType.typeTag.tpe.typeSymbol.asClass
+    coproduct.scalaType.tpe.typeSymbol.asClass
       .knownDirectSubclasses.forall(_.isModuleClass)
   }
 
