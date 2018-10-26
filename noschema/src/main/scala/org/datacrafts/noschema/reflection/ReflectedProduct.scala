@@ -19,7 +19,7 @@ class ReflectedProduct(
       override def toString: String = s"RuntimeType[${uniqueKey}]"
 
       override def matchInput(input: Any): Option[Any] =
-        if (input.getClass.getCanonicalName == tpe.typeSymbol.fullName) {
+        if (input.getClass.getCanonicalName.stripSuffix("$") == tpe.typeSymbol.fullName) {
           Some(input)
         } else {
           Option.empty
@@ -42,7 +42,13 @@ class ReflectedProduct(
             .dependencyOperation(fieldContext)
             .marshal(symbolExtractor.getSymbolValue(fieldContext))
       }
-    reflector.companionApply(args: _*)
+
+    // case object just return the instance by reflection
+    if (!reflector.companionSymbol.isModule) {
+      reflector.moduleMirror.instance
+    } else {
+      reflector.companionApply(args: _*)
+    }
   }
 
   override def unmarshal(
@@ -52,18 +58,23 @@ class ReflectedProduct(
   ): SymbolCollector = {
     // TODO use fold to be functional
     var currentCollector = emptyCollector
-    reflector.companionUnapply(input).map {
-      case values =>
-        for (i <- 0 until reflector.applyArgs.size) yield {
-          val symbol = reflector.applyArgs(i)
-          val fieldContext = fields.get(symbol)
-            .getOrElse(
-              throw new Exception(s"symbol ${symbol} not found among fields ${fields.keys}"))
-          currentCollector = currentCollector.addSymbolValue(
-            symbol = fieldContext,
-            value = operation.dependencyOperation(fieldContext).unmarshal(values(i))
-          )
-        }
+    // case object nothing to add
+    if (!reflector.companionSymbol.isModule) {
+      // nothing to add
+    } else {
+      reflector.companionUnapply(input).map {
+        case values =>
+          for (i <- 0 until reflector.applyArgs.size) yield {
+            val symbol = reflector.applyArgs(i)
+            val fieldContext = fields.get(symbol)
+              .getOrElse(
+                throw new Exception(s"symbol ${symbol} not found among fields ${fields.keys}"))
+            currentCollector = currentCollector.addSymbolValue(
+              symbol = fieldContext,
+              value = operation.dependencyOperation(fieldContext).unmarshal(values(i))
+            )
+          }
+      }
     }
     currentCollector
   }

@@ -14,7 +14,7 @@ class CoproductTupler[T](
   ): Option[Any] = {
     input match {
       case (key, value) =>
-        if (s"$key" == coproductElement.noSchema.scalaType.fullName) Some(value) else None
+        if (key == coproductElement.noSchema.scalaType.fullName) Some(value) else None
       case _ => throw new Exception(
         s"input ${input} ${input.getClass} does not match key value pair")
     }

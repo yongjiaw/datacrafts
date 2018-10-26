@@ -75,7 +75,12 @@ object NoSchemaReflector extends Slf4jLogging.Default {
 
           logInfo(s"performing reflection on ${tpe.typeSymbol.fullName}")
           val reflector = TypeReflector(tpe)
-          if (reflector.caseAccessors.nonEmpty) {
+          if (tpe.typeSymbol.isModuleClass) {
+            logInfo(
+              s"${tpe.typeSymbol.fullName} is Module(object)")
+            new ReflectedProduct(tpe, Map.empty)
+          }
+          else if (reflector.caseAccessors.nonEmpty) {
             logInfo(
               s"${tpe.typeSymbol.fullName} is case class with type parameters=${tpe.typeArgs}")
             new ReflectedProduct(

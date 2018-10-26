@@ -7,24 +7,26 @@ import org.datacrafts.noschema.{Context, NoSchema, NoSchemaCoproduct, NoSchemaPr
 import org.datacrafts.noschema.operator.CoproductOperator
 
 object ReflectedCoproduct {
+
+  // deal with wrapping of coproduct members as in Scrooge
   case class Member(
     symbol: ru.Symbol,
     wrapper: Option[ru.Symbol],
     context: Context.CoproductElement[Any]
   ) {
-    def matchGeneric(input: Any): Boolean = {
+    def matchGenericInput(input: Any): Boolean = {
       wrapper.map(
-        _.fullName == input.getClass.getCanonicalName
+        _.fullName == input.getClass.getCanonicalName.stripSuffix("$")
       ).getOrElse(
-        symbol.fullName == input.getClass.getCanonicalName
+        symbol.fullName == input.getClass.getCanonicalName.stripSuffix("$")
       )
     }
 
-    def unwrapGeneric(input: Any): Any = {
+    def unwrapGenericInput(input: Any): Any = {
       wrapper.map(_ => input.asInstanceOf[Product].productElement(0)).getOrElse(input)
     }
 
-    def wrapTyped(input: Any): Any = {
+    def wrapTypedInput(input: Any): Any = {
       wrapper.map(
         symbol => TypeReflector(symbol.typeSignature).companionApply(input)
       ).getOrElse(input)
@@ -45,7 +47,7 @@ class ReflectedCoproduct(
       override def toString: String = s"RuntimeType[${uniqueKey}]"
 
       override def matchInput(input: Any): Option[Any] =
-        if (members.exists(_.matchGeneric(input))) {
+        if (members.exists(_.matchGenericInput(input))) {
           Some(input)
         } else {
           Option.empty
@@ -60,16 +62,15 @@ class ReflectedCoproduct(
     (for (
       member <- members;
       ReflectedCoproduct.Member(memberSymbol, wrapperSymbol, memberContext) = member;
-      matchedValue <- typeExtractor.getTypeValue(memberContext);
-      result <- Try {
-        logDebug(
-          s"${reflector.fullName} found matched " +
-            s"subclass ${memberContext} for value ${matchedValue}")
-        member.wrapTyped(
-          operation.dependencyOperation(memberContext).marshal(matchedValue)
-        )
-      }.toOption
-    ) yield {result}
+      matchedValue <- typeExtractor.getTypeValue(memberContext)
+    ) yield {
+      logDebug(
+        s"${reflector.fullName} found matched " +
+          s"subclass ${memberContext} for value ${matchedValue}")
+      member.wrapTypedInput(
+        operation.dependencyOperation(memberContext).marshal(matchedValue)
+      )
+    }
       ).headOption.getOrElse(
       throw new Exception(s"no value among candidate types (${members}) " +
         s"found from $typeExtractor\n" +
@@ -87,7 +88,7 @@ class ReflectedCoproduct(
 
     val (matchedMember, result) =
     (for (
-      member <- members if member.matchGeneric(input);
+      member <- members if member.matchGenericInput(input);
       ReflectedCoproduct.Member(memberSymbol, wrapperSymbol, memberContext) = member
     ) yield {
       logDebug(
@@ -97,7 +98,7 @@ class ReflectedCoproduct(
         memberContext,
         // calling unapply on the wrapper symbol will dispatch multiple levels
         operation.dependencyOperation(memberContext)
-          .unmarshal(member.unwrapGeneric(input))
+          .unmarshal(member.unwrapGenericInput(input))
 
       )
     }).headOption.getOrElse(

@@ -20,14 +20,19 @@ class TypeReflector(val tpe: ru.Type) extends Slf4jLogging.Default {
 
   import org.datacrafts.noschema.NoSchema._
   logInfo(s"constructing reflector for ${tpe.uniqueKey}")
+  lazy val fullName: String = tpe.typeSymbol.fullName
 
   lazy val rootMirror = ru.runtimeMirror(getClass.getClassLoader)
   lazy val classMirror = rootMirror.reflectClass(tpe.typeSymbol.asClass)
-  lazy val companionSymbol = classMirror.symbol.companion
-  lazy val companionInstance = rootMirror.reflectModule(companionSymbol.asModule)
-  lazy val companionMirror = rootMirror.reflect(companionInstance.instance)
 
-  lazy val fullName: String = tpe.typeSymbol.fullName
+  // module is for general object, for case object it does not have companion
+  lazy val moduleSymbol = rootMirror.staticModule(fullName)
+  lazy val moduleMirror = rootMirror.reflectModule(moduleSymbol)
+
+  lazy val companionSymbol = classMirror.symbol.companion
+  lazy val companionModuleMirror = moduleMirror // rootMirror.reflectModule(companionSymbol.asModule)
+  lazy val companionInstanceMirror = rootMirror.reflect(companionModuleMirror.instance)
+
   def getCompanionMethodSymbol(methodName: String): ru.MethodSymbol = {
     companionSymbol.typeSignature.decl(ru.TermName(methodName)).asMethod
   }
@@ -71,11 +76,12 @@ class TypeReflector(val tpe: ru.Type) extends Slf4jLogging.Default {
     methodName: String,
     args: Any*
   ): Any = {
-    Try(companionMirror
+    Try(companionInstanceMirror
       .reflectMethod(getCompanionMethodSymbol(methodName))
       .apply(args: _*)) match {
       case Success(result) => result
-      case Failure(f) => throw new Exception(s"failed ${fullName}.${methodName}(${args})", f)
+      case Failure(f) => throw new Exception(s"failed ${fullName}.${methodName}(${args}). " +
+        s"classSymbol=${classMirror.symbol}", f)
     }
   }
 
