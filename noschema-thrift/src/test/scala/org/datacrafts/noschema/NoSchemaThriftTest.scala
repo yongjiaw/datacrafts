@@ -34,7 +34,9 @@ class NoSchemaThriftTest extends FlatSpec
 
     val op3 = reflectedSchemaOf[TestClass](
       new ReflectionRule {
+
         import ru.typeOf
+
         override def reflect(tpe: ru.Type): NoSchema[Any] = {
           val reflector = TypeReflector(tpe)
           if (tpe < typeOf[ThriftUnion]) { // union type extends both ThriftUnion and ThriftStruct
@@ -43,36 +45,43 @@ class NoSchemaThriftTest extends FlatSpec
                 s"${tpe.typeSymbol.fullName} is coproduct of (${reflector.subclasses})")
               new ReflectedCoproduct(
                 tpe,
-                members = (for (
-                  symbol <- reflector.subclasses;
-                  subClassReflector = new TypeReflector(symbol.typeSignature)
-                  if {
-                    subClassReflector.caseAccessors.size == 1 || {
-                      if (
-                        subClassReflector.caseAccessors.size == 0 &&
-                        symbol.name.toString == "UnknownUnionField"
-                      ) {
-                        false
-                      } else {
-                        throw new Exception(
-                          s"union member ${symbol.fullName} has " +
-                            s"${subClassReflector.caseAccessors.size} case accessors")
-                      }
-
-                    }
-                  }
-                ) yield {
+                members = (
+                  for (
+                    symbol <- reflector.subclasses
+                    if (symbol.name.toString != "UnknownUnionField")
+                  ) yield {
                     val symbolName = symbol.name.toString
-                    val wrappedMember = subClassReflector.caseAccessors(0)
-                  ReflectedCoproduct.Member(
-                    wrappedMember,
-                    Some(symbol),
-                    Context.CoproductElement(
-                      Symbol(symbolName),
-                      reflect(wrappedMember.typeSignature.dealias)
-                    )
-                  )
-                }).toSeq
+                    val subClassReflector = new TypeReflector(symbol.typeSignature)
+                    if (subClassReflector.caseAccessors.size == 0){ // enum is case object
+                      ReflectedCoproduct.Member(
+                        symbol,
+                        None,
+                        Context.CoproductElement(
+                          Symbol(symbolName),
+                          reflect(symbol.typeSignature.dealias)
+                        )
+                      )
+                    }
+                    else if (subClassReflector.caseAccessors.size == 1) {
+                      // everything else is wrapped in case class
+                      val wrappedMember = subClassReflector.caseAccessors(0)
+                      ReflectedCoproduct.Member(
+                        wrappedMember,
+                        Some(symbol),
+                        Context.CoproductElement(
+                          Symbol(symbolName),
+                          reflect(wrappedMember.typeSignature.dealias)
+                        )
+                      )
+                    }
+                    else {
+                      throw new Exception(
+                        s"ThriftUnion's subclass should not have more than 1 case accessors:" +
+                          s"${symbolName}(${subClassReflector.caseAccessors})"
+                      )
+                    }
+
+                  }).toSeq
               )
             }
             else {
@@ -217,15 +226,20 @@ object NoSchemaThriftTest {
   )
 
   // this type doesn't make much sense, just to assert cyclic reference with generic type is handled
-  case class GenericType[T](v1: T, v2: GenericType[GenericType[Double]] = null)
+  case class GenericType[T](v1: T,
+    v2: GenericType[GenericType[Double]] = null
+  )
 
 }
 
 sealed trait Fruit
 
 case class Apple(size: Int = 1) extends Fruit
+
 case class Pear(size: Double = 1.5) extends Fruit
 
 object Fruit1 {
+
   case class Apple(name: String = "red") extends Fruit
+
 }
