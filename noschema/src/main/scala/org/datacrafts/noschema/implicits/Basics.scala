@@ -24,7 +24,7 @@ object Basics {
       ot: Lazy[NoSchema.ScalaType[Option[T]]],
       st: Lazy[NoSchema.ScalaType[T]]
     ): OptionContainer[T] =
-      new OptionContainer[T](Context.ContainerElement(NoSchema.getLazySchema(node)(st.value))
+      new OptionContainer[T](Context.ContainerElement(node.value)
       )(ot.value, st.value)
 
     implicit def getSeqSchemaFromElementSchema[T](implicit
@@ -32,7 +32,7 @@ object Basics {
       ot: Lazy[NoSchema.ScalaType[Seq[T]]],
       st: Lazy[NoSchema.ScalaType[T]]
     ): SeqContainer[T] =
-      new SeqContainer[T](Context.ContainerElement(NoSchema.getLazySchema(node)(st.value))
+      new SeqContainer[T](Context.ContainerElement(node.value)
       )(ot.value, st.value)
 
     implicit def getSetSchemaFromElementSchema[T](implicit
@@ -40,7 +40,7 @@ object Basics {
       ot: Lazy[NoSchema.ScalaType[Set[T]]],
       st: Lazy[NoSchema.ScalaType[T]]
     ): SetContainer[T] =
-      new SetContainer[T](Context.ContainerElement(NoSchema.getLazySchema(node)(st.value))
+      new SetContainer[T](Context.ContainerElement(node.value)
       )(ot.value, st.value)
 
     implicit def getIterableSchemaFromElementSchema[T](implicit
@@ -48,21 +48,21 @@ object Basics {
       ot: Lazy[NoSchema.ScalaType[Iterable[T]]],
       st: Lazy[NoSchema.ScalaType[T]]
     ): IterableContainer[T] =
-      new IterableContainer[T](Context.ContainerElement(NoSchema.getLazySchema(node)(st.value))
+      new IterableContainer[T](Context.ContainerElement(node.value)
       )(ot.value, st.value)
 
     implicit def getMapSchemaFromElementSchema[T](implicit
       node: Lazy[NoSchema[T]],
       ot: Lazy[NoSchema.ScalaType[Map[String, T]]],
       st: Lazy[NoSchema.ScalaType[T]]): MapContainer[T] =
-      new MapContainer[T](Context.ContainerElement(NoSchema.getLazySchema(node)(st.value))
+      new MapContainer[T](Context.ContainerElement(node.value)
       )(ot.value, st.value)
 
     implicit def getMapSchemaFromElementSchema2[T](implicit
       node: Lazy[NoSchema[T]],
       ot: Lazy[NoSchema.ScalaType[scala.collection.Map[String, T]]],
       st: Lazy[NoSchema.ScalaType[T]]): MapContainer2[T] =
-      new MapContainer2[T](Context.ContainerElement(NoSchema.getLazySchema(node)(st.value))
+      new MapContainer2[T](Context.ContainerElement(node.value)
       )(ot.value, st.value)
 
   }

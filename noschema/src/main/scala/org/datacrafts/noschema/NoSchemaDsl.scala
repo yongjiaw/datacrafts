@@ -16,7 +16,7 @@ trait NoSchemaDsl {
   def reflectedSchemaOf[T: TypeTag](
     rule: ReflectionRule = new ReflectionRule {}
   ): NoSchema[T] = {
-    rule.reflect(implicitly[TypeTag[T]].tpe).lazySchema.asInstanceOf[NoSchema[T]]
+    rule.reflect(implicitly[TypeTag[T]].tpe).asInstanceOf[NoSchema[T]]
   }
 
   implicit class NoSchemaConverter[T](noschema: NoSchema[T]) {

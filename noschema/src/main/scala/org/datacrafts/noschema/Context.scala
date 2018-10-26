@@ -14,15 +14,12 @@ object Context {
     override lazy val noSchema: NoSchema[T] = lazySchema.lazySchema
   }
 
-  case class ContainerElement[T](lazySchema: HasLazySchema[T])
-    extends LocalContext[T] {
-    override lazy val noSchema: NoSchema[T] = lazySchema.lazySchema
-  }
 
-  case class CoproductElement[T](symbol: Symbol, lazySchema: HasLazySchema[T])
-    extends LocalContext[T] {
-    override lazy val noSchema: NoSchema[T] = lazySchema.lazySchema
-  }
+  case class ContainerElement[T](noSchema: NoSchema[T])
+    extends LocalContext[T]
+
+  case class CoproductElement[T](symbol: Symbol, noSchema: NoSchema[T])
+    extends LocalContext[T]
 
   case class Root[T](noSchema: NoSchema[T]) extends LocalContext[T]
 

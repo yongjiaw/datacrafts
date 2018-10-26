@@ -42,9 +42,7 @@ object ShapelessCoproduct extends Slf4jLogging.Default {
       val headValueContext =
         Context.CoproductElement(
           headSymbol.value.value,
-          new HasLazySchema[V] {
-            override def lazySchema: NoSchema[V] = head.value
-          }
+          head.value
         )
 
       new ShapelessCoproductAdapter[FieldType[K, V] :+: L](
@@ -105,9 +103,7 @@ object ShapelessCoproduct extends Slf4jLogging.Default {
       val headValueContext =
         Context.CoproductElement(
           headSymbol.value.value,
-          new HasLazySchema[V] {
-            override def lazySchema: NoSchema[V] = headValue.value
-          }
+          headValue.value
         )
 
       new ShapelessCoproductAdapter[FieldType[K, V] :+: CNil](
