@@ -6,10 +6,35 @@ import scala.util.Try
 import org.datacrafts.noschema.{Context, NoSchema, NoSchemaCoproduct, NoSchemaProduct, Operation}
 import org.datacrafts.noschema.operator.CoproductOperator
 
+object ReflectedCoproduct {
+  case class Member(
+    symbol: ru.Symbol,
+    wrapper: Option[ru.Symbol],
+    context: Context.CoproductElement[Any]
+  ) {
+    def matchGeneric(input: Any): Boolean = {
+      wrapper.map(
+        _.fullName == input.getClass.getCanonicalName
+      ).getOrElse(
+        symbol.fullName == input.getClass.getCanonicalName
+      )
+    }
+
+    def unwrapGeneric(input: Any): Any = {
+      wrapper.map(_ => input.asInstanceOf[Product].productElement(0)).getOrElse(input)
+    }
+
+    def wrapTyped(input: Any): Any = {
+      wrapper.map(
+        symbol => TypeReflector(symbol.typeSignature).companionApply(input)
+      ).getOrElse(input)
+    }
+  }
+}
 class ReflectedCoproduct(
   runtimeType: ru.Type,
-  members: Map[ru.Symbol, Context.CoproductElement[Any]]
-) extends NoSchemaCoproduct[Any](members.values.toSeq) {
+  members: Seq[ReflectedCoproduct.Member]
+) extends NoSchemaCoproduct[Any](members.map(_.context)) {
 
   import org.datacrafts.noschema.NoSchema._
 
@@ -20,7 +45,7 @@ class ReflectedCoproduct(
       override def toString: String = s"RuntimeType[${uniqueKey}]"
 
       override def matchInput(input: Any): Option[Any] =
-        if (input.getClass.getCanonicalName == tpe.typeSymbol.fullName) {
+        if (members.exists(_.matchGeneric(input))) {
           Some(input)
         } else {
           Option.empty
@@ -33,13 +58,16 @@ class ReflectedCoproduct(
     operation: Operation[Any]
   ): Any = {
     (for (
-      (memberSymbol, memberContext) <- members;
+      member <- members;
+      ReflectedCoproduct.Member(memberSymbol, wrapperSymbol, memberContext) = member;
       matchedValue <- typeExtractor.getTypeValue(memberContext);
       result <- Try {
         logDebug(
           s"${reflector.fullName} found matched " +
             s"subclass ${memberContext} for value ${matchedValue}")
-        operation.dependencyOperation(memberContext).marshal(matchedValue)
+        member.wrapTyped(
+          operation.dependencyOperation(memberContext).marshal(matchedValue)
+        )
       }.toOption
     ) yield {result}
       ).headOption.getOrElse(
@@ -59,20 +87,23 @@ class ReflectedCoproduct(
 
     val (matchedMember, result) =
     (for (
-      (memberSymbol, memberContext) <- members
-      if memberSymbol.fullName == input.getClass.getCanonicalName;
-      result <- Try {
-        logDebug(
-          s"${reflector.fullName} unmarshal input[${input.getClass}]=${input} " +
-            s"as subclass ${memberContext}")
-        operation.dependencyOperation(memberContext).unmarshal(input)
-      }.toOption
+      member <- members if member.matchGeneric(input);
+      ReflectedCoproduct.Member(memberSymbol, wrapperSymbol, memberContext) = member
     ) yield {
-      (memberContext, result)
+      logDebug(
+        s"${reflector.fullName} unmarshal input[${input.getClass}]=${input} " +
+          s"as subclass ${memberContext}")
+      (
+        memberContext,
+        // calling unapply on the wrapper symbol will dispatch multiple levels
+        operation.dependencyOperation(memberContext)
+          .unmarshal(member.unwrapGeneric(input))
+
+      )
     }).headOption.getOrElse(
       throw new Exception(
-        s"input=${input.getClass.getCanonicalName} " +
-          s"does not match any member ${members.keys.map(_.fullName)}")
+        s"input=${input}[${input.getClass.getCanonicalName}] " +
+          s"does not match any member ${members.map(_.symbol.fullName)}")
     )
 
     emptyUnion.addTypeValue(matchedMember, result)

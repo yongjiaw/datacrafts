@@ -4,6 +4,17 @@ import scala.reflect.runtime.{universe => ru}
 import scala.util.{Failure, Success, Try}
 
 import org.datacrafts.logging.Slf4jLogging
+import org.datacrafts.noschema.NoSchema.{TypeTagConverter, TypeUniqueKey}
+
+object TypeReflector {
+  private val _reflectors = collection.mutable.Map.empty[TypeUniqueKey, TypeReflector]
+  def apply(tpe: ru.Type): TypeReflector = _reflectors.synchronized {
+    _reflectors.getOrElseUpdate(
+      tpe.uniqueKey,
+      new TypeReflector(tpe)
+    )
+  }
+}
 
 class TypeReflector(val tpe: ru.Type) extends Slf4jLogging.Default {
 
@@ -64,7 +75,7 @@ class TypeReflector(val tpe: ru.Type) extends Slf4jLogging.Default {
       .reflectMethod(getCompanionMethodSymbol(methodName))
       .apply(args: _*)) match {
       case Success(result) => result
-      case Failure(f) => throw new Exception(s"failed ${fullName}.apply(${args})", f)
+      case Failure(f) => throw new Exception(s"failed ${fullName}.${methodName}(${args})", f)
     }
   }
 
@@ -85,7 +96,8 @@ class TypeReflector(val tpe: ru.Type) extends Slf4jLogging.Default {
       }
       paramList(0)
     case Failure(f) =>
-      throw new Exception(s"failed to reflect apply method for ${tpe.typeSymbol.fullName}")
+      // throw new Exception(s"failed to reflect apply method for ${tpe.typeSymbol.fullName}")
+      Seq.empty
   }
 
   def getClassMethodSymbol(methodName: String): Option[ru.MethodSymbol] = {
