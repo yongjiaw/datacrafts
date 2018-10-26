@@ -19,7 +19,12 @@ class ReflectedCoproduct(
 
       override def toString: String = s"RuntimeType[${uniqueKey}]"
 
-      override def matchInput(input: Any): Option[Any] = Option.empty
+      override def matchInput(input: Any): Option[Any] =
+        if (input.getClass.getCanonicalName == tpe.typeSymbol.fullName) {
+          Some(input)
+        } else {
+          Option.empty
+        }
     }
 
   lazy val reflector = new TypeReflector(runtimeType)

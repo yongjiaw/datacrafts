@@ -109,8 +109,7 @@ object NoSchemaReflector extends Slf4jLogging.Default {
       }).asInstanceOf[NoSchema[Any]]
 
   }
-
-
+  
   private def getOrCreateLazySchema(
     tpe: ru.Type,
     creator: => NoSchema[Any]
