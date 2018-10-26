@@ -29,6 +29,7 @@ class TypeReflector(val tpe: ru.Type) extends Slf4jLogging.Default {
   lazy val moduleSymbol = rootMirror.staticModule(fullName)
   lazy val moduleMirror = rootMirror.reflectModule(moduleSymbol)
 
+  // companion object is a specific type of module
   lazy val companionSymbol = classMirror.symbol.companion
   lazy val companionModuleMirror = moduleMirror // rootMirror.reflectModule(companionSymbol.asModule)
   lazy val companionInstanceMirror = rootMirror.reflect(companionModuleMirror.instance)
