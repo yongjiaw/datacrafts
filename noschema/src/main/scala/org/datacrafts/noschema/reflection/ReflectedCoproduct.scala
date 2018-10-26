@@ -1,6 +1,7 @@
 package org.datacrafts.noschema.reflection
 
 import scala.reflect.runtime.{universe => ru}
+import scala.util.Try
 
 import org.datacrafts.noschema.{Context, NoSchema, NoSchemaCoproduct, NoSchemaProduct, Operation}
 import org.datacrafts.noschema.operator.CoproductOperator
@@ -26,15 +27,17 @@ class ReflectedCoproduct(
   override def marshal(typeExtractor: CoproductOperator.TypeValueExtractor,
     operation: Operation[Any]
   ): Any = {
-    logDebug(s"marshalling ${typeExtractor} to ${reflector.fullName}")
     (for (
       (memberSymbol, memberContext) <- members;
-      matchedValue <- typeExtractor.getTypeValue(memberContext)
-    ) yield {
-      logDebug(
-        s"${reflector.fullName} found matched subclass ${memberContext} for value ${matchedValue}")
-      operation.dependencyOperation(memberContext).marshal(matchedValue)
-    }).headOption.getOrElse(
+      matchedValue <- typeExtractor.getTypeValue(memberContext);
+      result <- Try {
+        logDebug(
+          s"${reflector.fullName} found matched " +
+            s"subclass ${memberContext} for value ${matchedValue}")
+        operation.dependencyOperation(memberContext).marshal(matchedValue)
+      }.toOption
+    ) yield {result}
+      ).headOption.getOrElse(
       throw new Exception(s"no value among candidate types (${members}) " +
         s"found from $typeExtractor\n" +
         s"${operation.format()}")
@@ -52,12 +55,15 @@ class ReflectedCoproduct(
     val (matchedMember, result) =
     (for (
       (memberSymbol, memberContext) <- members
-      if memberSymbol.fullName == input.getClass.getCanonicalName
-    ) yield {
-      (
-        memberContext,
+      if memberSymbol.fullName == input.getClass.getCanonicalName;
+      result <- Try {
+        logDebug(
+          s"${reflector.fullName} unmarshal input[${input.getClass}]=${input} " +
+            s"as subclass ${memberContext}")
         operation.dependencyOperation(memberContext).unmarshal(input)
-      )
+      }.toOption
+    ) yield {
+      (memberContext, result)
     }).headOption.getOrElse(
       throw new Exception(
         s"input=${input.getClass.getCanonicalName} " +

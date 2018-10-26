@@ -115,7 +115,7 @@ object NoSchema extends Slf4jLogging.Default {
   def getLazySchema[T: ScalaType](shapelessLazySchema: Lazy[NoSchema[T]]): HasLazySchema[T] =
     this.synchronized {
 
-      def stackTraceDepth = Thread.currentThread().getStackTrace().size
+      def stackTraceDepth: Int = Thread.currentThread().getStackTrace().size
       val scalaType = implicitly[ScalaType[T]]
       val reference = scalaType.uniqueKey
       if (_instances.contains(reference)) {

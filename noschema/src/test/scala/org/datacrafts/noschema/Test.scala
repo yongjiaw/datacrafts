@@ -35,7 +35,9 @@ case class TestClassSimple(
   v4: Seq[Int] = null,
   v5: (String, Int) = ("a", 2),
   v6: Option[TestClass3] = None,
-  v7: Fruit = Apple(),
+  v7: Fruit = Pear(),
+  v8: Recursive = Recursive(),
+  v9: GenericType[Int] = null,
   v10: Any = "abc",
   v11: Set[Any] = Set(1, 2, 3)
 )
