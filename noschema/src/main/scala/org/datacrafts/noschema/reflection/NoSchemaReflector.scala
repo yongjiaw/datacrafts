@@ -7,7 +7,7 @@ import org.datacrafts.noschema.{AnyType, Context, NoSchema}
 import org.datacrafts.noschema.Container._
 import org.datacrafts.noschema.NoSchema.{HasLazySchema, ScalaType, TypeUniqueKey}
 
-object NoSchemaReflector extends Slf4jLogging.Default {
+object NoSchemaReflector extends ReflectionDsl with Slf4jLogging.Default {
 
   import NoSchema.TypeTagConverter
   class ReflectedScalaType(runtimeType: ru.Type)
@@ -49,26 +49,19 @@ object NoSchemaReflector extends Slf4jLogging.Default {
         // it will cause type argument mismatch error when marshalling the Iterable value to Set
         case t if t < typeOf[Map[String, _]] =>
           val elementType = t.typeArgs(0)
-          MapContainer(Context.ContainerElement(reflect(elementType)))
+          reflectMap(t, Context.ContainerElement(reflect(elementType)))
 
         case t if t < typeOf[Set[_]] =>
           val elementType = t.typeArgs(0)
-          SetContainer(Context.ContainerElement(reflect(elementType)))
-
-        case t if t < typeOf[Seq[_]] =>
-          val elementType = t.typeArgs(0)
-          SeqContainer(Context.ContainerElement(reflect(elementType)))
+          reflectSet(t, Context.ContainerElement(reflect(elementType)))
 
         case t if t < typeOf[Iterable[_]] =>
           val elementType = t.typeArgs(0)
-          IterableContainer(Context.ContainerElement(reflect(elementType)))
+          reflectSeq(t, Context.ContainerElement(reflect(elementType)))
 
         case t if t < typeOf[Option[_]] =>
           val elementType = t.typeArgs(0)
-          new ReflectedContainer.RfOption(
-            t,
-            Context.ContainerElement(reflect(elementType))
-          )
+          reflectOption(t, Context.ContainerElement(reflect(elementType)))
 
         case _ =>
 
