@@ -233,17 +233,12 @@ trait AvroRule extends DefaultRule with NoSchemaDsl {
       case coproduct: NoSchemaCoproduct[_] =>
         new CoproductAvroOperator(coproduct, operation, this)
 
-      case map: MapContainer[_] =>
+      case map: Container[_, _] if map.category == NoSchema.Category.Map =>
         new AvroMapOperator(
           map.element,
-          operation.asInstanceOf[AvroOperation[Map[String, map.Elem]]]
+          operation.asInstanceOf[AvroOperation[Iterable[(String, map.Elem)]]]
         )
 
-      case map: MapContainer2[_] =>
-        new AvroMapOperator2(
-          map.element,
-          operation.asInstanceOf[AvroOperation[scala.collection.Map[String, map.Elem]]]
-        )
       case seq: SeqContainer[_] =>
         new AvroSeqOperator(
           seq.element,
