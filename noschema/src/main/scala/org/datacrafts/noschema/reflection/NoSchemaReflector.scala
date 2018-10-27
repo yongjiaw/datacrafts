@@ -12,32 +12,15 @@ object NoSchemaReflector extends Slf4jLogging.Default {
   private val _conformingTypes =
     collection.mutable.Set.empty[(TypeUniqueKey, TypeUniqueKey)]
 
-  import org.datacrafts.noschema.NoSchema.TypeTagConverter
-
   trait ReflectionRule {
 
-    // override the behavior of <:< by caching previous results
-    // there is a scala bug that causing later tests of the same pair
-    // to return false after the initial true
-    implicit class TypeApiConverter(tpe1: ru.Type) {
-      def < (tpe2: ru.Type): Boolean = {
-        _conformingTypes.contains(
-          (tpe1.uniqueKey, tpe2.uniqueKey)
-        ) || {
-          if (tpe1 <:< tpe2) {
-            _conformingTypes.synchronized {
-              _conformingTypes.add((tpe1.uniqueKey, tpe2.uniqueKey))
-            }
-            true
-          } else {
-            false
-          }
-        }
-      }
+    implicit def typeToTypeReflector(tpe: ru.Type): TypeReflector = {
+      TypeReflector(tpe)
     }
 
     import scala.reflect.runtime.universe.typeOf
-    def reflect(tpe: ru.Type): NoSchema[Any] = (
+    def reflect(originalType: ru.Type): NoSchema[Any] = {
+      val tpe = originalType.dealias
       tpe match {
         case t if t < typeOf[Int] => implicitly[NoSchema[Int]]
         case t if t < typeOf[Short] => implicitly[NoSchema[Short]]
@@ -69,7 +52,10 @@ object NoSchemaReflector extends Slf4jLogging.Default {
 
         case t if t < typeOf[Option[_]] =>
           val elementType = t.typeArgs(0)
-          OptionContainer(Context.ContainerElement(reflect(elementType)))
+          new ReflectedContainer.RfOption(
+            t,
+            Context.ContainerElement(reflect(elementType))
+          )
 
         case _ =>
 
@@ -99,7 +85,7 @@ object NoSchemaReflector extends Slf4jLogging.Default {
 
                     getOrCreateLazySchema(
                       symbolType,
-                      reflect(symbolType)
+                      reflect(symbolType.dealias)
                     )
                   )
               }.toMap
@@ -128,7 +114,7 @@ object NoSchemaReflector extends Slf4jLogging.Default {
             throw new Exception(s"${tpe.typeSymbol.fullName} not recognized")
           }
 
-      }).asInstanceOf[NoSchema[Any]]
+      }}.asInstanceOf[NoSchema[Any]]
 
 
     protected def getOrCreateLazySchema(
@@ -137,7 +123,7 @@ object NoSchemaReflector extends Slf4jLogging.Default {
     ): HasLazySchema[Any] = {
 
       import NoSchema.TypeTagConverter
-      val reference = tpe.uniqueKey
+      val reference = tpe.dealias.uniqueKey
 
       this.synchronized {
 

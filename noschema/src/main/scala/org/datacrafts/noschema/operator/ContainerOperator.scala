@@ -41,43 +41,46 @@ object ContainerOperator {
     }
   }
 
-  class SeqOperator[T](
-    override val element: ContainerElement[T],
-    override val operation: Operation[Seq[T]]
-  ) extends ContainerOperator[T, Seq[T]] {
-
-    protected override def marshalNoneNull(input: Any): Seq[T] = {
+  trait GenericCollectionOperator {
+    Self: ContainerOperator[_, _] =>
+    def iterableElementOperation: Operation[Any] = elementOperation.asInstanceOf[Operation[Any]]
+    def marshalIterable(input: Any): Iterable[Any] = {
       input match {
-        case value: Iterable[_] => value.map(elementOperation.marshal).toSeq
-        case value: java.lang.Iterable[_] =>
-          value.asScala.map(elementOperation.marshal).toSeq
+        case value: Iterable[Any] => value.map(iterableElementOperation.marshal)
+        case value: java.lang.Iterable[Any] =>
+          value.asScala.map(iterableElementOperation.marshal)
         case _ => throw new Exception(
-          s"marshalling ${operation.context.noSchema.scalaType.uniqueKey} " +
+          s"marshalling input as Iterable " +
             s"but input type is not covered ${input.getClass}, ${input}")
       }
     }
 
+    def unmarshalIterable(input: Iterable[Any]): Any = {
+      input.map(iterableElementOperation.unmarshal)
+    }
+  }
+
+  class SeqOperator[T](
+    override val element: ContainerElement[T],
+    override val operation: Operation[Seq[T]]
+  ) extends ContainerOperator[T, Seq[T]] with GenericCollectionOperator {
+
+    protected override def marshalNoneNull(input: Any): Seq[T] = {
+      marshalIterable(input).asInstanceOf[Seq[T]]
+    }
+
     protected override def unmarshalNoneNull(input: Seq[T]): Any = {
-      input.map(elementOperation.unmarshal)
+      unmarshalIterable(input)
     }
   }
 
   class SetOperator[T](
     override val element: ContainerElement[T],
     override val operation: Operation[Set[T]]
-  ) extends ContainerOperator[T, Set[T]] {
+  ) extends ContainerOperator[T, Set[T]] with GenericCollectionOperator {
 
     protected override def marshalNoneNull(input: Any): Set[T] = {
-      val elements =
-      input match {
-        case value: Iterable[_] => value.map(elementOperation.marshal)
-        case value: java.lang.Iterable[_] =>
-          value.asScala.map(elementOperation.marshal)
-        case _ => throw new Exception(
-          s"marshalling ${operation.context.noSchema.scalaType.uniqueKey} " +
-            s"but input type is not covered ${input.getClass}, ${input}")
-      }
-
+      val elements = marshalIterable(input).asInstanceOf[Iterable[T]]
       val set = elements.toSet
       val size = elements.size
       if (size != set.size) {
@@ -95,35 +98,28 @@ object ContainerOperator {
     }
 
     protected override def unmarshalNoneNull(input: Set[T]): Any = {
-      input.map(elementOperation.unmarshal)
+      unmarshalIterable(input)
     }
   }
 
   class IterableOperator[T](
     override val element: ContainerElement[T],
     override val operation: Operation[Iterable[T]]
-  ) extends ContainerOperator[T, Iterable[T]] {
+  ) extends ContainerOperator[T, Iterable[T]] with GenericCollectionOperator {
 
     protected override def marshalNoneNull(input: Any): Iterable[T] = {
-      input match {
-        case value: Iterable[_] => value.map(elementOperation.marshal).toSeq
-        case value: java.lang.Iterable[_] =>
-          value.asScala.map(elementOperation.marshal).toSeq
-        case _ => throw new Exception(
-          s"marshalling ${operation.context.noSchema.scalaType.uniqueKey} " +
-            s"but input type is not covered ${input.getClass}, ${input}")
-      }
+      marshalIterable(input).asInstanceOf[Iterable[T]]
     }
 
     protected override def unmarshalNoneNull(input: Iterable[T]): Any = {
-      input.map(elementOperation.unmarshal)
+      unmarshalIterable(input)
     }
   }
 
   class MapOperator[T](
     override val element: ContainerElement[T],
     override val operation: Operation[Map[String, T]]
-  ) extends ContainerOperator[T, Map[String, T]] {
+  ) extends ContainerOperator[T, Map[String, T]] with GenericCollectionOperator {
 
     protected override def marshalNoneNull(input: Any): Map[String, T] = {
       input match {
@@ -146,6 +142,9 @@ object ContainerOperator {
     }
   }
 
+  // due to NoSchema being invariant on the types
+  // different Map implementations require different NoSchema class,
+  // even the Maps are the same hierarchy
   class MapOperator2[T](
     override val element: ContainerElement[T],
     override val operation: Operation[scala.collection.Map[String, T]]
@@ -169,6 +168,49 @@ object ContainerOperator {
       input.map {
         case (k, v) => k -> elementOperation.unmarshal(v)
       }
+    }
+  }
+
+  // there is a trade off between having many specific operators vs a few general operators
+  // the operation rule create operator instances and look them up in a map
+  // having many specific operators leads to better performance due to reduced operator complexity
+  // but it makes the operation rule more complex
+  // comparing to the runtime lookup of operator instances, usually the extra conditional check
+  // in a more complex rule does not have much overhead, so it's preferred to have a more general
+  // operator whenever it applies
+  class GeneralIterableOperator[T](
+    override val element: ContainerElement[T],
+    override val operation: Operation[Iterable[T]]
+  ) extends ContainerOperator[T, Iterable[T]] with GenericCollectionOperator {
+
+    protected override def marshalNoneNull(input: Any): Iterable[T] = {
+      val iterable = marshalIterable(input)
+      operation.context.noSchema.scalaType.fullName match {
+        case "scala.collection.Iterable" => iterable
+        case "scala.collection.Seq" => iterable.toSeq
+        case name if name == "scala.collection.Set" || name == "scala.collection.immutable.Set" =>
+          val set = iterable.toSet
+          val size = iterable.size
+          if (size != set.size) {
+            val duplicatedElements =
+              for ((x, xs) <- iterable.groupBy(x => x) if xs.size > 1) yield {x -> xs.size}
+
+            throw new Exception(
+              s"input size is ${size} but unique element size is ${set.size}, " +
+                s"duplicates with count: ${duplicatedElements}. " +
+                s"not safe to marshal input as set, marshal as Seq or convert input to Set first." +
+                s"\ninput=${input}\noperation=${operation}"
+            )
+          }
+          set
+        case other =>
+          throw new Exception(s"cannot convert iterable to ${other}")
+      }
+      // marshalIterable(input).asInstanceOf[Iterable[T]]
+    }.asInstanceOf[Iterable[T]]
+
+    protected override def unmarshalNoneNull(input: Iterable[T]): Any = {
+      unmarshalIterable(input)
     }
   }
 }

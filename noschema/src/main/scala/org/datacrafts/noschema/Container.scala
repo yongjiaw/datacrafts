@@ -1,7 +1,5 @@
 package org.datacrafts.noschema
 
-import shapeless.Lazy
-
 abstract class Container[T: NoSchema.ScalaType, C: NoSchema.ScalaType](
   category: NoSchema.Category.Value,
   val element: Context.ContainerElement[T],

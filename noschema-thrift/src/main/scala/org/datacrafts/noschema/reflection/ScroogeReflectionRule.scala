@@ -9,9 +9,13 @@ import org.datacrafts.noschema.{Context, NoSchema}
 trait ScroogeReflectionRule extends NoSchemaReflector.ReflectionRule with Slf4jLogging.Default {
   import ru.typeOf
 
+  protected def isThriftUnion(tpe: ru.Type): Boolean = tpe < typeOf[ThriftUnion]
+
+  protected def isThrift(tpe: ru.Type): Boolean = tpe < typeOf[ThriftStruct]
+
   override def reflect(tpe: ru.Type): NoSchema[Any] = {
     val reflector = TypeReflector(tpe)
-    if (tpe < typeOf[ThriftUnion]) { // union type extends both ThriftUnion and ThriftStruct
+    if (isThriftUnion(tpe)) { // union type extends both ThriftUnion and ThriftStruct
       if (reflector.subclasses.nonEmpty) { // coproduct
         logInfo(
           s"${tpe.typeSymbol.fullName} is coproduct of (${reflector.subclasses})")
@@ -60,23 +64,19 @@ trait ScroogeReflectionRule extends NoSchemaReflector.ReflectionRule with Slf4jL
         throw new Exception(s"${tpe.typeSymbol.fullName} not recognized")
       }
     }
-    else if (tpe < typeOf[ThriftStruct]) {
+    else if (isThrift(tpe)) {
       logInfo(s"${tpe.typeSymbol.fullName} is thrift struct")
       new ReflectedProduct(
         tpe,
         fields = reflector.applyArgs.map {
           s =>
             val symbolName = s.name.toString
-            val symbolType =
-              reflector.caseMemberTypeMap.get(symbolName).getOrElse(
-                s.typeSignature
-              )
+            val symbolType = s.typeSignature
             s -> Context.MemberVariable(
               Symbol(symbolName),
-
               getOrCreateLazySchema(
                 symbolType,
-                reflect(symbolType)
+                reflect(symbolType.dealias)
               )
             )
         }.toMap

@@ -16,8 +16,9 @@ object TypeReflector {
   }
 }
 
-class TypeReflector(val tpe: ru.Type) extends Slf4jLogging.Default {
+class TypeReflector(val originalType: ru.Type) extends Slf4jLogging.Default {
 
+  val tpe = originalType.dealias
   import org.datacrafts.noschema.NoSchema._
   logInfo(s"constructing reflector for ${tpe.uniqueKey}")
   lazy val fullName: String = tpe.typeSymbol.fullName
@@ -53,6 +54,10 @@ class TypeReflector(val tpe: ru.Type) extends Slf4jLogging.Default {
       accessor.asTerm.name.toString -> accessor.typeSignatureIn(tpe).finalResultType
   }.toMap
 
+  def < (other: TypeReflector): Boolean = {
+    tpe <:< other.tpe
+  }
+
   def companionApply(args: Any*): Any = {
     logDebug(s"calling ${fullName}.apply: input=${args}")
     applyCompanionMethod("apply", args: _*)
@@ -84,15 +89,6 @@ class TypeReflector(val tpe: ru.Type) extends Slf4jLogging.Default {
       case Failure(f) => throw new Exception(s"failed ${fullName}.${methodName}(${args}). " +
         s"classSymbol=${classMirror.symbol}", f)
     }
-  }
-
-  // the type signature of the symbol can be a type parameter
-  // right now it can only be resolved based on position in the applyArg list and type arg list
-  // applyArg list ordering and type arg list ordering may be incosistent like:
-  // case lass SomeClass[T1, T2](a: T2, b: T1)
-  // there does not seem to be a way to directly get
-  class SymbolWithFinalType(val symbol: ru.Symbol, val finalType: ru.Type) {
-
   }
 
   lazy val applyArgs: Seq[ru.Symbol] = Try(getCompanionMethodSymbol("apply")) match {

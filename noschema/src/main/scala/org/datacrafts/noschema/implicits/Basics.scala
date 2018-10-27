@@ -64,6 +64,5 @@ object Basics {
       st: Lazy[NoSchema.ScalaType[T]]): MapContainer2[T] =
       new MapContainer2[T](Context.ContainerElement(node.value)
       )(ot.value, st.value)
-
   }
 }

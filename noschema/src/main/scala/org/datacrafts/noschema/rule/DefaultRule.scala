@@ -24,10 +24,20 @@ trait DefaultRule extends Operation.Rule {
       case coproduct: NoSchemaCoproduct[V] =>
         new CoproductTupler(operation, coproduct)
 
-      case option: OptionContainer[_] =>
+      case option: Container[_, _] if option.category == NoSchema.Category.Option =>
         new OptionOperator(
           option.element,
           operation.asInstanceOf[Operation[Option[option.Elem]]]
+        )
+
+      case iterable: Container[_, _]
+        if Set(
+          NoSchema.Category.Seq,
+          NoSchema.Category.Set
+        ).contains(iterable.category) =>
+        new GeneralIterableOperator(
+          iterable.element,
+          operation.asInstanceOf[Operation[Iterable[iterable.Elem]]]
         )
 
       case map: MapContainer[_] =>
@@ -40,24 +50,6 @@ trait DefaultRule extends Operation.Rule {
         new MapOperator2(
           map.element,
           operation.asInstanceOf[Operation[scala.collection.Map[String, map.Elem]]]
-        )
-
-      case seq: SeqContainer[_] =>
-        new SeqOperator(
-          seq.element,
-          operation.asInstanceOf[Operation[Seq[seq.Elem]]]
-        )
-
-      case set: SetContainer[_] =>
-        new SetOperator(
-          set.element,
-          operation.asInstanceOf[Operation[Set[set.Elem]]]
-        )
-
-      case iterable: IterableContainer[_] =>
-        new IterableOperator(
-          iterable.element,
-          operation.asInstanceOf[Operation[Iterable[iterable.Elem]]]
         )
 
       case other =>

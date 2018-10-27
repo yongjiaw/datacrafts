@@ -244,7 +244,6 @@ trait AvroRule extends DefaultRule with NoSchemaDsl {
           map.element,
           operation.asInstanceOf[AvroOperation[scala.collection.Map[String, map.Elem]]]
         )
-
       case seq: SeqContainer[_] =>
         new AvroSeqOperator(
           seq.element,
