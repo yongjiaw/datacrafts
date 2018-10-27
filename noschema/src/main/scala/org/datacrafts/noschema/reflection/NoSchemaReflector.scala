@@ -5,12 +5,25 @@ import scala.reflect.runtime.{universe => ru}
 import org.datacrafts.logging.Slf4jLogging
 import org.datacrafts.noschema.{AnyType, Context, NoSchema}
 import org.datacrafts.noschema.Container._
-import org.datacrafts.noschema.NoSchema.{HasLazySchema, TypeUniqueKey}
+import org.datacrafts.noschema.NoSchema.{HasLazySchema, ScalaType, TypeUniqueKey}
 
 object NoSchemaReflector extends Slf4jLogging.Default {
 
-  private val _conformingTypes =
-    collection.mutable.Set.empty[(TypeUniqueKey, TypeUniqueKey)]
+  import NoSchema.TypeTagConverter
+  class ReflectedScalaType(runtimeType: ru.Type)
+    extends ScalaType[Any](runtimeType.uniqueKey) {
+    override lazy val tpe = runtimeType
+    override lazy val classTag = throw new Exception(s"classTag not available for $this")
+    override lazy val manifest = throw new Exception(s"manigest not available for $this")
+    override def toString: String = s"RuntimeType[${uniqueKey}]"
+
+    override def matchInput(input: Any): Option[Any] =
+      if (input.getClass.getCanonicalName.stripSuffix("$") == tpe.typeSymbol.fullName) {
+        Some(input)
+      } else {
+        Option.empty
+      }
+  }
 
   trait ReflectionRule {
 

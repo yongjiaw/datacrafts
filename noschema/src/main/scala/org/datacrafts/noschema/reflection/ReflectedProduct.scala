@@ -4,27 +4,14 @@ import scala.reflect.runtime.{universe => ru}
 
 import org.datacrafts.noschema.{Context, NoSchema, NoSchemaProduct, Operation}
 import org.datacrafts.noschema.operator.ProductOperator.{SymbolCollector, SymbolExtractor}
+import org.datacrafts.noschema.reflection.NoSchemaReflector.ReflectedScalaType
 
 class ReflectedProduct(
   runtimeType: ru.Type,
   fields: Map[ru.Symbol, Context.MemberVariable[Any]]
 ) extends NoSchemaProduct[Any](fields.values.toSeq) {
 
-  import org.datacrafts.noschema.NoSchema._
-
-  override lazy val scalaType: NoSchema.ScalaType[Any] =
-    new NoSchema.ScalaType[Any](runtimeType.uniqueKey) {
-      override lazy val tpe = runtimeType
-
-      override def toString: String = s"RuntimeType[${uniqueKey}]"
-
-      override def matchInput(input: Any): Option[Any] =
-        if (input.getClass.getCanonicalName.stripSuffix("$") == tpe.typeSymbol.fullName) {
-          Some(input)
-        } else {
-          Option.empty
-        }
-    }
+  override lazy val scalaType = new ReflectedScalaType(runtimeType)
 
   lazy val reflector = new TypeReflector(runtimeType)
 

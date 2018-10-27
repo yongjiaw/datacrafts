@@ -1,10 +1,10 @@
 package org.datacrafts.noschema.reflection
 
 import scala.reflect.runtime.{universe => ru}
-import scala.util.Try
 
-import org.datacrafts.noschema.{Context, NoSchema, NoSchemaCoproduct, NoSchemaProduct, Operation}
+import org.datacrafts.noschema.{Context, NoSchemaCoproduct, Operation}
 import org.datacrafts.noschema.operator.CoproductOperator
+import org.datacrafts.noschema.reflection.NoSchemaReflector.ReflectedScalaType
 
 object ReflectedCoproduct {
 
@@ -38,21 +38,7 @@ class ReflectedCoproduct(
   members: Seq[ReflectedCoproduct.Member]
 ) extends NoSchemaCoproduct[Any](members.map(_.context)) {
 
-  import org.datacrafts.noschema.NoSchema._
-
-  override lazy val scalaType: NoSchema.ScalaType[Any] =
-    new NoSchema.ScalaType[Any](runtimeType.uniqueKey) {
-      override lazy val tpe = runtimeType
-
-      override def toString: String = s"RuntimeType[${uniqueKey}]"
-
-      override def matchInput(input: Any): Option[Any] =
-        if (members.exists(_.matchGenericInput(input))) {
-          Some(input)
-        } else {
-          Option.empty
-        }
-    }
+  override lazy val scalaType = new ReflectedScalaType(runtimeType)
 
   lazy val reflector = new TypeReflector(runtimeType)
 

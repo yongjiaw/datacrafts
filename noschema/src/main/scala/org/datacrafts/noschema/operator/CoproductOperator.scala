@@ -44,7 +44,6 @@ abstract class CoproductOperator[T, O] extends Operator[T] with Slf4jLogging.Def
   }
 
   protected final override def marshalNoneNull(input: Any): T = {
-    val tag = operation.context.noSchema.scalaType.classTag
     val className = input.getClass.getCanonicalName
     operation.context.noSchema.scalaType.matchInput(input) match {
       case Some(value) =>
