@@ -10,7 +10,7 @@ import org.datacrafts.noschema.operator.CoproductOperator.{TypeValueExtractor, U
 import shapeless.{:+:, CNil, Coproduct, Inl, Inr, LabelledGeneric, Lazy, Witness}
 import shapeless.labelled.{field, FieldType}
 
-class ShapelessCoproduct[T, R <: Coproduct](
+private class ShapelessCoproduct[T, R <: Coproduct](
   members: Seq[Context.CoproductElement[_]],
   generic: LabelledGeneric.Aux[T, R],
   shapeless: ShapelessCoproductAdapter[R],
@@ -161,7 +161,7 @@ object ShapelessCoproduct extends Slf4jLogging.Default {
 
     def composeWithGeneric[T](
       generic: LabelledGeneric.Aux[T, R],
-      st: NoSchema.ScalaType[T]): ShapelessCoproduct[T, R] =
+      st: NoSchema.ScalaType[T]): NoSchemaCoproduct[T] =
       new ShapelessCoproduct[T, R](
         // filter the UnknownUnionField
         // this field will not produce value in unmarshaling,

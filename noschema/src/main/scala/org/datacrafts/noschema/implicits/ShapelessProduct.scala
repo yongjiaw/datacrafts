@@ -6,7 +6,7 @@ import org.datacrafts.noschema.operator.ProductOperator.{SymbolCollector, Symbol
 import shapeless.{::, HList, HNil, LabelledGeneric, Lazy, Witness}
 import shapeless.labelled.{field, FieldType}
 
-class ShapelessProduct[T, R <: HList](
+private class ShapelessProduct[T, R <: HList](
   fields: Seq[Context.MemberVariable[_]],
   generic: LabelledGeneric.Aux[T, R],
   shapeless: ShapelessProductAdapter[R],
@@ -126,7 +126,7 @@ object ShapelessProduct {
 
     def composeWithGeneric[T](
       generic: LabelledGeneric.Aux[T, R],
-      st: NoSchema.ScalaType[T]): NoSchema[T] =
+      st: NoSchema.ScalaType[T]): NoSchemaProduct[T] =
       new ShapelessProduct(members, generic, this, st)
   }
 }

@@ -9,10 +9,9 @@ import org.apache.avro.Schema.Field
 import org.apache.avro.file.DataFileWriter
 import org.apache.avro.generic.{GenericData, GenericDatumWriter, GenericRecord}
 import org.datacrafts.logging.Slf4jLogging
-import org.datacrafts.noschema.{Context, Operation}
+import org.datacrafts.noschema.{Context, NoSchemaCoproduct, Operation}
 import org.datacrafts.noschema.Context.LocalContext
 import org.datacrafts.noschema.NoSchema.ScalaType
-import org.datacrafts.noschema.implicits.ShapelessCoproduct
 import org.datacrafts.noschema.avro.AvroRule.SchemaWrapper
 
 class AvroOperation[T](
@@ -65,14 +64,14 @@ class AvroOperation[T](
 
   lazy val isUnion: Boolean = {
     context.noSchema match {
-      case shapeless: ShapelessCoproduct[_, _] => avroRule.isUnion(shapeless)
+      case coproduct: NoSchemaCoproduct[_] => avroRule.isUnion(coproduct)
       case _ => false
     }
   }
 
   lazy val isEnum: Boolean = {
     context.noSchema match {
-      case shapeless: ShapelessCoproduct[_, _] => avroRule.isEnum(shapeless)
+      case coproduct: NoSchemaCoproduct[_] => avroRule.isEnum(coproduct)
       case _ => false
     }
   }
