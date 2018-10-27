@@ -31,25 +31,16 @@ trait DefaultRule extends Operation.Rule {
         )
 
       case iterable: Container[_, _]
-        if Set(
-          NoSchema.Category.Seq,
-          NoSchema.Category.Set
-        ).contains(iterable.category) =>
+        if Set(NoSchema.Category.Seq, NoSchema.Category.Set).contains(iterable.category) =>
         new GeneralIterableOperator(
           iterable.element,
           operation.asInstanceOf[Operation[Iterable[iterable.Elem]]]
         )
 
-      case map: MapContainer[_] =>
-        new MapOperator(
+      case map: Container[_, _] if map.category == NoSchema.Category.Map =>
+        new GeneralMapOperator(
           map.element,
-          operation.asInstanceOf[Operation[Map[String, map.Elem]]]
-        )
-
-      case map: MapContainer2[_] =>
-        new MapOperator2(
-          map.element,
-          operation.asInstanceOf[Operation[scala.collection.Map[String, map.Elem]]]
+          operation.asInstanceOf[Operation[Iterable[(String, map.Elem)]]]
         )
 
       case other =>

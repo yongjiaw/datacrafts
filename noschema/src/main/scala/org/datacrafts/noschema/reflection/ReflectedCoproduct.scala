@@ -38,7 +38,14 @@ class ReflectedCoproduct(
   members: Seq[ReflectedCoproduct.Member]
 ) extends NoSchemaCoproduct[Any](members.map(_.context)) {
 
-  override lazy val scalaType = new ReflectedScalaType(runtimeType)
+  override lazy val scalaType = new ReflectedScalaType(runtimeType) {
+    override def matchInput(input: Any): Option[Any] =
+      if (members.exists(_.matchGenericInput(input))) {
+        Some(input)
+      } else {
+        Option.empty
+      }
+  }
 
   lazy val reflector = new TypeReflector(runtimeType)
 

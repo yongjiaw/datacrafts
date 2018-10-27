@@ -14,7 +14,7 @@ object NoSchemaReflector extends Slf4jLogging.Default {
     extends ScalaType[Any](runtimeType.uniqueKey) {
     override lazy val tpe = runtimeType
     override lazy val classTag = throw new Exception(s"classTag not available for $this")
-    override lazy val manifest = throw new Exception(s"manigest not available for $this")
+    override lazy val manifest = throw new Exception(s"manifest not available for $this")
     override def toString: String = s"RuntimeType[${uniqueKey}]"
 
     override def matchInput(input: Any): Option[Any] =

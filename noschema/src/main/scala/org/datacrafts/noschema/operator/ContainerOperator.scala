@@ -214,9 +214,30 @@ object ContainerOperator {
     }
   }
 
-  /*
+
   class GeneralMapOperator[T](
     override val element: ContainerElement[T],
     override val operation: Operation[Iterable[(String, T)]]
-  ) */
+  ) extends ContainerOperator[T, Iterable[(String, T)]] {
+
+    override protected def marshalNoneNull(input: Any): Iterable[(String, T)] = {
+      input match {
+        case value: Iterable[_] => value.map {
+          case (k, v) => s"$k" -> elementOperation.marshal(v)
+        }.toMap
+        case value: java.util.Map[_, _] => value.asScala.map {
+          case (k, v) => s"$k" -> elementOperation.marshal(v)
+        }.toMap
+        case _ => throw new Exception(
+          s"marshalling ${operation.context.noSchema.scalaType.uniqueKey} " +
+            s"but input type is not covered ${input.getClass}, ${input}")
+      }
+    }
+
+    override protected def unmarshalNoneNull(input: Iterable[(String, T)]): Any = {
+      input.map {
+        case (k, v) => k -> elementOperation.unmarshal(v)
+      }.toMap
+    }
+  }
 }
