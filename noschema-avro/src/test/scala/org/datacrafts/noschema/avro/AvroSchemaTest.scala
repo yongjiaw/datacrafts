@@ -70,23 +70,27 @@ class AvroSchemaTest extends FlatSpec with AvroOperationDsl with ScroogeSupport 
     val op = schemaOf[Option[Option[Option[Double]]]].operation()
     println(op.operator.marshal(null)) // Some(Some(None))) instead of None
 
-    val avroOp = avroOperationOf[Test2]()
-    println(avroOp.format())
-    println(avroOp.avroSchema)
+    val avroOp1 = avroOperationOf[Test2]()
+    val avroOp2 = deprecatedAvroOperationOf[Test2]()
+    for (avroOp <- Seq(avroOp1, avroOp2)) {
 
-    val value = Test2(1.1, Test(12))
-    val avro = avroOp.toAvro(value)
-    println(avro)
-    val expectedString = """{"v1": 1.1, "v10": {"UnionExample": {"bar": null, "foo": "bar"}}, "v11": 2, "v2": {"v3": 12, "v4": 0.1}, "v3": {"v1": 1}, "v4": "BE", "v5": {"x": {"v2": "a"}}, "v6": [1.5], "v7": {"bytes": ""}, "v8": [["1", "2"], [], ["3"]], "v9": null}"""
-    assert(avro.toString == expectedString)
+      println(avroOp.format())
+      println(avroOp.avroSchema)
 
-    assert(avroOp.fromAvro(avro) == value)
+      val value = Test2(1.1, Test(12))
+      val avro = avroOp.toAvro(value)
+      println(avro)
+      val expectedString = """{"v1": 1.1, "v10": {"UnionExample": {"bar": null, "foo": "bar"}}, "v11": 2, "v2": {"v3": 12, "v4": 0.1}, "v3": {"v1": 1}, "v4": "BE", "v5": {"x": {"v2": "a"}}, "v6": [1.5], "v7": {"bytes": ""}, "v8": [["1", "2"], [], ["3"]], "v9": null}"""
+      assert(avro.toString == expectedString)
 
-    // write to avro file should be successful too
-    val buffer = new ByteArrayOutputStream(1000)
-    val avroWriter = avroOp.newWriter(buffer)
-    avroWriter.write(value)
-    println(new String(buffer.toByteArray))
+      assert(avroOp.fromAvro(avro) == value)
+
+      // write to avro file should be successful too
+      val buffer = new ByteArrayOutputStream(1000)
+      val avroWriter = avroOp.newWriter(buffer)
+      avroWriter.write(value)
+      println(new String(buffer.toByteArray))
+    }
   }
 }
 
@@ -101,7 +105,7 @@ case class Test2(v1: Double, v2: Test,
   v5: Map[String, TestUnion] = Map("x" -> BU("a")),
   v6: Seq[Double] = Seq(1.5),
   v7: Array[Byte] = Array.emptyByteArray,
-  v8: Seq[Seq[String]] = Seq(Seq("1", "2"), Seq.empty, Seq("3")),
+  v8: Seq[Seq[String]] = Seq(Seq("1", "2"), List(), Seq("3")),
   v9: Option[TestEnum] = None,
   v10: Option[NestedUnion] = Some(NestedUnion.A(a = UnionExample.A(StructExample(foo = "bar")))),
   v11: Option[NestedUnion] = Some(NestedUnion.B(2.toShort))

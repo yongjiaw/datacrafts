@@ -27,6 +27,14 @@ object NoSchemaReflector extends ReflectionDsl with Slf4jLogging.Default {
 
   trait ReflectionRule {
 
+    protected def coproductFilter(symbol: ru.Symbol): Boolean = {
+      val result = symbol.name.toString != "UnknownUnionField"
+      logDebug(s"filtering ${symbol}, result=$result")
+      result
+    }
+
+    protected def productFilter(symbol: ru.Symbol): Boolean = true
+
     implicit def typeToTypeReflector(tpe: ru.Type): TypeReflector = {
       TypeReflector(tpe)
     }
@@ -48,7 +56,7 @@ object NoSchemaReflector extends ReflectionDsl with Slf4jLogging.Default {
         // If Iterable schema was assigned to Set type, for example, unmarshalling/unapply is fine
         // it will cause type argument mismatch error when marshalling the Iterable value to Set
         case t if t < typeOf[Map[String, _]] =>
-          val elementType = t.typeArgs(0)
+          val elementType = t.typeArgs(1)
           reflectMap(t, Context.ContainerElement(reflect(elementType)))
 
         case t if t < typeOf[Set[_]] =>
@@ -77,8 +85,9 @@ object NoSchemaReflector extends ReflectionDsl with Slf4jLogging.Default {
               s"${tpe.typeSymbol.fullName} is case class with type parameters=${tpe.typeArgs}")
             new ReflectedProduct(
               tpe,
-              fields = reflector.applyArgs.map {
-                s =>
+              fields = (
+                for (s <- reflector.applyArgs if productFilter(s)) yield {
+
                   val symbolName = s.name.toString
                   val symbolType =
                     reflector.caseMemberTypeMap.get(symbolName).getOrElse(
@@ -94,7 +103,7 @@ object NoSchemaReflector extends ReflectionDsl with Slf4jLogging.Default {
                       reflect(symbolType.dealias)
                     )
                   )
-              }.toMap
+              }).toMap
             )
           }
           else if (reflector.subclasses.nonEmpty) { // coproduct
@@ -102,8 +111,8 @@ object NoSchemaReflector extends ReflectionDsl with Slf4jLogging.Default {
               s"${tpe.typeSymbol.fullName} is coproduct of (${reflector.subclasses})")
             new ReflectedCoproduct(
               tpe,
-              members = reflector.subclasses.map {
-                s =>
+              members = (
+                for (s <- reflector.subclasses if coproductFilter(s)) yield {
                   val symbolName = s.name.toString
                   ReflectedCoproduct.Member(
                     s,
@@ -113,7 +122,7 @@ object NoSchemaReflector extends ReflectionDsl with Slf4jLogging.Default {
                       reflect(s.typeSignature.dealias)
                     )
                   )
-              }.toSeq
+              }).toSeq
             )
           }
           else {

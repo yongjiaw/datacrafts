@@ -34,7 +34,7 @@ object AvroContainerOperator {
   class AvroIterableOperator[T](
     override val element: ContainerElement[T],
     override val operation: AvroOperation[Iterable[T]]
-  ) extends IterableOperator(element, operation) {
+  ) extends GeneralIterableOperator(element, operation) {
     override lazy val elementOperation: AvroOperation[T] = operation.dependencyOperation(element)
     protected override def unmarshalNoneNull(input: Iterable[T]): Any =
       input.map(elementOperation.unmarshal).asJava

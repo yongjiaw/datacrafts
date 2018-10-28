@@ -7,24 +7,40 @@ import org.datacrafts.logging.Slf4jLogging
 import org.datacrafts.noschema.{Context, NoSchema}
 
 trait ScroogeReflectionRule extends NoSchemaReflector.ReflectionRule with Slf4jLogging.Default {
-  import ru.typeOf
 
-  protected def isThriftUnion(tpe: ru.Type): Boolean = tpe < typeOf[ThriftUnion]
+  protected def isThriftUnion(tpe: ru.Type): Boolean = {
+    // val result = tpe.dealiasedType.typeSymbol.typeSignature < typeOf[ThriftUnion]
+    val result = tpe.dealiasedType.typeSymbol.typeSignature.toString.contains("with com.twitter.scrooge.ThriftUnion")
+    logDebug(s"${tpe.dealiasedType.typeSymbol.typeSignature} isThriftUnion=$result")
+    result
+  }
 
-  protected def isThrift(tpe: ru.Type): Boolean = tpe < typeOf[ThriftStruct]
+  protected def isThrift(tpe: ru.Type): Boolean = {
+    // tpe < typeOf[ThriftStruct]
+    val result = tpe.dealiasedType.typeSymbol.typeSignature.toString.contains("with com.twitter.scrooge.ThriftStruct")
+    logDebug(s"${tpe.dealiasedType.typeSymbol.typeSignature} isThriftStruct=$result")
+    result
+  }
+
+  override protected def coproductFilter(symbol: ru.Symbol): Boolean = {
+    val result = symbol.name.toString != "UnknownUnionField"
+    logDebug(s"filtering ${symbol}, result=$result")
+    result
+  }
+
+  override protected def productFilter(symbol: ru.Symbol): Boolean = true
 
   override def reflect(tpe: ru.Type): NoSchema[Any] = {
     val reflector = TypeReflector(tpe)
     if (isThriftUnion(tpe)) { // union type extends both ThriftUnion and ThriftStruct
       if (reflector.subclasses.nonEmpty) { // coproduct
         logInfo(
-          s"${tpe.typeSymbol.fullName} is coproduct of (${reflector.subclasses})")
+          s"${tpe.typeSymbol.fullName} is thrift coproduct of (${reflector.subclasses})")
         new ReflectedCoproduct(
           tpe,
           members = (
             for (
-              symbol <- reflector.subclasses
-              if (symbol.name.toString != "UnknownUnionField")
+              symbol <- reflector.subclasses if coproductFilter(symbol)
             ) yield {
               val symbolName = symbol.name.toString
               val subClassReflector = new TypeReflector(symbol.typeSignature)
@@ -68,8 +84,10 @@ trait ScroogeReflectionRule extends NoSchemaReflector.ReflectionRule with Slf4jL
       logInfo(s"${tpe.typeSymbol.fullName} is thrift struct")
       new ReflectedProduct(
         tpe,
-        fields = reflector.applyArgs.map {
-          s =>
+        fields = (
+          for (
+            s <- reflector.applyArgs if productFilter(s)
+          ) yield {
             val symbolName = s.name.toString
             val symbolType = s.typeSignature
             s -> Context.MemberVariable(
@@ -79,7 +97,7 @@ trait ScroogeReflectionRule extends NoSchemaReflector.ReflectionRule with Slf4jL
                 reflect(symbolType.dealias)
               )
             )
-        }.toMap
+        }).toMap
       )
     } else {
       logInfo(s"${tpe.typeSymbol.fullName} is not thrift, use default rule")

@@ -239,25 +239,25 @@ trait AvroRule extends DefaultRule with NoSchemaDsl {
           operation.asInstanceOf[AvroOperation[Iterable[(String, map.Elem)]]]
         )
 
-      case seq: SeqContainer[_] =>
-        new AvroSeqOperator(
-          seq.element,
-          operation.asInstanceOf[AvroOperation[Seq[seq.Elem]]]
-        )
-
-      case iterable: IterableContainer[_] =>
+      case iterable: Container[_, _]
+        if Set(
+          NoSchema.Category.Seq,
+          NoSchema.Category.Set
+        ).contains(iterable.category) =>
         new AvroIterableOperator(
           iterable.element,
           operation.asInstanceOf[AvroOperation[Iterable[iterable.Elem]]]
         )
 
-      case option: OptionContainer[_] =>
+      case option: Container[_, _] if option.category == NoSchema.Category.Option =>
         new AvroOptionOperator(
           option.element,
           operation.asInstanceOf[AvroOperation[Option[option.Elem]]]
         )
 
-      case _ => super.getOperator(operation)
+      case p: Primitive[_] => super.getOperator(operation)
+      case other =>
+        throw new Exception(s"schema ${other} does not have avro rule and is not primitive")
     }
   }.asInstanceOf[Operator[V]]
 }

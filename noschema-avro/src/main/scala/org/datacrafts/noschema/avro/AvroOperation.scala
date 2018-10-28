@@ -101,7 +101,7 @@ class AvroOperation[T](
 
   override def unmarshal(input: T): Any = {
     val result = operator.unmarshal(input)
-    logDebug(s"converted $input to $result")
+    logDebug(s"converted $input to $result by operator ${operator}")
     schemaWrapper match {
       case Some(SchemaWrapper(_, _, wrapperField)) =>
         val record = new GenericData.Record(avroSchema)
@@ -117,12 +117,17 @@ class AvroOperation[T](
 
   def scalaType: ScalaType[T] = context.noSchema.scalaType
 
-  def anyToAvro(input: Any): Any = {
-    scalaType.matchInput(input) match {
-      case Some(t) => toAvro(t)
-      case None =>
-        throw new Exception(
-          s"input ${input.getClass.getCanonicalName} is not instance of ${scalaType}: $input")
+  def anyToAvro(input: Any, checkType: Boolean = true): Any = {
+    if (checkType) {
+      scalaType.matchInput(input) match {
+        case Some(t) => toAvro(t)
+        case None =>
+          throw new Exception(
+            s"input ${input.getClass.getCanonicalName} is not instance of ${scalaType}: $input")
+      }
+    }
+    else {
+      toAvro(input.asInstanceOf[T])
     }
   }
 

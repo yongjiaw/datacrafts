@@ -1,6 +1,7 @@
 package org.datacrafts.noschema.reflection
 
 import scala.reflect.runtime.{universe => ru}
+import scala.util.Try
 
 import org.datacrafts.noschema.{Context, NoSchemaCoproduct, Operation}
 import org.datacrafts.noschema.operator.CoproductOperator
@@ -55,14 +56,17 @@ class ReflectedCoproduct(
     (for (
       member <- members;
       ReflectedCoproduct.Member(memberSymbol, wrapperSymbol, memberContext) = member;
-      matchedValue <- typeExtractor.getTypeValue(memberContext)
+      matchedValue <- typeExtractor.getTypeValue(memberContext);
+      result <- Try{
+        logDebug(
+          s"${reflector.fullName} found matched " +
+            s"subclass ${memberContext} for value ${matchedValue}")
+        member.wrapTypedInput(
+          operation.dependencyOperation(memberContext).marshal(matchedValue)
+        )
+      }.toOption
     ) yield {
-      logDebug(
-        s"${reflector.fullName} found matched " +
-          s"subclass ${memberContext} for value ${matchedValue}")
-      member.wrapTypedInput(
-        operation.dependencyOperation(memberContext).marshal(matchedValue)
-      )
+      result
     }
       ).headOption.getOrElse(
       throw new Exception(s"no value among candidate types (${members}) " +

@@ -18,13 +18,21 @@ object TypeReflector {
 
 class TypeReflector(val originalType: ru.Type) extends Slf4jLogging.Default {
 
-  val tpe = originalType.dealias
+  val dealiasedType = {
+    var current = originalType
+    var next = originalType.dealias
+    while (current != next) {
+      current = next
+      next = next.dealias
+    }
+    current
+  }
   import org.datacrafts.noschema.NoSchema._
-  logInfo(s"constructing reflector for ${tpe.uniqueKey}")
-  lazy val fullName: String = tpe.typeSymbol.fullName
+  logInfo(s"constructing reflector for ${dealiasedType.uniqueKey}=${dealiasedType.typeSymbol}")
+  lazy val fullName: String = dealiasedType.typeSymbol.fullName
 
   lazy val rootMirror = ru.runtimeMirror(getClass.getClassLoader)
-  lazy val classMirror = rootMirror.reflectClass(tpe.typeSymbol.asClass)
+  lazy val classMirror = rootMirror.reflectClass(dealiasedType.typeSymbol.asClass)
 
   // module is for general object, for case object it does not have companion
   lazy val moduleSymbol = rootMirror.staticModule(fullName)
@@ -40,22 +48,22 @@ class TypeReflector(val originalType: ru.Type) extends Slf4jLogging.Default {
   }
 
   lazy val subclasses: Set[ru.Symbol] = {
-    tpe.typeSymbol.asClass.knownDirectSubclasses
+    dealiasedType.typeSymbol.asClass.knownDirectSubclasses
   }
 
   lazy val caseAccessors: Seq[ru.MethodSymbol] = {
-    tpe.typeSymbol.typeSignature.members.collect {
+    dealiasedType.typeSymbol.typeSignature.members.collect {
       case m: ru.MethodSymbol if m.isCaseAccessor => m
     }.toSeq
   }
 
   lazy val caseMemberTypeMap: Map[String, ru.Type] = caseAccessors.map {
     accessor =>
-      accessor.asTerm.name.toString -> accessor.typeSignatureIn(tpe).finalResultType
+      accessor.asTerm.name.toString -> accessor.typeSignatureIn(dealiasedType).finalResultType
   }.toMap
 
   def < (other: TypeReflector): Boolean = {
-    tpe <:< other.tpe
+    dealiasedType <:< other.dealiasedType
   }
 
   def companionApply(args: Any*): Any = {
