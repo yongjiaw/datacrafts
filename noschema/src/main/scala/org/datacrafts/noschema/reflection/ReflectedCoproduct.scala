@@ -48,7 +48,7 @@ class ReflectedCoproduct(
       }
   }
 
-  lazy val reflector = new TypeReflector(runtimeType)
+  lazy val reflector = TypeReflector(runtimeType)
 
   override def marshal(typeExtractor: CoproductOperator.TypeValueExtractor,
     operation: Operation[Any]

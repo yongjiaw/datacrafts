@@ -4,7 +4,6 @@ import scala.reflect.runtime.{universe => ru}
 
 import org.datacrafts.logging.Slf4jLogging
 import org.datacrafts.noschema.{AnyType, Context, NoSchema}
-import org.datacrafts.noschema.Container._
 import org.datacrafts.noschema.NoSchema.{HasLazySchema, ScalaType, TypeUniqueKey}
 
 object NoSchemaReflector extends ReflectionDsl with Slf4jLogging.Default {
@@ -193,8 +192,6 @@ object NoSchemaReflector extends ReflectionDsl with Slf4jLogging.Default {
     }
 
   }
-
-
 
   private val _stackTraceMark = collection.mutable.Map.empty[TypeUniqueKey, Int]
 

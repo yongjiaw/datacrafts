@@ -15,6 +15,13 @@ trait ScroogeReflectionRule extends NoSchemaReflector.ReflectionRule with Slf4jL
     result
   }
 
+  protected def isThriftEnum(tpe: ru.Type): Boolean = {
+    // val result = tpe.dealiasedType.typeSymbol.typeSignature < typeOf[ThriftUnion]
+    val result = tpe.dealiasedType.typeSymbol.typeSignature.toString.contains("with com.twitter.scrooge.ThriftEnum")
+    logDebug(s"${tpe.dealiasedType.typeSymbol.typeSignature} isThriftUnion=$result")
+    result
+  }
+
   protected def isThrift(tpe: ru.Type): Boolean = {
     // tpe < typeOf[ThriftStruct]
     val result = tpe.dealiasedType.typeSymbol.typeSignature.toString.contains("with com.twitter.scrooge.ThriftStruct")
@@ -32,35 +39,58 @@ trait ScroogeReflectionRule extends NoSchemaReflector.ReflectionRule with Slf4jL
 
   override def reflect(tpe: ru.Type): NoSchema[Any] = {
     val reflector = TypeReflector(tpe)
-    if (isThriftUnion(tpe)) { // union type extends both ThriftUnion and ThriftStruct
+    if (isThriftEnum(tpe)) {
+      new ReflectedCoproduct(
+        runtimeType = tpe,
+        members = (
+          for (
+            symbol <- reflector.subclasses
+          ) yield {
+            val symbolName = symbol.name.toString
+            val subClassReflector = TypeReflector(symbol.typeSignature)
+            if (
+              subClassReflector.caseAccessors.size == 0 ||
+              symbolName.startsWith("EnumUnknown") && subClassReflector.caseAccessors.size == 1
+            ) { // enum is case object
+              ReflectedCoproduct.Member(
+                symbol = symbol,
+                wrapper = None,
+                context = Context.CoproductElement(
+                  Symbol(symbolName),
+                  reflect(symbol.typeSignature.dealias)
+                )
+              )
+            }
+            else {
+              throw new Exception(
+                s"ThriftEnum's subclass should not have more than 1 case accessors " +
+                  s"except for Unknown:" +
+                  s"${symbolName}(${subClassReflector.caseAccessors})"
+              )
+            }
+
+          }).toSeq
+      )
+    }
+    else if (isThriftUnion(tpe)) { // union type extends both ThriftUnion and ThriftStruct
       if (reflector.subclasses.nonEmpty) { // coproduct
         logInfo(
           s"${tpe.typeSymbol.fullName} is thrift coproduct of (${reflector.subclasses})")
         new ReflectedCoproduct(
-          tpe,
+          runtimeType = tpe,
           members = (
             for (
               symbol <- reflector.subclasses if coproductFilter(symbol)
             ) yield {
               val symbolName = symbol.name.toString
-              val subClassReflector = new TypeReflector(symbol.typeSignature)
-              if (subClassReflector.caseAccessors.size == 0) { // enum is case object
-                ReflectedCoproduct.Member(
-                  symbol,
-                  None,
-                  Context.CoproductElement(
-                    Symbol(symbolName),
-                    reflect(symbol.typeSignature.dealias)
-                  )
-                )
-              }
-              else if (subClassReflector.caseAccessors.size == 1) {
+              val subClassReflector = TypeReflector(symbol.typeSignature)
+              if (subClassReflector.caseAccessors.size == 1) {
                 // everything else is wrapped in case class
                 val wrappedMember = subClassReflector.caseAccessors(0)
                 ReflectedCoproduct.Member(
-                  wrappedMember,
-                  Some(symbol),
-                  Context.CoproductElement(
+                  symbol = wrappedMember,
+                  wrapper = Some(symbol),
+                  context = Context.CoproductElement(
                     Symbol(symbolName),
                     reflect(wrappedMember.typeSignature.dealias)
                   )
@@ -68,7 +98,7 @@ trait ScroogeReflectionRule extends NoSchemaReflector.ReflectionRule with Slf4jL
               }
               else {
                 throw new Exception(
-                  s"ThriftUnion's subclass should not have more than 1 case accessors:" +
+                  s"ThriftUnion's subclass should have exactly 1 case accessors:" +
                     s"${symbolName}(${subClassReflector.caseAccessors})"
                 )
               }
@@ -80,10 +110,10 @@ trait ScroogeReflectionRule extends NoSchemaReflector.ReflectionRule with Slf4jL
         throw new Exception(s"${tpe.typeSymbol.fullName} not recognized")
       }
     }
-    else if (isThrift(tpe)) {
+    else if (isThrift(tpe)) { // thrift struct / product
       logInfo(s"${tpe.typeSymbol.fullName} is thrift struct")
       new ReflectedProduct(
-        tpe,
+        runtimeType = tpe,
         fields = (
           for (
             s <- reflector.applyArgs if productFilter(s)

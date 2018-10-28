@@ -7,7 +7,6 @@ import scala.util.{Failure, Success, Try}
 
 import org.datacrafts.logging.Slf4jLogging
 import org.datacrafts.noschema.NoSchema.{TypeTagConverter, TypeUniqueKey}
-import sun.applet.AppletClassLoader
 
 object TypeReflector {
   private val _reflectors = collection.mutable.Map.empty[TypeUniqueKey, TypeReflector]
