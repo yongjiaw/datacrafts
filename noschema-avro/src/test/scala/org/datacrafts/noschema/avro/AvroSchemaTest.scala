@@ -7,6 +7,7 @@ import org.apache.avro.Schema.Field
 import org.apache.avro.generic.GenericData.EnumSymbol
 import org.datacrafts.logging.Slf4jLogging
 import org.datacrafts.noschema.ScroogeSupport
+import org.datacrafts.noschema.reflection.ScroogeReflectionRule
 import org.datacrafts.scrooge.shapes.{NestedUnion, StructExample, UnionExample}
 import org.scalatest.FlatSpec
 
@@ -14,7 +15,9 @@ import org.scalatest.FlatSpec
 class AvroSchemaTest extends FlatSpec with AvroOperationDsl with ScroogeSupport {
   "nested union" should "be wrapped" in {
     import scala.collection.JavaConverters._
-    val schema = avroOperationOf[NestedUnion]().avroSchema
+    val schema = avroOperationOf[NestedUnion](
+      reflectionRule = new ScroogeReflectionRule {}
+    ).avroSchema
     println(schema)
     val expectedSchema =
       Schema.createUnion(
@@ -24,7 +27,9 @@ class AvroSchemaTest extends FlatSpec with AvroOperationDsl with ScroogeSupport 
           List(
             new Field(
               "UnionExample",
-              avroOperationOf[UnionExample]().avroSchema,
+              avroOperationOf[UnionExample](
+                reflectionRule = new ScroogeReflectionRule {}
+              ).avroSchema,
               null,
               null)).asJava
         ),
@@ -41,7 +46,9 @@ class AvroSchemaTest extends FlatSpec with AvroOperationDsl with ScroogeSupport 
   }
 
   "Enum marshal/unmarshal" should "be successful" in {
-    val avroOp = avroOperationOf[TestEnum]()
+    val avroOp = avroOperationOf[TestEnum](
+      reflectionRule = new ScroogeReflectionRule {}
+    )
     assert(avroOp.toAvro(AE) == new EnumSymbol(avroOp.avroSchema, "AE"))
     assert(avroOp.toAvro(BE) == new EnumSymbol(avroOp.avroSchema, "BE"))
     assertRoundTrip(avroOp, AE)
@@ -50,13 +57,17 @@ class AvroSchemaTest extends FlatSpec with AvroOperationDsl with ScroogeSupport 
   }
 
   "Union marshal/unmarshal" should "be successful" in {
-    val avroOp = avroOperationOf[TestUnion]()
+    val avroOp = avroOperationOf[TestUnion](
+      reflectionRule = new ScroogeReflectionRule {}
+    )
     assertRoundTrip(avroOp, AU(1))
     assertRoundTrip(avroOp, BU("a"))
   }
 
   "NestedUnion marshal/unmarshal" should "be successful" in {
-    val avroOp = avroOperationOf[NestedUnion]()
+    val avroOp = avroOperationOf[NestedUnion](
+      reflectionRule = new ScroogeReflectionRule {}
+    )
     println(avroOp.format())
     assertRoundTrip(avroOp, NestedUnion.A(UnionExample.A(StructExample(foo = "bar"))))
     assertRoundTrip(avroOp, NestedUnion.A(UnionExample.B(2)))
@@ -70,7 +81,9 @@ class AvroSchemaTest extends FlatSpec with AvroOperationDsl with ScroogeSupport 
     val op = schemaOf[Option[Option[Option[Double]]]].operation()
     println(op.operator.marshal(null)) // Some(Some(None))) instead of None
 
-    val avroOp1 = avroOperationOf[Test2]()
+    val avroOp1 = avroOperationOf[Test2](
+      reflectionRule = new ScroogeReflectionRule {}
+    )
     val avroOp2 = deprecatedAvroOperationOf[Test2]()
     for (avroOp <- Seq(avroOp1, avroOp2)) {
 
