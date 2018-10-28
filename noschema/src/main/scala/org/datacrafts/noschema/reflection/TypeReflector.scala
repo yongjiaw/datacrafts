@@ -1,10 +1,13 @@
 package org.datacrafts.noschema.reflection
 
+import java.net.URLClassLoader
+
 import scala.reflect.runtime.{universe => ru}
 import scala.util.{Failure, Success, Try}
 
 import org.datacrafts.logging.Slf4jLogging
 import org.datacrafts.noschema.NoSchema.{TypeTagConverter, TypeUniqueKey}
+import sun.applet.AppletClassLoader
 
 object TypeReflector {
   private val _reflectors = collection.mutable.Map.empty[TypeUniqueKey, TypeReflector]
@@ -14,6 +17,8 @@ object TypeReflector {
       new TypeReflector(tpe)
     )
   }
+
+  var classLoader = Thread.currentThread().getContextClassLoader
 }
 
 class TypeReflector(val originalType: ru.Type) extends Slf4jLogging.Default {
@@ -31,11 +36,28 @@ class TypeReflector(val originalType: ru.Type) extends Slf4jLogging.Default {
   logInfo(s"constructing reflector for ${dealiasedType.uniqueKey}=${dealiasedType.typeSymbol}")
   lazy val fullName: String = dealiasedType.typeSymbol.fullName
 
-  lazy val rootMirror = ru.runtimeMirror(getClass.getClassLoader)
+  lazy val classLoader = TypeReflector.classLoader
+  lazy val rootMirror = ru.runtimeMirror(classLoader)
+
   lazy val classMirror = rootMirror.reflectClass(dealiasedType.typeSymbol.asClass)
 
+  lazy val classLoaderMessage = {
+    classLoader match {
+      case cl: URLClassLoader =>
+        s"NoSchema Reflection ClassLoader URLs ${cl.getURLs.toSeq}"
+      case _ =>
+        s"NoSchema Reflection ClassLoader is ${TypeReflector.classLoader}"
+    }
+  }
   // module is for general object, for case object it does not have companion
-  lazy val moduleSymbol = rootMirror.staticModule(fullName)
+  lazy val moduleSymbol = {
+    Try(rootMirror.staticModule(fullName)) match {
+      case Success(symbol) => symbol
+      case Failure(f) =>
+        throw new Exception(
+          s"failed to get static module: ${classLoaderMessage}", f)
+    }
+  }
   lazy val moduleMirror = rootMirror.reflectModule(moduleSymbol)
 
   // companion object is a specific type of module
@@ -68,11 +90,11 @@ class TypeReflector(val originalType: ru.Type) extends Slf4jLogging.Default {
 
   def companionApply(args: Any*): Any = {
     logDebug(s"calling ${fullName}.apply: input=${args}")
-    applyCompanionMethod("apply", args: _*)
+    applyMethod(applyMethodMirror, args: _*)
   }
 
   def companionUnapply(value: Any): Option[Seq[Any]] = {
-    applyCompanionMethod("unapply", value) match {
+    applyMethod(unapplyMethodMirror, value) match {
       case Some(result) =>
         logDebug(s"${fullName}.unapply: input=${value}, output=${result}")
         if (result.isInstanceOf[Product]) { // more than 1 values
@@ -86,16 +108,23 @@ class TypeReflector(val originalType: ru.Type) extends Slf4jLogging.Default {
     }
   }
 
-  def applyCompanionMethod(
-    methodName: String,
+  lazy val applyMethodMirror = companionInstanceMirror
+    .reflectMethod(getCompanionMethodSymbol("apply"))
+
+  lazy val unapplyMethodMirror = companionInstanceMirror
+    .reflectMethod(getCompanionMethodSymbol("unapply"))
+
+  def applyMethod(
+    methodMirror: ru.MethodMirror,
     args: Any*
   ): Any = {
-    Try(companionInstanceMirror
-      .reflectMethod(getCompanionMethodSymbol(methodName))
-      .apply(args: _*)) match {
+    Try(methodMirror.apply(args: _*)) match {
       case Success(result) => result
-      case Failure(f) => throw new Exception(s"failed ${fullName}.${methodName}(${args}). " +
-        s"classSymbol=${classMirror.symbol}", f)
+      case Failure(f) =>
+        val currentThread = Thread.currentThread()
+        throw new Exception(
+          s"failed ${fullName}.${methodMirror.symbol}(${s"${args}".take(100)}). " +
+        s"classSymbol=${classMirror.symbol}, currentThread=${currentThread.getName}", f)
     }
   }
 
