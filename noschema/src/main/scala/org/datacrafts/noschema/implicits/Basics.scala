@@ -1,7 +1,6 @@
 package org.datacrafts.noschema.implicits
 
-import org.datacrafts.noschema.{Context, NoSchema, Primitive}
-import org.datacrafts.noschema.Container._
+import org.datacrafts.noschema.{Container, Context, NoSchema, Primitive}
 import org.datacrafts.noschema.Primitive.Type
 import shapeless.Lazy
 
@@ -19,50 +18,59 @@ object Basics {
   }
 
   trait Containers {
+
     implicit def getOptionSchemaFromElementSchema[T](implicit
       node: Lazy[NoSchema[T]],
       ot: Lazy[NoSchema.ScalaType[Option[T]]],
       st: Lazy[NoSchema.ScalaType[T]]
-    ): OptionContainer[T] =
-      new OptionContainer[T](Context.ContainerElement(node.value)
-      )(ot.value, st.value)
+    ): Container[T, Option[T]] =
+      new Container[T, Option[T]](
+        NoSchema.Category.Option,
+        Context.ContainerElement(node.value), false)(st.value, ot.value)
 
     implicit def getSeqSchemaFromElementSchema[T](implicit
       node: Lazy[NoSchema[T]],
       ot: Lazy[NoSchema.ScalaType[Seq[T]]],
       st: Lazy[NoSchema.ScalaType[T]]
-    ): SeqContainer[T] =
-      new SeqContainer[T](Context.ContainerElement(node.value)
-      )(ot.value, st.value)
+    ): Container[T, Seq[T]] =
+      new Container[T, Seq[T]](
+        NoSchema.Category.Seq,
+        Context.ContainerElement(node.value))(st.value, ot.value)
 
     implicit def getSetSchemaFromElementSchema[T](implicit
       node: Lazy[NoSchema[T]],
       ot: Lazy[NoSchema.ScalaType[Set[T]]],
       st: Lazy[NoSchema.ScalaType[T]]
-    ): SetContainer[T] =
-      new SetContainer[T](Context.ContainerElement(node.value)
-      )(ot.value, st.value)
+    ): Container[T, Set[T]] =
+      new Container[T, Set[T]](
+        NoSchema.Category.Set,
+        Context.ContainerElement(node.value))(st.value, ot.value)
 
     implicit def getIterableSchemaFromElementSchema[T](implicit
       node: Lazy[NoSchema[T]],
       ot: Lazy[NoSchema.ScalaType[Iterable[T]]],
       st: Lazy[NoSchema.ScalaType[T]]
-    ): IterableContainer[T] =
-      new IterableContainer[T](Context.ContainerElement(node.value)
-      )(ot.value, st.value)
+    ): Container[T, Iterable[T]] =
+      new Container[T, Iterable[T]](
+        NoSchema.Category.Seq,
+        Context.ContainerElement(node.value))(st.value, ot.value)
 
     implicit def getMapSchemaFromElementSchema[T](implicit
       node: Lazy[NoSchema[T]],
       ot: Lazy[NoSchema.ScalaType[Map[String, T]]],
-      st: Lazy[NoSchema.ScalaType[T]]): MapContainer[T] =
-      new MapContainer[T](Context.ContainerElement(node.value)
-      )(ot.value, st.value)
+      st: Lazy[NoSchema.ScalaType[T]]
+    ): Container[T, Map[String, T]] =
+      new Container[T, Map[String, T]](
+        NoSchema.Category.Map,
+        Context.ContainerElement(node.value))(st.value, ot.value)
 
     implicit def getMapSchemaFromElementSchema2[T](implicit
       node: Lazy[NoSchema[T]],
       ot: Lazy[NoSchema.ScalaType[scala.collection.Map[String, T]]],
-      st: Lazy[NoSchema.ScalaType[T]]): MapContainer2[T] =
-      new MapContainer2[T](Context.ContainerElement(node.value)
-      )(ot.value, st.value)
+      st: Lazy[NoSchema.ScalaType[T]]
+    ): Container[T, scala.collection.Map[String, T]] =
+      new Container[T, scala.collection.Map[String, T]](
+        NoSchema.Category.Map,
+        Context.ContainerElement(node.value))(st.value, ot.value)
   }
 }
