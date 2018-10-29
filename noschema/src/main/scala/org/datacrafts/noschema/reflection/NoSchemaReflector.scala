@@ -130,7 +130,6 @@ object NoSchemaReflector extends ReflectionDsl with Slf4jLogging.Default {
 
       }}.asInstanceOf[NoSchema[Any]]
 
-
     protected def getOrCreateLazySchema(
       tpe: ru.Type,
       creator: => NoSchema[Any]

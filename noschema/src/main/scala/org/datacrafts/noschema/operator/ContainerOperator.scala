@@ -214,7 +214,6 @@ object ContainerOperator {
     }
   }
 
-
   class GeneralMapOperator[T](
     override val element: ContainerElement[T],
     override val operation: Operation[Iterable[(String, T)]]

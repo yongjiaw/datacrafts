@@ -3,10 +3,10 @@ package org.datacrafts.noschema.operator
 import scala.util.{Failure, Success, Try}
 
 import org.datacrafts.logging.Slf4jLogging
+import org.datacrafts.noschema.Context.MemberVariable
 import org.datacrafts.noschema.NoSchemaProduct
 import org.datacrafts.noschema.Operation.Operator
 import org.datacrafts.noschema.operator.ProductOperator.{ProductBuilder, SymbolExtractor}
-import org.datacrafts.noschema.Context.MemberVariable
 
 abstract class ProductOperator[T, O] extends Operator[T] with Slf4jLogging.Default {
 

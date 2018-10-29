@@ -14,7 +14,6 @@ object Context {
     override lazy val noSchema: NoSchema[T] = lazySchema.lazySchema
   }
 
-
   case class ContainerElement[T](noSchema: NoSchema[T])
     extends LocalContext[T]
 

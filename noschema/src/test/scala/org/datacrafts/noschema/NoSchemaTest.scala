@@ -22,7 +22,7 @@ class NoSchemaTest extends FlatSpec with NoSchemaDsl {
     val op2 = schemaOf[TestClass].operation()
     println(op2.format())
 
-    val op3 = reflectedSchemaOf[TestClass]().operation()
+    val op3 = schemaByReflection[TestClass]().operation()
     println(op3.format())
 
     for (op <- Seq(op1, op3)) {

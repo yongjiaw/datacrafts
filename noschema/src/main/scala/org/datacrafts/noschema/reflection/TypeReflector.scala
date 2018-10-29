@@ -61,7 +61,8 @@ class TypeReflector(val originalType: ru.Type) extends Slf4jLogging.Default {
 
   // companion object is a specific type of module
   lazy val companionSymbol = classMirror.symbol.companion
-  lazy val companionModuleMirror = moduleMirror // rootMirror.reflectModule(companionSymbol.asModule)
+  lazy val companionModuleMirror = moduleMirror
+  // rootMirror.reflectModule(companionSymbol.asModule)
   lazy val companionInstanceMirror = rootMirror.reflect(companionModuleMirror.instance)
 
   def getCompanionMethodSymbol(methodName: String): ru.MethodSymbol = {

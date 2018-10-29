@@ -6,25 +6,30 @@ import com.twitter.scrooge.{ThriftStruct, ThriftUnion}
 import org.datacrafts.logging.Slf4jLogging
 import org.datacrafts.noschema.{Context, NoSchema}
 
+object ScroogeReflectionRule extends ScroogeReflectionRule
+
 trait ScroogeReflectionRule extends NoSchemaReflector.ReflectionRule with Slf4jLogging.Default {
 
   protected def isThriftUnion(tpe: ru.Type): Boolean = {
     // val result = tpe.dealiasedType.typeSymbol.typeSignature < typeOf[ThriftUnion]
-    val result = tpe.dealiasedType.typeSymbol.typeSignature.toString.contains("with com.twitter.scrooge.ThriftUnion")
+    val result = tpe.dealiasedType.typeSymbol.typeSignature.toString
+      .contains("with com.twitter.scrooge.ThriftUnion")
     logDebug(s"${tpe.dealiasedType.typeSymbol.typeSignature} isThriftUnion=$result")
     result
   }
 
   protected def isThriftEnum(tpe: ru.Type): Boolean = {
     // val result = tpe.dealiasedType.typeSymbol.typeSignature < typeOf[ThriftUnion]
-    val result = tpe.dealiasedType.typeSymbol.typeSignature.toString.contains("with com.twitter.scrooge.ThriftEnum")
+    val result = tpe.dealiasedType.typeSymbol.typeSignature.toString
+      .contains("with com.twitter.scrooge.ThriftEnum")
     logDebug(s"${tpe.dealiasedType.typeSymbol.typeSignature} isThriftUnion=$result")
     result
   }
 
   protected def isThrift(tpe: ru.Type): Boolean = {
     // tpe < typeOf[ThriftStruct]
-    val result = tpe.dealiasedType.typeSymbol.typeSignature.toString.contains("with com.twitter.scrooge.ThriftStruct")
+    val result = tpe.dealiasedType.typeSymbol.typeSignature.toString
+      .contains("with com.twitter.scrooge.ThriftStruct")
     logDebug(s"${tpe.dealiasedType.typeSymbol.typeSignature} isThriftStruct=$result")
     result
   }

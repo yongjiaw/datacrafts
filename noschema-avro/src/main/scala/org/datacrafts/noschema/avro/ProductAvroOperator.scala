@@ -1,8 +1,8 @@
 package org.datacrafts.noschema.avro
 
 import org.apache.avro.generic.{GenericData, GenericRecord}
-import org.datacrafts.noschema.NoSchemaProduct
 import org.datacrafts.noschema.Context.MemberVariable
+import org.datacrafts.noschema.NoSchemaProduct
 import org.datacrafts.noschema.operator.ProductOperator
 import org.datacrafts.noschema.operator.ProductOperator.{ProductBuilder, SymbolCollector, SymbolExtractor}
 

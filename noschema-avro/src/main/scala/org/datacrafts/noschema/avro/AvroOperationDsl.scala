@@ -5,20 +5,21 @@ import org.datacrafts.noschema.reflection.NoSchemaReflector.ReflectionRule
 
 trait AvroOperationDsl extends NoSchemaDsl {
 
-  def deprecatedAvroOperationOf[T: NoSchema](
+  def avroOperationof[T](
+    noSchema: NoSchema[T],
+    avroRule: AvroRule
+  ): AvroOperation[T] = new AvroOperation[T](Context.root(noSchema), avroRule, None)
+
+  def avroOperationByShapeless[T: NoSchema](
     avroRule: AvroRule = AvroRule.Default): AvroOperation[T] = {
-    new AvroOperation[T](Context.root(schemaOf[T]), avroRule, None)
+    avroOperationof(schemaByShapeless[T], avroRule)
   }
 
-  def avroOperationOf[T: scala.reflect.runtime.universe.TypeTag](
+  def avroOperationByReflection[T: scala.reflect.runtime.universe.TypeTag](
     avroRule: AvroRule = AvroRule.Default,
-    reflectionRule: ReflectionRule = new ReflectionRule {}
+    schemaReflectionRule: ReflectionRule = new ReflectionRule {}
   ): AvroOperation[T] = {
-    new AvroOperation[T](
-      Context.root(
-        reflectedSchemaOf[T](reflectionRule)),
-      avroRule,
-      None)
+    avroOperationof(schemaByReflection[T](schemaReflectionRule), avroRule)
   }
 
 }

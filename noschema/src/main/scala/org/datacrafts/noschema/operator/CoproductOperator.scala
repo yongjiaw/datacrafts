@@ -3,8 +3,8 @@ package org.datacrafts.noschema.operator
 import scala.util.{Failure, Success, Try}
 
 import org.datacrafts.logging.Slf4jLogging
-import org.datacrafts.noschema.NoSchemaCoproduct
 import org.datacrafts.noschema.Context.CoproductElement
+import org.datacrafts.noschema.NoSchemaCoproduct
 import org.datacrafts.noschema.Operation.Operator
 import org.datacrafts.noschema.operator.CoproductOperator.{CoproductBuilder, CoproductInfo, TypeValueExtractor, UnionTypeValueCollector}
 
@@ -78,7 +78,6 @@ object CoproductOperator {
   trait CoproductBuilder[O] extends UnionTypeValueCollector {
     def build(): O
   }
-
 
   trait TypeValueExtractor {
     // can control the whether the symbol is allowed to be absent and treated as null

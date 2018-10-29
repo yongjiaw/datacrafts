@@ -37,10 +37,10 @@ object AvroRecursiveSchemaTest extends AvroOperationDsl {
     )
     println(schema2)
 
-    val avroOp1 = avroOperationOf[Recursive]()
+    val avroOp1 = avroOperationByShapeless[Recursive]()
     println(avroOp1.avroSchema)
 
-    val avroOp = avroOperationOf[TestClass]()
+    val avroOp = avroOperationByShapeless[TestClass]()
     val schema = avroOp.avroSchema
 
     val buffer = new ByteArrayOutputStream(1000)

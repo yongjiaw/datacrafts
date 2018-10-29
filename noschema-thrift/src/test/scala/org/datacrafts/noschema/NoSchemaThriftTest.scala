@@ -13,7 +13,7 @@ import org.scalatest.FlatSpec
 
 // scalastyle:off
 class NoSchemaThriftTest extends FlatSpec
-  with NoSchemaDsl with ScroogeSupport with Slf4jLogging.Default {
+  with ThriftSchemaDsl with Slf4jLogging.Default {
 
   "Marshalling and unmarshalling with Map" should "be successful" in {
 
@@ -32,9 +32,7 @@ class NoSchemaThriftTest extends FlatSpec
     val op2 = schemaOf[TestClass].operation()
     println(op2.format())
 
-    val op3 = reflectedSchemaOf[TestClass](
-      new ScroogeReflectionRule {}
-    ).operation()
+    val op3 = schemaByReflection[TestClass]().operation()
     println(op3.format())
 
     for (op <- Seq(op1, op3)) {

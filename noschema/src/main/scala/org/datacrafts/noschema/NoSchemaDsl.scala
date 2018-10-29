@@ -1,8 +1,8 @@
 package org.datacrafts.noschema
 
 import org.datacrafts.noschema.Operation.SchemaFormatter
-import org.datacrafts.noschema.rule.DefaultRule
 import org.datacrafts.noschema.reflection.NoSchemaReflector.ReflectionRule
+import org.datacrafts.noschema.rule.DefaultRule
 
 trait NoSchemaDsl {
 
@@ -11,9 +11,13 @@ trait NoSchemaDsl {
     implicitly[NoSchema[T]]
   }
 
+  def schemaByShapeless[T: NoSchema]: NoSchema[T] = {
+    implicitly[NoSchema[T]]
+  }
+
   import scala.reflect.runtime.universe.TypeTag
   // this method uses runtime reflection with TypeTag
-  def reflectedSchemaOf[T: TypeTag](
+  def schemaByReflection[T: TypeTag](
     rule: ReflectionRule = new ReflectionRule {}
   ): NoSchema[T] = {
     rule.reflect(implicitly[TypeTag[T]].tpe).asInstanceOf[NoSchema[T]]
