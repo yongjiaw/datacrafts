@@ -6,13 +6,13 @@ import org.apache.avro.Schema
 import org.apache.avro.Schema.Field
 import org.apache.avro.generic.GenericData.EnumSymbol
 import org.datacrafts.logging.Slf4jLogging
-import org.datacrafts.noschema.ScroogeSupport
+import org.datacrafts.noschema.ThriftSchemaDsl
 import org.datacrafts.noschema.reflection.ScroogeReflectionRule
 import org.datacrafts.scrooge.shapes.{NestedUnion, StructExample, UnionExample}
 import org.scalatest.FlatSpec
 
 // scalastyle:off
-class AvroSchemaTest extends FlatSpec with AvroOperationDsl with ScroogeSupport {
+class AvroSchemaTest extends FlatSpec with AvroOperationDsl with ThriftSchemaDsl {
   "nested union" should "be wrapped" in {
     import scala.collection.JavaConverters._
     val schema = avroOperationByReflection[NestedUnion](

@@ -5,10 +5,11 @@ import java.io.ByteArrayOutputStream
 import org.apache.avro.{Schema, SchemaBuilder}
 import org.apache.avro.SchemaBuilder.FieldBuilder
 import org.apache.avro.generic.GenericData
+import org.datacrafts.noschema.NoSchemaDsl
 import org.datacrafts.noschema.NoSchemaTest.{GenericType, Recursive, TestClass, TestClass3}
 
 // scalastyle:off
-object AvroRecursiveSchemaTest extends AvroOperationDsl {
+object AvroRecursiveSchemaTest extends AvroOperationDsl with NoSchemaDsl {
   def main(args: Array[String]): Unit = {
     println(schemaOf[TestClass].format())
     val schema1 =
@@ -25,7 +26,6 @@ object AvroRecursiveSchemaTest extends AvroOperationDsl {
     )
 
     println(record)
-
 
     import scala.collection.JavaConverters._
     val schema2 = Schema.createRecord(
