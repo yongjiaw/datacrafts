@@ -97,12 +97,13 @@ class TypeReflector(val originalType: ru.Type) extends Slf4jLogging.Default {
     applyMethod(unapplyMethodMirror, value) match {
       case Some(result) =>
         logDebug(s"${fullName}.unapply: input=${value}, output=${result}")
-        if (result.isInstanceOf[Product]) { // more than 1 values
-          val product = result.asInstanceOf[Product]
-          Some((0 until product.productArity).map(product.productElement))
-        }
-        else { // 1 value
-          Some(Seq(result))
+        result match {
+          // a single option value
+          case option: Option[_] => Some(Seq(option))
+          // multiple values
+          case product: Product => Some((0 until product.productArity).map(product.productElement))
+          // single non-option value
+          case _ => Some(Seq(result))
         }
       case None => None
     }

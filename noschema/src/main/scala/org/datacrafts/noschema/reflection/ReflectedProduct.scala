@@ -56,6 +56,8 @@ class ReflectedProduct(
             val fieldContext = fields.get(symbol)
               .getOrElse(
                 throw new Exception(s"symbol ${symbol} not found among fields ${fields.keys}"))
+            logDebug(s"${reflector.fullName} unmarshal value($i)=${values(i)} as " +
+              s"${symbol.name}=${fieldContext}")
             currentCollector = currentCollector.addSymbolValue(
               symbol = fieldContext,
               value = operation.dependencyOperation(fieldContext).unmarshal(values(i))
