@@ -6,7 +6,6 @@ import org.apache.avro.Schema
 import org.apache.avro.Schema.Field
 import org.datacrafts.logging.Slf4jLogging
 import org.datacrafts.noschema.{Container, NoSchema, NoSchemaCoproduct, NoSchemaDsl, NoSchemaProduct, Operation, Primitive}
-import org.datacrafts.noschema.Container._
 import org.datacrafts.noschema.Context.{CoproductElement, LocalContext}
 import org.datacrafts.noschema.Operation.Operator
 import org.datacrafts.noschema.avro.AvroContainerOperator._
@@ -15,7 +14,6 @@ import org.datacrafts.noschema.operator.PrimitiveOperator
 import org.datacrafts.noschema.rule.DefaultRule
 
 object AvroRule {
-  val NameSpacePattern = """(.+)\.(.+)""".r
 
   object Default extends AvroRule with Slf4jLogging.Default
 
@@ -24,6 +22,8 @@ object AvroRule {
 
 trait AvroRule extends DefaultRule with NoSchemaDsl {
   Self: Slf4jLogging =>
+
+  val NameSpacePattern = """(.+)\.(.+)""".r
 
   def getSchemaDoc(operation: AvroOperation[_]): String = {
     null // scalastyle:ignore
@@ -128,7 +128,7 @@ trait AvroRule extends DefaultRule with NoSchemaDsl {
       // record
       case product: NoSchemaProduct[_] =>
         product.scalaType.fullName match {
-          case AvroRule.NameSpacePattern(namespace, name) =>
+          case NameSpacePattern(namespace, name) =>
             Schema.createRecord(
               name,
               getSchemaDoc(operation),
@@ -168,7 +168,7 @@ trait AvroRule extends DefaultRule with NoSchemaDsl {
       // enum
       case coproduct: NoSchemaCoproduct[_] if operation.isEnum =>
         coproduct.scalaType.fullName match {
-          case AvroRule.NameSpacePattern(namespace, name) =>
+          case NameSpacePattern(namespace, name) =>
             Schema.createEnum(
               name,
               getSchemaDoc(operation),
