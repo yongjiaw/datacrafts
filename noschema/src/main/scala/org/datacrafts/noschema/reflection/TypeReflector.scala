@@ -90,20 +90,24 @@ class TypeReflector(val originalType: ru.Type) extends Slf4jLogging.Default {
 
   def companionApply(args: Any*): Any = {
     logDebug(s"calling ${fullName}.apply: input=${args}")
-    applyMethod(applyMethodMirror, args: _*)
+    callMethod(applyMethodMirror, args: _*)
   }
 
   def companionUnapply(value: Any): Option[Seq[Any]] = {
-    applyMethod(unapplyMethodMirror, value) match {
+    callMethod(unapplyMethodMirror, value) match {
       case Some(result) =>
         logDebug(s"${fullName}.unapply: input=${value}, output=${result}")
-        result match {
-          // a single option value
-          case option: Option[_] => Some(Seq(option))
-          // multiple values
-          case product: Product => Some((0 until product.productArity).map(product.productElement))
-          // single non-option value
-          case _ => Some(Seq(result))
+        if (applyArgs.size == 1) {
+          Some(Seq(result))
+        }
+        else {
+          result match {
+            case product: Product =>
+              Some((0 until product.productArity).map(product.productElement))
+            case _ => throw new Exception(
+              s"multiple apply args but does not get product after unapply: " +
+                s"applyArgs=${applyArgs}, UnapplyResult=${result}")
+          }
         }
       case None => None
     }
@@ -115,7 +119,7 @@ class TypeReflector(val originalType: ru.Type) extends Slf4jLogging.Default {
   lazy val unapplyMethodMirror = companionInstanceMirror
     .reflectMethod(getCompanionMethodSymbol("unapply"))
 
-  def applyMethod(
+  def callMethod(
     methodMirror: ru.MethodMirror,
     args: Any*
   ): Any = {
