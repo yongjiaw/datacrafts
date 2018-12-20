@@ -1,5 +1,6 @@
 package org.datacrafts.noschema.reflection
 
+import scala.collection.MapLike
 import scala.reflect.runtime.{universe => ru}
 
 import org.datacrafts.logging.Slf4jLogging
@@ -54,7 +55,7 @@ object NoSchemaReflector extends ReflectionDsl with Slf4jLogging.Default {
         // more specific type should go first
         // If Iterable schema was assigned to Set type, for example, unmarshalling/unapply is fine
         // it will cause type argument mismatch error when marshalling the Iterable value to Set
-        case t if t < typeOf[Map[String, _]] =>
+        case t if t < typeOf[MapLike[String, _, _]] || t < typeOf[java.util.Map[String, _]] =>
           val elementType = t.typeArgs(1)
           reflectMap(t, Context.ContainerElement(reflect(elementType)))
 

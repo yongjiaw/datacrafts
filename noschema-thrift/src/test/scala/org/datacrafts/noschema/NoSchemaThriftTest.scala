@@ -1,12 +1,7 @@
 package org.datacrafts.noschema
 
-import scala.reflect.runtime.{universe => ru}
-
-import com.twitter.scrooge.{ThriftStruct, ThriftUnion}
 import org.datacrafts.logging.Slf4jLogging
 import org.datacrafts.noschema.NoSchemaThriftTest._
-import org.datacrafts.noschema.reflection._
-import org.datacrafts.noschema.reflection.NoSchemaReflector.{logInfo, ReflectionRule}
 import org.datacrafts.noschema.rule.DefaultRule
 import org.datacrafts.scrooge.shapes._
 import org.scalatest.FlatSpec
@@ -34,6 +29,8 @@ class NoSchemaThriftTest extends FlatSpec
 
     val op3 = schemaByReflection[TestClass]().operation()
     println(op3.format())
+
+    assert(op2.format() == op3.format())
 
     for (op <- Seq(op1, op3)) {
 
@@ -105,7 +102,7 @@ class NoSchemaThriftTest extends FlatSpec
   }
 }
 
-object NoSchemaThriftTest {
+object NoSchemaThriftTest extends ThriftSchemaDsl{
 
   case class TestClass(
     v1: Int,
@@ -121,7 +118,6 @@ object NoSchemaThriftTest {
     thriftMap: MapExample = MapExample(id = "1"),
     thriftUnion: UnionExample = UnionExample.B(b = 1),
     thriftUnion2: UnionExample = UnionExample.A(StructExample(foo = "bar"))
-    // thriftEnum: TweetType = TweetType.Tweet
   )
 
   case class TestClass2(v21: Int = 3,
