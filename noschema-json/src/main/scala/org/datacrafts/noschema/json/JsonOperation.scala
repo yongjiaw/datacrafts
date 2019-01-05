@@ -3,6 +3,7 @@ package org.datacrafts.noschema.json
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import com.fasterxml.jackson.module.scala.experimental.ScalaObjectMapper
+
 import org.datacrafts.logging.Slf4jLogging
 import org.datacrafts.noschema.{Context, NoSchemaCoproduct, NoSchemaProduct, Operation}
 import org.datacrafts.noschema.Context.CoproductElement

@@ -214,8 +214,8 @@ This file is divided into 3 sections:
    <parameter name="groups">java,scala,3rdParty,ck</parameter>
    <parameter name="group.java">javax?\..*</parameter>
    <parameter name="group.scala">scala\..*</parameter>
-   <parameter name="group.3rdParty">(?!com\.creditkarma\.).*</parameter>
-   <parameter name="group.ck">com\.creditkarma\..*</parameter>
+   <parameter name="group.3rdParty">(?!org\.datacrafts\.).*</parameter>
+   <parameter name="group.datacrafts">org\.datacrafts\..*</parameter>
   </parameters>
  </check>
 

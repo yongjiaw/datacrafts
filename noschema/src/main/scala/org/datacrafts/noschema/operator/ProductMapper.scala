@@ -12,42 +12,47 @@ class ProductMapper[T](
   includeNull: Boolean = true
 ) extends ProductOperator[T, Map[String, Any]] {
 
-  override protected def parse(input: Any): SymbolExtractor = input match {
-    case iterable: Iterable[_] =>
-      new SymbolExtractor {
-        private val map = collection.mutable.Map.empty[String, Any] ++
-          iterable.map {
-            case value => value match {
-              case (k, v) => (s"$k" -> v)
-              case _ => throw new Exception(s"$value does not match key value pair")
-            }
+  import scala.collection.JavaConverters._
+  protected def parseIterable(input: Any, iterable: Iterable[_]): SymbolExtractor = {
+    new SymbolExtractor {
+      private val map = collection.mutable.Map.empty[String, Any] ++
+        iterable.map {
+          case value => value match {
+            case (k, v) => (s"$k" -> v)
+            case _ => throw new Exception(s"$value does not match key value pair")
           }
-
-        override def removeSymbol(member: MemberVariable[_]): SymbolExtractor = {
-          map -= member.symbol.name
-          this
         }
 
-        override def getSymbolValue(member: MemberVariable[_]): Any = {
-          map.getOrElse(
-            member.symbol.name,
-            if (allowAbsence) {
-              null //scalastyle:ignore
-            } else {
-              throw new Exception(
-                s"${member.symbol.name} is absent for ${product.scalaType}: input=$input")
-            }
-          )
-        }
+      override def removeSymbol(member: MemberVariable[_]): SymbolExtractor = {
+        map -= member.symbol.name
+        this
+      }
 
-        override def allSymbolsExtracted(): Unit = {
-          if (!allowUnknownField && map.nonEmpty) {
+      override def getSymbolValue(member: MemberVariable[_]): Any = {
+        map.getOrElse(
+          member.symbol.name,
+          if (allowAbsence) {
+            null //scalastyle:ignore
+          } else {
             throw new Exception(
-              s"there are unknown fields [${map.keySet.mkString(",")}] from input=$input" +
-                s" for schema=${operation.context.noSchema.scalaType.fullName}")
+              s"${member.symbol.name} is absent for ${product.scalaType}: input=$input")
           }
+        )
+      }
+
+      override def allSymbolsExtracted(): Unit = {
+        if (!allowUnknownField && map.nonEmpty) {
+          throw new Exception(
+            s"there are unknown fields [${map.keySet.mkString(",")}] from input=$input" +
+              s" for schema=${operation.context.noSchema.scalaType.fullName}")
         }
       }
+    }
+  }
+
+  override protected def parse(input: Any): SymbolExtractor = input match {
+    case javaMap: java.util.Map[_, _] => parseIterable(input, javaMap.asScala)
+    case iterable: Iterable[_] => parseIterable(input, iterable)
     case _ => throw new Exception(s"input type ${input.getClass} is not Iterable[(_, _)]")
   }
 
