@@ -101,6 +101,19 @@ lazy val `noschema-json` = project.settings(
   noschema
 )
 
+val seleniumVersion = "3.141.59"
+lazy val dwfpp = project.settings(
+  commenSettings,
+  libraryDependencies ++= Seq(
+    "org.seleniumhq.selenium" % "selenium-chrome-driver" % seleniumVersion,
+    "org.seleniumhq.selenium" % "selenium-support" % seleniumVersion,
+    "com.typesafe" % "config" % "1.3.3",
+    "org.slf4j" % "slf4j-log4j12" % "1.7.25" % Test
+  )
+).dependsOn(
+  noschema
+)
+
 lazy val datacrafts = (project in file("."))
   .settings(
     commenSettings,
