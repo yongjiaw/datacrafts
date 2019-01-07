@@ -11,14 +11,15 @@ case class FastPassConfig(
   initialPageUrl: String,
   landingPageSignature: String,
   timeParsingRegex: String,
-  priorities: Seq[ExperienceSelectionConfig]
+  scoringRules: Seq[ScoringRule]
 ) {
   val timeRegex = timeParsingRegex.r
 }
 
-case class ExperienceSelectionConfig(
+case class ScoringRule(
   namePattern: String,
-  timeSlot: TimeSlot
+  timeSlot: TimeSlot,
+  value: Double
 ) {
   val namePatternRegex = namePattern.r
 }
