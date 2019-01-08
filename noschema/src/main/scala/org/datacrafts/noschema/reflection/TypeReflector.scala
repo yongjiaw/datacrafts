@@ -66,7 +66,11 @@ class TypeReflector(val originalType: ru.Type) extends Slf4jLogging.Default {
   lazy val companionInstanceMirror = rootMirror.reflect(companionModuleMirror.instance)
 
   def getCompanionMethodSymbol(methodName: String): ru.MethodSymbol = {
-    companionSymbol.typeSignature.decl(ru.TermName(methodName)).asMethod
+    Try(companionSymbol.typeSignature.decl(ru.TermName(methodName)).asMethod) match {
+      case Success(ms) => ms
+      case Failure(f) => throw new Exception(
+        s"failed to get method[${methodName}] for ${fullName}")
+    }
   }
 
   lazy val subclasses: Set[ru.Symbol] = {
