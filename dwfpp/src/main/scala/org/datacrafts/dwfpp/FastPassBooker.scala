@@ -2,6 +2,7 @@ package org.datacrafts.dwfpp
 
 import java.util.LongSummaryStatistics
 
+import scala.reflect.internal.FatalError
 import scala.util.{Failure, Success, Try}
 
 import org.openqa.selenium.{By, WebDriver, WebElement}
@@ -16,9 +17,9 @@ trait FastPassBooker extends Slf4jLogging.Default {
 
   // def config: FastPassBookerConfig
 
-  def landingPageSignature: String
+  def selectionPageSignature: String
 
-  def matchName(name: String): Boolean
+  def attractionHasValue(name: String): Boolean
 
   def getScore(name: String,
     time: HourAndMinute
@@ -77,7 +78,7 @@ trait FastPassBooker extends Slf4jLogging.Default {
     def cssOptionalElementOf(parent: Option[WebElement] = None): Option[WebElement] = {
       val elements = cssElementsOf(parent)
       if (elements.size > 1) {
-        throw new Exception(
+        throw new FatalError(
           s"css selector [${value}] cannot have more than one match: size=${elements.size}")
       }
       elements.headOption
@@ -94,7 +95,7 @@ trait FastPassBooker extends Slf4jLogging.Default {
 
   protected def blockUntilSelectionPage(): Unit = {
     blockUntil(
-      landingPageSignature,
+      selectionPageSignature,
       Some(
         s"required interactive steps before automation (never change font size): go to browser, " +
           s"login, select party, select date, select park, " +
@@ -152,6 +153,10 @@ trait FastPassBooker extends Slf4jLogging.Default {
       waitFunction: Option[(Int) => Long]
     ): Try[T] = {
       Try(call) match {
+        case Failure(f: FatalError) =>
+          logError(s"call [${callName.getOrElse("")}] " +
+            s"encountered fatal error and won't retry: ${f.getMessage}")
+          Failure(f)
         case Failure(f) =>
           val waitMs = waitFunction.map(func => func(n)).getOrElse(0L)
           logError(s"call [${callName.getOrElse("")}] " +
@@ -173,7 +178,7 @@ trait FastPassBooker extends Slf4jLogging.Default {
   protected def waitWhile(
     condition: => Boolean,
     message: => String,
-    timeOutMs: Long = -1
+    timeOutMs: Long = 1000L * 30
   ): Unit = {
     val initialTime = System.currentTimeMillis()
     var lastPrintTime = 0L
@@ -194,7 +199,7 @@ trait FastPassBooker extends Slf4jLogging.Default {
   case class ExperienceItems(name: String,
     times: Seq[WebElement]
   ) {
-    lazy val matchedName: Boolean = matchName(name)
+    lazy val hasValue: Boolean = attractionHasValue(name)
 
     lazy val allItems = times.map(time => ExperienceItem(name, time))
     lazy val scoredItems = {
@@ -238,7 +243,7 @@ trait FastPassBooker extends Slf4jLogging.Default {
   def userName: String
   def password: String
 
-  def logIn(): Unit = {
+  def login(): Unit = {
     logInfo("go to login page")
     driver.get("https://disneyworld.disney.go.com/login")
     logInfo("setting user name")
@@ -250,8 +255,8 @@ trait FastPassBooker extends Slf4jLogging.Default {
   }
 
   def partyNames: Seq[String]
+
   def selectParty(): Unit = {
-    blockUntil("div[id=selectPartyPage]")
     val upperCaseNames = partyNames.map(_.toUpperCase()).toSet
     def inParty(name: String): Boolean = {
       upperCaseNames.contains(name.toUpperCase())
@@ -269,7 +274,8 @@ trait FastPassBooker extends Slf4jLogging.Default {
       }
     }
 
-    "div[class^='guest directive']".cssElementsOf().foreach {
+    val names =
+    "div[class^='guest directive']".cssElementsOf().map {
       guest =>
         val firstName = "[class^=firstName]".cssSingleElementOf(Some(guest)).getText
         val lastName = "[class^=lastName]".cssSingleElementOf(Some(guest)).getText
@@ -304,7 +310,10 @@ trait FastPassBooker extends Slf4jLogging.Default {
             logInfo(s"${guestName} is not in party and not selected")
           }
         }
-    }.retry()
+        guestName
+    }.retry(callName = Some("select guests"))
+
+    logInfo(s"all guests in the account: ${names}")
 
     val guestsNotFound = upperCaseNames -- foundGuests.map(_.toUpperCase())
     if (guestsNotFound.nonEmpty) {
@@ -366,6 +375,8 @@ trait FastPassBooker extends Slf4jLogging.Default {
     continueWithGuests()
   }
 
+  def getState(): Any = {}
+
   protected def blockUntil(
     cssSelector: String,
     customMessage: Option[String] = None
@@ -390,23 +401,190 @@ trait FastPassBooker extends Slf4jLogging.Default {
     )
   }
 
+  // after fast pass is full, can only use modify
+  // or cancel some fast pass and restart
+  def fastPassFull: Boolean = _fastPassFull
+
+  private var _fastPassFull: Boolean = false
+
   def continueWithGuests(): Unit = {
     def buttons =
       """div[class*=button][role=button]""".cssElementsOf()
 
     logInfo(s"found buttons: ${buttons.map(_.getText).mkString(",")}")
 
-    buttons.filter(_.getText.contains("Continue"))
-      .foreach {
-        continue =>
-          continue.moveAndClick()
+    val removeButtons = buttons.filter(_.getText.contains("Remove"))
+    val continueButtons = buttons.filter(_.getText.contains("Continue"))
+
+    if (removeButtons.nonEmpty && continueButtons.isEmpty) {
+      _fastPassFull = true
+      // throw FatalError(s"Reached fast pass limit, need to modify existing passes")
+      // if fast pass if full, the only option is to modify
+      // exiting fast pass with the same guests and in the same park
+      logInfo(s"fast pass is full, find a fast pass to modify")
+      selectFastpassToModify()
+    }
+    else {
+
+      buttons.filter(_.getText.contains("Continue"))
+        .foreach {
+          continue =>
+            continue.moveAndClick()
+        }
+
+      buttons.filter(_.getText.contains("Next")).headOption
+        .foreach {
+          next =>
+            next.moveAndClick()
+        }
+    }.retry(callName = Some("continue with guest"))
+  }
+
+  var _fastPassModifyPointer = 0
+
+  def addSelection(attractionSelection: AttractionSelection): Unit
+  def selectFastpassToModify(): Unit = {
+    driver.get("https://disneyworld.disney.go.com/fastpass-plus/")
+    val listings = "div[class='listing ng-scope']".cssElementsOf()
+    val selectedDay = s"${monthSelection} ${daySelection}"
+    val matchedListingWithSelection =
+    for (
+      listing <- listings;
+      monthAnyYear = "[class^=monthAndYear]".cssSingleElementOf(Some(listing)) if {
+        val matched = monthAnyYear.getText.contains(selectedDay)
+        logInfo(
+          s"checking fast pass for ${monthAnyYear}, matched=${matched}: selection=${selectedDay}")
+        matched
+      }
+    ) yield {
+
+      val selections = "div[role=button][class^=entitlement]".cssElementsOf(Some(listing))
+      if (selections.isEmpty) {
+        throw FatalError(s"no selections found for ${monthAnyYear.getText}")
       }
 
-    buttons.filter(_.getText.contains("Next")).headOption
-      .foreach {
-        next =>
-          next.moveAndClick()
+      val validSelections =
+      for (
+        selection <- selections if {
+          selection.moveAndClick()
+          val guests = "[class=guest-card__info]".cssElementsOf()
+          if (guests.isEmpty) {
+            throw FatalError(s"didn't find guest info")
+          }
+          val names =
+            for (guest <- guests) yield {
+
+              val names = "[class^=ng-binding]".cssElementsOf(Some(guest))
+              if (names.size != 2) {
+                throw FatalError(
+                  s"guest must have first and last names, found: ${names.map(_.getText)}")
+              }
+              names.map(_.getText).mkString(" ")
+            }
+          // close the pop up
+          "div[class^='icon close'][role=button]".cssSingleElementOf().moveAndClick()
+
+          val containsAll = partyNames.forall(names.contains)
+          logInfo(s"containsAll=${containsAll} for ${selection.getText}")
+          containsAll
+        }
+      ) yield {
+        val attractionName = "h3".cssSingleElementOf(Some(selection)).getText
+        logInfo(s"attraction=${attractionName}")
+        val arrivalTime = "div[class^=arrivalItemTime]".cssSingleElementOf(Some(selection)).getText
+        logInfo(s"arrivalTime=${attractionName}")
+        val attractionSelection =
+        AttractionSelection.fromNameAndTime(attractionName, parseTime(arrivalTime))
+        addSelection(attractionSelection)
+        (selection, attractionSelection)
       }
+
+      if (validSelections.isEmpty) {
+        throw FatalError(
+          s"no existing fast pass contains all the parties ${partyNames}, " +
+            s"must manually cancel some fastpass," +
+            s" or modify multiple fastpasses to make them available")
+      }
+
+      val selectionIndex = _fastPassModifyPointer % selections.size
+      _fastPassModifyPointer += 1
+
+
+      val selection = validSelections(selectionIndex)
+
+      monthAnyYear.getText -> selection
+    }
+
+    if (matchedListingWithSelection.isEmpty ||
+      matchedListingWithSelection.size > 1) {
+      throw FatalError(
+        s"must have exactly one matching for ${selectedDay}: ${matchedListingWithSelection.map(_._1)}")
+    }
+
+    val selection = matchedListingWithSelection(0)._2
+    logInfo(s"modifying ${selection}")
+
+    selection._1.moveAndClick()
+
+    val buttons = "div[role=button][class^=clickable]".cssElementsOf()
+    val modifyButtons = buttons.filter(_.getText == "Modify")
+    if (modifyButtons.isEmpty) {
+      throw FatalError(s"did not find modify button")
+    }
+    if (modifyButtons.size > 1) {
+      throw FatalError(s"more than 1 modify buttons: ${modifyButtons.size}")
+    }
+    modifyButtons(0).moveAndClick()
+
+    modifiedItem = Some(selection._2)
+
+    selectParty()
+  }
+
+  var modifiedItem: Option[AttractionSelection] = None
+
+  def evaluateAction(
+    selection: ExperienceItem,
+    toBeCancelled: Seq[WebElement]
+  ): Boolean = {
+    logInfo(s"to be canceled: ${toBeCancelled.map(_.getText)}")
+    if (toBeCancelled.nonEmpty) {
+      val maxCancel = toBeCancelled.map {
+        cancel =>
+          val name =
+            "div[class^=attractionNameContainer]".cssSingleElementOf(Some(cancel)).getText
+          val window = "div[class^=arrivalWindow]".cssSingleElementOf(Some(cancel))
+          new ExperienceItem(name, window)
+      }.maxBy(_.score)
+      logInfo(s"max cancel: ${maxCancel}")
+      if (selection.score < maxCancel.score) {
+        logInfo(
+          s"there is no value to select ${selection} and cancel ${maxCancel}, " +
+            s"may need to manually adjust scoring function " +
+            s"if it's not aware of what has already been selected"
+        )
+        false
+        /* throw new Exception(
+          s"there is no value to select ${selection} and cancel ${maxCancel}, " +
+            s"may need to manually adjust scoring function " +
+            s"if it's not aware of what has already been selected"
+        ) */
+      } else {
+        logInfo(s"there more value to select ${selection} and cancel ${maxCancel}")
+        true
+      }
+    } else {
+      logInfo(s"select ${selection}, nothing to cancel")
+      true
+    }
+  }
+
+  def updateSelection(
+    selection: ExperienceItem,
+    toBeCancelled: Seq[WebElement],
+    confirmed: Boolean
+  ): Unit = {
+
   }
 
   def selectExperience(): Unit = {
@@ -428,7 +606,7 @@ trait FastPassBooker extends Slf4jLogging.Default {
         val matchedItems = allExperiences.filter(_.name != "").flatMap(_.scoredItems)
         val currentTime = System.currentTimeMillis()
 
-        val matchedExperiences = allExperiences.filter(_.matchedName)
+        val matchedExperiences = allExperiences.filter(_.hasValue)
         matchedExperiences.flatMap(_.allItems).foreach {
           item =>
             matchedExperienceNameStats.getOrElseUpdate(
@@ -447,7 +625,7 @@ trait FastPassBooker extends Slf4jLogging.Default {
           s"matchedItems=${matchedItems.size}: ${matchedItems}")
         matchedItems.headOption
 
-      }.retry() match {
+      }.retry(callName = Some("finding top matches")) match {
         case Success(result) => result
         case Failure(f) => throw new Exception(s"failed to find available times after retry: ${f}")
       }
@@ -471,7 +649,6 @@ trait FastPassBooker extends Slf4jLogging.Default {
             continueWithGuests()
             def buttons =
               """div[class*=button][role=button]""".cssElementsOf()
-                .retry().getOrElse(throw new Exception(s"failed to get buttons after retry"))
 
             logInfo(s"found buttons: ${buttons.map(_.getText).mkString(",")}")
 
@@ -481,31 +658,68 @@ trait FastPassBooker extends Slf4jLogging.Default {
             confirm
           }
 
-          val confirm = findConfirm.retry().getOrElse(throw new Exception(s"failed to get confirm"))
+          val confirm = findConfirm.retry(
+            callName = Some(s"find confirm after select: ${item}")
+          ).getOrElse(throw new Exception(s"failed to get confirm"))
 
-          val toBeCancelled = "div[class^=canceledAttraction]".cssOptionalElementOf()
-          toBeCancelled.map {
-            cancel =>
-              val name =
-                "div[class^=attractionNameContainer]".cssSingleElementOf(Some(cancel)).getText
-              val window = "div[class^=arrivalWindow]".cssSingleElementOf(Some(cancel))
-              val cancelItem = new ExperienceItem(name, window)
-              logInfo(s"to be cancelled: ${cancelItem}")
-              if (item.score < cancelItem.score ||
-                item.score == cancelItem.score && !(item.itemTime < cancelItem.itemTime)) {
+          val toBeCancelled =
+            "div[class^=canceledAttraction]".cssOptionalElementOf()
+              .map {
+                cancel =>
+                  val attractions = "div[class=attraction]".cssElementsOf(Some(cancel))
+                  if (attractions.isEmpty) throw new FatalError(
+                    s"cancel attractions container must contain attractions"
+                  )
+                  attractions
+              }.getOrElse(Seq.empty)
+          if (
+            evaluateAction(item, toBeCancelled)
+          ) { // confirm and get ready for next
+            confirm.moveAndClick()
+
+            logInfo(s"Successfully confirmed ${item}")
+
+            updateSelection(item, toBeCancelled, true)
+
+            val sameDayButton = "div[action-button^=sameDay]".cssSingleElementOf()
+            if (sameDayButton.getAttribute("class").endsWith("disabled")) {
+              logInfo(s"sameDay button is disabled, find a fast pass to modify")
+              selectFastpassToModify()
+
+            } else {
+              logInfo(s"keep booking for the same day")
+              sameDayButton.moveAndClick()
+              val buttons =
+                """div[class*=button][role=button]""".cssElementsOf()
+
+              val nextButton = buttons.filter(_.getText == "Next")
+              if (nextButton.size != 1) {
                 throw new Exception(
-                  s"there is no value to select ${item} and cancel ${cancelItem}, " +
-                    s"may need to manually adjust scoring function " +
-                    s"if it's not aware of what has already been selected"
-                )
+                  s"number of next buttons must be exactly 1: ${nextButton.map(_.getText)}")
               }
+
+              nextButton(0).moveAndClick()
+            }
+
+          } else {
+            updateSelection(item, toBeCancelled, false)
+            // go back
+            val buttons =
+              """div[class*=button][role=button]""".cssElementsOf()
+
+            val backButton = buttons.filter(_.getText == "Back")
+            if (backButton.size != 1) {
+              throw new Exception(
+                s"number of next buttons must be exactly 1: ${backButton.map(_.getText)}")
+            }
+
+            backButton(0).moveAndClick()
           }
-          confirm.moveAndClick()
 
+          // now expect the selection page
+          // selectionPageSignature.cssSingleElementOf()
 
-          logInfo(s"Successfully confirmed ${item}")
-
-          false
+          true
 
         case None =>
           logInfo(s"no match found, refresh")
@@ -516,8 +730,33 @@ trait FastPassBooker extends Slf4jLogging.Default {
       }
     }
     ) {
-
+      logInfo(s"currentState: ${getState()}")
     }
 
+  }
+
+  def matchAttraction(attractionName: String): AttractionWithParkLand
+
+  object AttractionSelection {
+    def fromExperience(selection: ExperienceItem): AttractionSelection = {
+      new AttractionSelection(
+        matchAttraction(selection.name),
+        parseTime(selection.timeString)
+      )
+    }
+    def fromNameAndTime(name: String, time: HourAndMinute): AttractionSelection = {
+      new AttractionSelection(
+        matchAttraction(name),
+        time
+      )
+    }
+    def fromWebElement(element: WebElement): AttractionSelection = {
+      val name =
+        "div[class^=attractionNameContainer]".cssSingleElementOf(Some(element)).getText
+      val window = "div[class^=arrivalWindow]".cssSingleElementOf(Some(element))
+
+      new AttractionSelection(matchAttraction(name), parseTime(window.getText))
+
+    }
   }
 }

@@ -1,6 +1,6 @@
 package org.datacrafts.dwfpp
 
-import org.openqa.selenium.WebDriver
+import org.openqa.selenium.{WebDriver, WebElement}
 import org.openqa.selenium.chrome.ChromeDriver
 
 object ChromeFastPassBooker {
@@ -33,7 +33,7 @@ class ChromeFastPassBooker(
   config: FastPassBookerConfig
 ) extends FastPassBooker {
 
-  val partyNames = Seq("")
+  val partyNames = Seq()
 
   val userName = ""
   val password = ""
@@ -42,16 +42,23 @@ class ChromeFastPassBooker(
     new ChromeDriver()
   }
 
-  /*
-  def config: FastPassBookerConfig = {
-    _config.getOrElse(
-      throw new Exception(s"config not initialized yet")
-    )
-  } */
+  override def evaluateAction(selection: ExperienceItem,
+    toBeCancelled: Seq[WebElement]
+  ): Boolean = {
+    // add cancel items to already selected attractions
+    super.evaluateAction(selection, toBeCancelled)
+  }
 
-  override def landingPageSignature: String = config.fastPassConfig.landingPageSignature
+  override def updateSelection(selection: ExperienceItem,
+    toBeCancelled: Seq[WebElement], confirmed: Boolean
+  ): Unit = {
+    // remove cancelled items, add new selection
+    super.updateSelection(selection, toBeCancelled, confirmed)
+  }
 
-  override def matchName(name: String): Boolean =
+  override def selectionPageSignature: String = "div[id=selectExperiencePage]"
+
+  override def attractionHasValue(name: String): Boolean =
     config.fastPassConfig.scoringRules.filter(_.value > 0).exists(
       detail => name.matches(detail.namePattern))
 
@@ -72,5 +79,10 @@ class ChromeFastPassBooker(
 
   override def daySelection: Int = 14
 
-  override def parkSelection: String = "Animal Kingdom"
+  // override def parkSelection: String = "Animal Kingdom"
+  override def parkSelection: String = "Epcot"
+
+  override def addSelection(attractionSelection: AttractionSelection): Unit = {}
+
+  override def matchAttraction(attractionName: String): AttractionWithParkLand = null
 }

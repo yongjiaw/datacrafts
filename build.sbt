@@ -62,6 +62,13 @@ lazy val logging = project.settings(
   )
 )
 
+lazy val util = project.settings(
+  commenSettings,
+  libraryDependencies ++= Seq(
+    "org.slf4j" % "slf4j-log4j12" % "1.7.25" % Test
+  )
+).dependsOn(logging)
+
 lazy val noschema = project.settings(
   commenSettings,
   libraryDependencies ++= Seq(
@@ -111,7 +118,8 @@ lazy val dwfpp = project.settings(
     "org.slf4j" % "slf4j-log4j12" % "1.7.25" % Test
   )
 ).dependsOn(
-  noschema
+  `noschema-json`,
+  util
 )
 
 lazy val datacrafts = (project in file("."))
