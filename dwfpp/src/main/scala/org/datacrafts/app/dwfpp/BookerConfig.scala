@@ -1,13 +1,13 @@
-package org.datacrafts.dwfpp
+package org.datacrafts.app.dwfpp
 
 import java.util.{Calendar, TimeZone}
 
-import org.datacrafts.dwfpp.Config.Login
+import org.datacrafts.app.dwfpp.BookerConfig.Login
 
-object Config {
+object BookerConfig {
 
-  def parse(fileName: String): Config = {
-    new ConfigParser[Config].parseConfig(fileName)
+  def parse(fileName: String): BookerConfig = {
+    new ConfigParser[BookerConfig].parseConfig(fileName)
   }
 
   case class Login (userName: String, password: String)
@@ -18,7 +18,7 @@ object Config {
     name: String,
     selected: Option[Boolean],
     lands: Seq[Land],
-    groups: Option[Seq[Config.Group]] = None
+    groups: Option[Seq[BookerConfig.Group]] = None
   ) {
 
     val groupLimitMap: Map[String, Int] = groups.getOrElse(Seq.empty).map {
@@ -50,19 +50,19 @@ object Config {
   case class HourValue(hour: Double, value: Double)
 }
 
-case class Config(
+case class BookerConfig(
   login: Login,
   parties: Seq[String],
-  date: Config.Date,
-  hourPreferences: Option[Seq[Config.HourValue]],
-  parks: Seq[Config.Park],
+  date: BookerConfig.Date,
+  hourPreferences: Option[Seq[BookerConfig.HourValue]],
+  parks: Seq[BookerConfig.Park],
   timeZone: String,
   logRoot: String
 ) {
   val calender = Calendar.getInstance(
     TimeZone.getTimeZone(Option(timeZone).getOrElse("EST"))
   )
-  def selectedPark: Config.Park = {
+  def selectedPark: BookerConfig.Park = {
     val selected = parks.filter(_.selected.getOrElse(false))
     if (selected.size != 1) {
       throw new Exception(s"must select exactly 1 park: selected=${selected.map(_.name)}")

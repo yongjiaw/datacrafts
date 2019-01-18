@@ -1,7 +1,7 @@
 package org.datacrafts.app.dwfpp
 
 import java.io.{File, FileOutputStream}
-import java.util.{Calendar, TimeZone}
+import java.util.Calendar
 
 import scala.annotation.tailrec
 import scala.reflect.internal
@@ -10,19 +10,15 @@ import scala.util.{Failure, Success, Try}
 
 import org.openqa.selenium.WebElement
 
-import org.datacrafts.app.dwfpp.FastPassGreedyBooker.{AttractionStatsMap, EvaluationWithMetadata, FastPassChanges, MatchedAttractionStatsMap}
-import org.datacrafts.dwfpp.{AttractionWithParkLand, Config, HourAndMinute, UnknownAttraction}
-import org.datacrafts.dwfpp.Config.Attraction
+import org.datacrafts.app.dwfpp.FastPassGreedyBooker.{EvaluationWithMetadata, FastPassChanges, MatchedAttractionStatsMap}
 import org.datacrafts.logging.Slf4jLogging
 import org.datacrafts.noschema.json.{JsonOperation, JsonOperationDsl}
 import org.datacrafts.util.Retriable
 
-class ChromeGreedyBooker(config: Config) extends FastPassGreedyBooker(config) {
-  override lazy val client: WebDriverClient = ChromeClient
-}
-
-abstract class FastPassGreedyBooker(config: Config)
+abstract class FastPassGreedyBooker(config: BookerConfig)
   extends Slf4jLogging.Default with Retriable with JsonOperationDsl {
+
+  def client: WebDriverClient
 
   lazy val logRoot: String = {
     Option(config.logRoot).getOrElse("log")
@@ -60,8 +56,6 @@ abstract class FastPassGreedyBooker(config: Config)
     writeToFile(new File(file), json)
 
   }
-
-  def client: WebDriverClient
 
   private val _fastPasses = collection.mutable.Set.empty[FastPass]
 
@@ -276,7 +270,7 @@ abstract class FastPassGreedyBooker(config: Config)
   def verifyFastPass(
     month: String,
     day: Int,
-    parks: Seq[Config.Park],
+    parks: Seq[BookerConfig.Park],
     fastPass: FastPass
   ): Boolean = {
 

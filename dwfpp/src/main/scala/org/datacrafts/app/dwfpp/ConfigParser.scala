@@ -1,14 +1,12 @@
-package org.datacrafts.dwfpp
+package org.datacrafts.app.dwfpp
 
 import java.io.File
-
-import scala.util.matching.Regex
 
 import com.typesafe.config.ConfigFactory
 
 import org.datacrafts.logging.Slf4jLogging
-import org.datacrafts.noschema.{AnyType, NoSchema, NoSchemaDsl, Operation, Primitive}
-import org.datacrafts.noschema.operator.{AnyOperator, PrimitiveOperator}
+import org.datacrafts.noschema.{NoSchema, NoSchemaDsl, Operation, Primitive}
+import org.datacrafts.noschema.operator.PrimitiveOperator
 import org.datacrafts.noschema.rule.DefaultRule
 
 class ConfigParser[T: NoSchema] extends NoSchemaDsl {

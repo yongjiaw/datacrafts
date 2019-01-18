@@ -1,15 +1,12 @@
 package org.datacrafts.app.dwfpp
 
 import scala.reflect.internal.FatalError
-import scala.util.{Failure, Random, Success, Try}
+import scala.util.{Random, Try}
 
-import com.sun.net.httpserver.Authenticator.Success
 import org.openqa.selenium.{By, WebDriver, WebElement}
 import org.openqa.selenium.interactions.Actions
-import org.openqa.selenium.support.ui.{ExpectedConditions, Select, WebDriverWait}
+import org.openqa.selenium.support.ui.{ExpectedConditions, WebDriverWait}
 
-import org.datacrafts.app.dwfpp.FastPassGreedyBooker.FastPassChanges
-import org.datacrafts.dwfpp.{AttractionWithParkLand, Config, ConfigParser, HourAndMinute}
 import org.datacrafts.logging.Slf4jLogging
 import org.datacrafts.util.Retriable
 
@@ -182,7 +179,7 @@ trait WebDriverClient extends Retriable {
   }
 
   def parseFastPasses(
-    parks: Seq[Config.Park]
+    parks: Seq[BookerConfig.Park]
   ): Map[String, Seq[(FastPass, WebElement)]] = {
 
     // driver.get("https://disneyworld.disney.go.com/fastpass-plus/")
@@ -245,7 +242,7 @@ trait WebDriverClient extends Retriable {
     fastPassesMap
   }
 
-  def parseCancellingItems(parks: Seq[Config.Park]): Seq[FastPass] = {
+  def parseCancellingItems(parks: Seq[BookerConfig.Park]): Seq[FastPass] = {
     "div"
 
     "div[class^=canceledAttraction]".cssOptionalElementOf()
@@ -352,7 +349,7 @@ trait WebDriverClient extends Retriable {
 
   def modifyRandomFastPass(
     previousModify: Option[FastPass],
-    parks: Seq[Config.Park],
+    parks: Seq[BookerConfig.Park],
     monthSelection: String,
     daySelection: Int,
     guests: Seq[String]
@@ -506,7 +503,7 @@ trait WebDriverClient extends Retriable {
   def collectionCurrentDayFastPass(
     month: String,
     day: Int,
-    parks: Seq[Config.Park]
+    parks: Seq[BookerConfig.Park]
   ): Seq[FastPass] = {
     driver.get("https://disneyworld.disney.go.com/fastpass-plus/")
     waitForFastPassPageLoad()
@@ -537,7 +534,7 @@ trait WebDriverClient extends Retriable {
   }
 
   def getAvailableFastPassSelection(
-    parks: Seq[Config.Park],
+    parks: Seq[BookerConfig.Park],
     guestNames: Seq[String]
   ): Seq[(AttractionWithParkLand, Seq[(FastPass, WebElement)])] = {
     // click show more experiences
