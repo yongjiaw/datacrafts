@@ -222,5 +222,13 @@ parks: [
 The agent will first select the guests, date and park.
 Select a higher valued FastPass from the specified park may lead to cancelling all the existing FastPasses from another park.
 When all 3 FastPasses are filled, the agent will randomly modify existing FastPasses.
-Unspecified attractions have 0 value and will not be considered.
+Unspecified attractions or attractions failed to match with the config have 0 value and will not be considered.
+Attraction matching is based on name string and is case insensitive. For example the full name for Soarin is "Soarin' Around the World".
+The config is fine as long as it's contained in the full name.
+This rule applies to park name matching as well.
+Animal Kingdom and Epcot both have tiered attractions that only allow 1 FastPass in the group.
+This information is useful for the agent to pick the right move, since it need to understand the consequence of each selection
+before clicking the link.
 It sleeps for 10 seconds for every refresh so that it won't create too much traffic load - be a good bot.
+
+Raise an issue [here](issues) if you have any questions.
