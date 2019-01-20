@@ -1,7 +1,7 @@
 package org.datacrafts.app.dwfpp
 
 import scala.reflect.internal.FatalError
-import scala.util.{Random, Try}
+import scala.util.{Failure, Random, Success, Try}
 
 import org.openqa.selenium.{By, WebDriver, WebElement}
 import org.openqa.selenium.interactions.Actions
@@ -21,7 +21,10 @@ trait WebDriverClient extends Retriable {
   def driver: WebDriver = {
     val d = _driver.getOrElse({
       logInfo(s"creating driver")
-      createDriver()
+      Try (createDriver()) match {
+        case Success(wd) => wd
+        case Failure(f) => throw FatalError(f.getMessage)
+      }
     })
     _driver = Some(d)
     d
@@ -46,6 +49,25 @@ trait WebDriverClient extends Retriable {
     "input[id=loginPagePassword]".cssSingleElementOf().sendKeys(password)
     logInfo("sign in")
     "button[id=loginPageSubmitButton]".cssSingleElementOf().moveAndClick()
+
+
+    {
+      val loginError = "[id=pageLevelError]".cssOptionalElementOf().map(_.getText)
+      val accountText = "div[class=accountContainer]".cssOptionalElementOf().map(_.getText)
+      if (loginError.nonEmpty) {
+        throw FatalError(s"login error: ${loginError.get}")
+      } else {
+        if (accountText.isEmpty) {
+          throw new Exception(s"waiting for login")
+        } else {
+         if (accountText.get.toUpperCase.contains("WELCOME")) {
+           logInfo("login success")
+         } else {
+           throw new Exception(s"account text not recognized: ${accountText.get}")
+         }
+        }
+      }
+    }.withRetry()
   }
 
   def gotoPartySelection(): Unit = {

@@ -108,15 +108,22 @@ lazy val `noschema-json` = project.settings(
   noschema
 )
 
+import sbt.Keys._
 val seleniumVersion = "3.141.59"
 lazy val dwfpp = project.settings(
   commenSettings,
+  mainClass in assembly := Some("org.datacrafts.app.dwfpp.MainApp"),
   libraryDependencies ++= Seq(
     "org.seleniumhq.selenium" % "selenium-chrome-driver" % seleniumVersion,
     "org.seleniumhq.selenium" % "selenium-support" % seleniumVersion,
     "com.typesafe" % "config" % "1.3.3",
-    "org.slf4j" % "slf4j-log4j12" % "1.7.25" % Test
-  )
+    "org.slf4j" % "slf4j-log4j12" % "1.7.25"
+  ),
+  artifact in (Compile, assembly) := {
+    val art = (artifact in (Compile, assembly)).value
+    art.withClassifier(Some("assembly"))
+  },
+  addArtifact(artifact in (Compile, assembly), assembly)
 ).dependsOn(
   `noschema-json`,
   util

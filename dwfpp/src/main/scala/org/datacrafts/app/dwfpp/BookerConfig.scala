@@ -52,7 +52,7 @@ object BookerConfig {
 
 case class BookerConfig(
   login: Login,
-  parties: Seq[String],
+  guests: Seq[String],
   date: BookerConfig.Date,
   hourPreferences: Option[Seq[BookerConfig.HourValue]],
   parks: Seq[BookerConfig.Park],

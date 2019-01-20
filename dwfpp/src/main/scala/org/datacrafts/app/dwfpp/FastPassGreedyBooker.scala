@@ -28,7 +28,7 @@ abstract class FastPassGreedyBooker(config: BookerConfig)
     val year = config.calender.get(Calendar.YEAR)
     val month = config.calender.get(Calendar.MONTH) + 1
     val day = config.calender.get(Calendar.DAY_OF_MONTH)
-    val names = config.parties.sorted.mkString("_").replaceAll("""\s""", "_")
+    val names = config.guests.sorted.mkString("_").replaceAll("""\s""", "_")
     val park = config.selectedPark.name.replaceAll("""\s""", "_")
     s"${logRoot}/${config.date.month}_${config.date.day}" +
       s"/${park}/${names}/${logType}/${year}_${month}_${day}/${System.currentTimeMillis()}"
@@ -65,9 +65,9 @@ abstract class FastPassGreedyBooker(config: BookerConfig)
 
   def selectGuests(): Unit = {
     client.gotoPartySelection()
-    logInfo(s"selecting party guests: ${config.parties}")
+    logInfo(s"selecting party guests: ${config.guests}")
 
-    client.selectParty(config.parties: _*).withRetry(maxRetry = 10)
+    client.selectParty(config.guests: _*).withRetry(maxRetry = 10)
   }
 
   def selectDatePark(): Unit = {
@@ -124,10 +124,11 @@ abstract class FastPassGreedyBooker(config: BookerConfig)
       config.parks,
       config.date.month,
       config.date.day,
-      config.parties
+      config.guests
     )
   }
 
+  def sleepInterval: Long = 10000
   @tailrec
   final def repeatedActionRecursive(
     modifyingPassPass: Option[FastPass], n: Int
@@ -145,7 +146,8 @@ abstract class FastPassGreedyBooker(config: BookerConfig)
       case _ =>
 
         if (n > 0) {
-          logInfo(s"cycle=${n}, refresh")
+          logInfo(s"cycle=${n}, wait and refresh")
+          Thread.sleep(sleepInterval)
           client.driver.navigate().refresh()
         }
         else {
@@ -158,7 +160,7 @@ abstract class FastPassGreedyBooker(config: BookerConfig)
         if (isErrorPage) {
           logInfo(s"encountered error page, refresh and repeat the action")
           client.driver.navigate().refresh()
-          Thread.sleep(1000)
+          Thread.sleep(sleepInterval)
           repeatedActionRecursive(modifyingPassPass, n)
         }
         else if (isSelectionPage) {
@@ -298,7 +300,7 @@ abstract class FastPassGreedyBooker(config: BookerConfig)
     val availableFastPasses: Seq[(AttractionWithParkLand, Seq[(FastPass, WebElement)])] =
       client.getAvailableFastPassSelection(
         config.parks,
-        config.parties
+        config.guests
       )
 
     availableFastPasses.foreach {

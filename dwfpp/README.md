@@ -1,3 +1,32 @@
+#DisneyWorld FastPassPlus Booking Agent
+
+This application uses browser automation to select FastPass from DisneyWorld (Orlando) FastPassPlus system.
+It does not work DisneyLand (LA) MaxPass system (yet).
+Popular rides like Avatar can be obtained consistently, which is impossible with manual selection. 
+##Get Started
+
+1. Download the released assembly jar from maven (https://mvnrepository.com/artifact/org.datacrafts/noschema-avro): dwfpp-assembly-<version>.jar 
+2. Download chromedriver OS specific executable from http://chromedriver.chromium.org
+<BR>
+Chrome must be installed independently, and chromedriver must be compatible with the installed Chrome.
+3. Copy paste the application.conf file and modify it for choice of theme park, date and guests
+4. Install Java runtime 
+5. Run the following command with all three of the above mentioned files under the current directory:
+dwfpp-assembly-<version>.jar, chromedriver executable file, and application.conf.
+```text
+java -jar dwfpp-assembly-<version>.jar 
+``` 
+
+The agent will run forever trying to improve the FastPass selection. Use Control-C to kill it.
+
+## Configuration
+The application.conf file is in Human-Optimized-Config-Object-Notation(HOCON) format.
+The syntax is intuitive enough and mostly self-explained (https://en.wikipedia.org/wiki/HOCON).
+The template configuration is already setup with most of the information and reasonable defaults.
+You just need to customize the following information:
+
+Disney account login, guest names and date of selection are at the top of the application.conf file.
+```hocon
 // login information to
 // https://disneyworld.disney.go.com/login/
 login {
@@ -15,33 +44,16 @@ date = {
   day = 14
 }
 
-// these numbers are multiplying factors for the attraction's base value
-// the missing values are interpolated
-// value outside of the boundaries just takes the boundary value
-// this is the default preference, each park, region and attraction can have an override preference
-hourPreferences: [
-  {
-    hour = 9
-    value = 1
-  }
-  {
-    hour = 10
-    value = 1.5
-  }
-  {
-    hour = 11
-    value = 2
-  }
-  {
-    hour = 17
-    value = 1.5
-  }
-  {
-    hour = 20
-    value = 1
-  }
-]
+```
 
+Theme park selection is embedded in the detailed park configuration.<BR>
+Set selected to true to select the specific park, only 1 park can be selected.<BR>
+Each park has multiple lands and attractions inside the lands, and each attraction has a numeric value.
+The FastPass booking agent will use a greedy algorithm to select from the available FastPasses with the highest value.
+HourPreferences attribute can be optional set for each attraction (otherwise use the global one), which will be used as additional multiplying factor based on
+interpolated value. The default setting gives 11am highest value.
+
+```hocon
 parks: [
   {
     name: "Animal Kingdom"
@@ -204,3 +216,10 @@ parks: [
     name: "Hollywood Studios"
   }
 ]
+```
+## Specific Behavior
+The agent will first select the guests, date and park.
+Select a higher valued FastPass from the specified park may lead to cancelling all the existing FastPasses from another park.
+When all 3 FastPasses are filled, the agent will randomly modify existing FastPasses.
+Unspecified attractions have 0 value and will not be considered.
+It sleeps for 10 seconds for every refresh so that it won't create too much traffic load - be a good bot.
