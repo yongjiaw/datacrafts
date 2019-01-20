@@ -8,8 +8,7 @@ Popular rides like Avatar can be obtained consistently, which is impossible with
 1. Download the executable jar from Sonatype with the most recent version:
 https://oss.sonatype.org/service/local/repositories/releases/content/org/datacrafts/dwfpp_2.12/1.0.2/dwfpp_2.12-1.0.2-assembly.jar
  
-2. Download chromedriver OS specific executable from http://chromedriver.chromium.org
-<BR>
+2. Download chromedriver OS specific executable from (http://chromedriver.chromium.org).
 Chrome must be installed independently, and chromedriver must be compatible with the installed Chrome.
 3. Copy paste the application.conf file and modify it for choice of theme park, date and guests
 4. Install Java runtime 
