@@ -13,9 +13,9 @@ Chrome must be installed independently, and chromedriver must be compatible with
 3. Copy paste the application.conf file and modify it for choice of theme park, date and guests
 4. Install Java runtime 
 5. Run the following command with all three of the above mentioned files under the current directory:
-dwfpp-assembly-<version>.jar, chromedriver executable file, and application.conf.
+downloaded jar from step 1, chromedriver executable from step 2, and application.conf from step 3.
 ```text
-java -jar dwfpp-assembly-<version>.jar 
+java -jar <the jar file name from step 1> 
 ``` 
 
 The agent will run forever trying to improve the FastPass selection. Use Control-C to kill it.
