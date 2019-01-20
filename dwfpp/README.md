@@ -231,4 +231,4 @@ This information is useful for the agent to pick the right move, since it need t
 before clicking the link.
 It sleeps for 10 seconds for every refresh so that it won't create too much traffic load - be a good bot.
 
-Raise an issue [here](issues) if you have any questions.
+Raise an issue [here](../../../issues) if you have any questions.
