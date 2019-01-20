@@ -82,6 +82,10 @@ abstract class FastPassGreedyBooker(config: BookerConfig)
 
   def startGreedyLoop(): Unit = {
     {
+      logInfo(s"guests: ${config.guests}")
+      if (config.guests.isEmpty) {
+        throw FatalError(s"must specify guest names")
+      }
       logInfo("closing driver")
       client.closeDriver()
       login()
@@ -145,25 +149,24 @@ abstract class FastPassGreedyBooker(config: BookerConfig)
 
       case _ =>
 
-        if (n > 0) {
-          logInfo(s"cycle=${n}, wait and refresh")
+        val (isSelectionPage, isErrorPage) = client.isSelectionOrError()
+
+        if (isSelectionPage && n > 0) {
+          logInfo(s"cycle=${n}, wait ${sleepInterval}ms then refresh")
           Thread.sleep(sleepInterval)
           client.driver.navigate().refresh()
         }
         else {
           // client.selectTimeFilter("Morning")
         }
-        client.selectTimeValue("10:00 AM") // pick the highest value time
-
-        val (isSelectionPage, isErrorPage) = client.isSelectionOrError()
 
         if (isErrorPage) {
           logInfo(s"encountered error page, refresh and repeat the action")
           client.driver.navigate().refresh()
-          Thread.sleep(sleepInterval)
           repeatedActionRecursive(modifyingPassPass, n)
         }
         else if (isSelectionPage) {
+          client.selectTimeValue("10:00 AM") // pick the highest value time
           logInfo(s"reached selection page, pick greedy action")
 
           pickGreedyAction(modifyingPassPass) match {
@@ -251,11 +254,8 @@ abstract class FastPassGreedyBooker(config: BookerConfig)
                 )
               }
             case None =>
-              // no better actions, decide what to do
-              // 1. if selecting new fast pass, repeat the loop
-              // refresh if page has error
-              // 2. if modifying existing fast pass,
-              // repeat or change the modifying fast pass then repeat
+              // no better actions
+              logInfo(s"no better action repeat for next cycle")
               repeatedActionRecursive(
                 modifyingPassPass, n + 1
               )

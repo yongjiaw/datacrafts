@@ -1,11 +1,13 @@
-#DisneyWorld FastPassPlus Booking Agent
+# DisneyWorld FastPassPlus Booking Agent
 
 This application uses browser automation to select FastPass from DisneyWorld (Orlando) FastPassPlus system.
 It does not work DisneyLand (LA) MaxPass system (yet).
 Popular rides like Avatar can be obtained consistently, which is impossible with manual selection. 
-##Get Started
+## Get Started
 
-1. Download the released assembly jar from maven (https://mvnrepository.com/artifact/org.datacrafts/noschema-avro): dwfpp-assembly-<version>.jar 
+1. Download the executable jar from Sonatype with the most recent version:
+https://oss.sonatype.org/service/local/repositories/releases/content/org/datacrafts/dwfpp_2.12/1.0.2/dwfpp_2.12-1.0.2-assembly.jar
+ 
 2. Download chromedriver OS specific executable from http://chromedriver.chromium.org
 <BR>
 Chrome must be installed independently, and chromedriver must be compatible with the installed Chrome.

@@ -111,7 +111,7 @@ lazy val `noschema-json` = project.settings(
 import sbt.Keys._
 val seleniumVersion = "3.141.59"
 lazy val dwfpp = project.settings(
-  version := "1.0.0",
+  version := "1.0.2",
   commenSettings,
   mainClass in assembly := Some("org.datacrafts.app.dwfpp.MainApp"),
   libraryDependencies ++= Seq(
