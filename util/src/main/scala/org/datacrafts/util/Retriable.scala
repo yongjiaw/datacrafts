@@ -42,9 +42,17 @@ object Retriable {
           case FatalError(f) => None
           case _ => if (tried < maxRetry && waited < maxWait) Some(1000L) else None
         }
-      logError(s"call [$callName] " +
-        s"encountered exception with ${tried} previous retries, maxRetry=${maxRetry}, " +
-        s"waited=$waited, maxWait=${maxWait}, nextWait=${waitTime}: ${f.getMessage}")
+      if (waitTime.isEmpty) {
+        logError(s"call [$callName] " +
+          s"terminated with ${tried} previous retries, maxRetry=${maxRetry}, " +
+          s"waited=$waited, maxWait=${maxWait}: ${f.getMessage}")
+      }
+      else {
+        logDebug(s"call [$callName] " +
+          s"will retry with ${tried} previous retries, maxRetry=${maxRetry}, " +
+          s"waited=$waited, maxWait=${maxWait}, nextWait=${waitTime}: ${f.getMessage}")
+      }
+
       waitTime
 
     }
