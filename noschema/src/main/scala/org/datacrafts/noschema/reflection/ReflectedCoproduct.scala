@@ -16,10 +16,14 @@ object ReflectedCoproduct {
     context: Context.CoproductElement[Any]
   ) {
     def matchGenericInput(input: Any): Boolean = {
+
+      val inputClassFullName = input.getClass.getName.stripSuffix("$")
+        .replaceAll("""\$""", ".")
+
       wrapper.map(
-        _.fullName == input.getClass.getCanonicalName.stripSuffix("$")
+        _.fullName == inputClassFullName
       ).getOrElse(
-        symbol.fullName == input.getClass.getCanonicalName.stripSuffix("$")
+        symbol.fullName == inputClassFullName
       )
     }
 

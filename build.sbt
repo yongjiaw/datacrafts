@@ -138,7 +138,7 @@ lazy val datacrafts = (project in file("."))
     publishArtifact := false
   )
   .aggregate(
-    dwfpp,
+    // dwfpp,
     logging,
     noschema,
     `noschema-avro`,
