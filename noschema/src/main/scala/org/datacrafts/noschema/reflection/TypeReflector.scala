@@ -112,7 +112,7 @@ class TypeReflector(val originalType: ru.Type) extends Slf4jLogging.Default {
 
   lazy val unapplyMethodMirror = companionInstanceMirror
     .reflectMethod(getCompanionMethodSymbol("unapply"))
-  
+
   def callMethod(
     methodMirror: ru.MethodMirror,
     args: Any*
