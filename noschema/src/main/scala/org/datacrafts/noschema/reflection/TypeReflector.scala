@@ -97,25 +97,15 @@ class TypeReflector(val originalType: ru.Type) extends Slf4jLogging.Default {
     callMethod(applyMethodMirror, args: _*)
   }
 
-  def companionUnapply(value: Any): Option[Seq[Any]] = {
-    callMethod(unapplyMethodMirror, value) match {
-      case Some(result) =>
-        logDebug(s"${fullName}.unapply: input=${value}, output=${result}")
-        if (applyArgs.size == 1) {
-          Some(Seq(result))
-        }
-        else {
-          result match {
-            case product: Product =>
-              Some((0 until product.productArity).map(product.productElement))
-            case _ => throw new Exception(
-              s"multiple apply args but does not get product after unapply: " +
-                s"applyArgs=${applyArgs}, UnapplyResult=${result}")
-          }
-        }
-      case None => None
-    }
-  }
+  /**
+    * unapply method is not generated if the number of fields for the thrift object is more than 22.
+    *
+    * But the trait of the object always extends Product, hence we can get all the fields through the productIterator
+    * @param value
+    * @return
+    */
+  def companionUnapply(value: Any): Option[Seq[Any]] =
+    Some(value.asInstanceOf[Product].productIterator.toList)
 
   lazy val applyMethodMirror = companionInstanceMirror
     .reflectMethod(getCompanionMethodSymbol("apply"))
