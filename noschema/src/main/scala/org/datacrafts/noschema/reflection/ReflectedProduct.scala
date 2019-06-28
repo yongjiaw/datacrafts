@@ -49,7 +49,7 @@ class ReflectedProduct(
     if (!reflector.companionSymbol.isModule) {
       // nothing to add
     } else {
-      reflector.companionUnapply(input).map {
+      reflector.flattenObject(input).map {
         case values =>
           for (i <- 0 until reflector.applyArgs.size) yield {
             val symbol = reflector.applyArgs(i)

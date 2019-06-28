@@ -97,25 +97,28 @@ class TypeReflector(val originalType: ru.Type) extends Slf4jLogging.Default {
     callMethod(applyMethodMirror, args: _*)
   }
 
-  def companionUnapply(value: Any): Option[Seq[Any]] = value match {
+  def flattenObject(value: Any): Option[Seq[Any]] = value match {
     case product: Product => Some(product.productIterator.toList)
-    case _ =>
-      callMethod(unapplyMethodMirror, value) match {
-        case Some(result) =>
-          logDebug(s"${fullName}.unapply: input=${value}, output=${result}")
-          if (applyArgs.size == 1) {
-            Some(Seq(result))
+    case _ => companionUnapply(value)
+  }
+
+  def companionUnapply(value: Any): Option[Seq[Any]] = {
+    callMethod(unapplyMethodMirror, value) match {
+      case Some(result) =>
+        logDebug(s"${fullName}.unapply: input=${value}, output=${result}")
+        if (applyArgs.size == 1) {
+          Some(Seq(result))
+        }
+        else {
+          result match {
+            case product: Product => Some(product.productIterator.toList)
+            case _ => throw new Exception(
+              s"multiple apply args but does not get product after unapply: " +
+                s"applyArgs=${applyArgs}, UnapplyResult=${result}")
           }
-          else {
-            result match {
-              case product: Product => Some(product.productIterator.toList)
-              case _ => throw new Exception(
-                s"multiple apply args but does not get product after unapply: " +
-                  s"applyArgs=${applyArgs}, UnapplyResult=${result}")
-            }
-          }
-        case None => None
-      }
+        }
+      case None => None
+    }
   }
 
   lazy val applyMethodMirror = companionInstanceMirror
