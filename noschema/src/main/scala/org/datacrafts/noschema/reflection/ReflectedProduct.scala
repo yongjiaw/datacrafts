@@ -2,7 +2,7 @@ package org.datacrafts.noschema.reflection
 
 import scala.reflect.runtime.{universe => ru}
 
-import org.datacrafts.noschema.{Context, NoSchema, NoSchemaProduct, Operation}
+import org.datacrafts.noschema.{Context, NoSchemaProduct, Operation}
 import org.datacrafts.noschema.operator.ProductOperator.{SymbolCollector, SymbolExtractor}
 import org.datacrafts.noschema.reflection.NoSchemaReflector.ReflectedScalaType
 
@@ -29,6 +29,12 @@ class ReflectedProduct(
             .dependencyOperation(fieldContext)
             .marshal(symbolExtractor.getSymbolValue(fieldContext))
       }
+
+    reflector.applyArgs.foreach(
+      symbol =>
+      symbolExtractor.removeSymbol(fields.get(symbol).get)
+    )
+    symbolExtractor.allSymbolsExtracted()
 
     // case object just return the instance by reflection
     if (!reflector.companionSymbol.isModule) {

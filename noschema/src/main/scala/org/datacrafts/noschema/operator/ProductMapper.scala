@@ -14,6 +14,7 @@ class ProductMapper[T](
 
   import scala.collection.JavaConverters._
   protected def parseIterable(input: Any, iterable: Iterable[_]): SymbolExtractor = {
+    // the product object is responsible to call proper methods of symbol extractor
     new SymbolExtractor {
       private val map = collection.mutable.Map.empty[String, Any] ++
         iterable.map {

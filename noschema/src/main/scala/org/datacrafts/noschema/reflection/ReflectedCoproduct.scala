@@ -1,5 +1,7 @@
 package org.datacrafts.noschema.reflection
 
+import java.io.{PrintWriter, StringWriter}
+
 import scala.reflect.runtime.{universe => ru}
 import scala.util.Try
 
@@ -57,25 +59,31 @@ class ReflectedCoproduct(
   override def marshal(typeExtractor: CoproductOperator.TypeValueExtractor,
     operation: Operation[Any]
   ): Any = {
-    (for (
+    val tryAlternatives =
+    for (
       member <- members;
       ReflectedCoproduct.Member(memberSymbol, wrapperSymbol, memberContext) = member;
-      matchedValue <- typeExtractor.getTypeValue(memberContext);
-      result <- Try{
+      matchedValue <- typeExtractor.getTypeValue(memberContext)
+    ) yield {
+      Try{
         logDebug(
           s"${reflector.fullName} found matched " +
             s"subclass ${memberContext} for value ${matchedValue}")
         member.wrapTypedInput(
           operation.dependencyOperation(memberContext).marshal(matchedValue)
         )
-      }.toOption
-    ) yield {
-      result
+      }
     }
-      ).headOption.getOrElse(
-      throw new Exception(s"no value among candidate types (${members}) " +
-        s"found from $typeExtractor\n" +
-        s"${operation.format()}")
+    tryAlternatives.flatMap(_.toOption).headOption.getOrElse(
+      throw new Exception(s"all ${members.size} alternatives of coproduct failed: (${members})\n" +
+        s"$typeExtractor\n" +
+        s"${operation.format()}\n" +
+        s"${tryAlternatives.flatMap(_.failed.toOption).map {
+          f =>
+            val sw = new StringWriter()
+            f.printStackTrace(new PrintWriter(sw))
+            sw.toString
+        }.mkString("\n###\n")}")
     )
 
   }
