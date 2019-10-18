@@ -5,9 +5,9 @@ import xerial.sbt.Sonatype._
 sonatypeProfileName := "org.datacrafts"
 
 val scalaTestVersion = "3.0.5"
-val scroogeVersion = "18.7.0"
+val scroogeVersion = "19.6.0"
 val shapelessVersion = "2.3.3"
-val thriftVersion = "0.11.0"
+val thriftVersion = "0.12.0"
 val avroVersion = "1.8.2"
 
 val commenSettings = Seq(
